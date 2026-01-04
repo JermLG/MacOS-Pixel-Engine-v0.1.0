@@ -20,19 +20,106 @@ A high-performance 2D sandbox game engine with pixel-level cellular automata phy
 
 ---
 
-## Materials Implemented
 
-1. **Empty** - Void/air
-2. **Stone** - Immovable solid (gray)
-3. **Sand** - Granular powder that falls and piles (sandy yellow)
-4. **Water** - Liquid that flows and spreads (blue)
-5. **Steam** - Gas that rises and disperses (light gray, semi-transparent)
+## All Materials
 
-Each material has:
-- State (solid/liquid/powder/gas)
-- Density (determines displacement behavior)
-- Color with random variance
-- Update rules (cellular automata logic)
+Below is a complete list of all 80 materials defined in the engine, grouped by category, with a brief description of their typical behavior:
+
+### BASIC (0–9)
+1. **Empty** – Air/void, does nothing.
+2. **Stone** – Immovable solid, blocks other materials.
+3. **Sand** – Powder, falls and piles up.
+4. **Water** – Liquid, flows and falls.
+5. **Steam** – Gas, rises and disperses.
+6. **Oil** – Flammable liquid, floats on water, burns.
+7. **Fire** – Burns flammable materials, spreads, disappears after time.
+8. **Wood** – Solid, burns when touched by fire.
+9. **Acid** – Liquid, corrodes many materials, dangerous to organic.
+10. **Lava** – Hot liquid, burns, turns water to steam, solidifies to stone.
+
+### POWDERS (10–19)
+11. **Ash** – Powder, falls, remains after burning.
+12. **Dirt** – Powder, falls, can grow grass.
+13. **Gravel** – Heavy powder, falls, piles, denser than sand.
+14. **Snow** – Powder, falls, melts to water.
+15. **Gunpowder** – Explosive powder, ignites with fire.
+16. **Salt** – Powder, dissolves in water.
+17. **Coal** – Powder, burns for a long time.
+18. **Rust** – Powder, forms from metal + water.
+19. **Sawdust** – Powder, burns quickly.
+20. **Glass Powder** – Powder, melts to glass at high heat.
+
+### LIQUIDS (20–29)
+21. **Honey** – Thick liquid, flows slowly, sticky.
+22. **Mud** – Thick liquid, forms from dirt + water.
+23. **Blood** – Liquid, organic, can be absorbed by flesh.
+24. **Poison** – Liquid, damages organic materials.
+25. **Slime** – Sticky liquid, slows movement, can grow fungus.
+26. **Milk** – Liquid, organic, can spoil.
+27. **Alcohol** – Flammable liquid, burns quickly.
+28. **Mercury** – Heavy toxic liquid, does not mix with water.
+29. **Petrol** – Highly flammable liquid, explosive.
+30. **Glue** – Sticky liquid, bonds powders and solids.
+
+### GASES (30–39)
+31. **Smoke** – Gas, rises, produced by fire.
+32. **Toxic Gas** – Gas, damages organic, spreads quickly.
+33. **Hydrogen** – Light, flammable gas, explosive with fire.
+34. **Helium** – Inert, light gas, rises rapidly.
+35. **Methane** – Flammable gas, explosive.
+36. **Spark** – Short-lived, ignites flammable materials.
+37. **Plasma** – Hot, energetic gas, burns everything.
+38. **Dust** – Fine powder in air, settles over time.
+39. **Spore** – Organic gas, can grow fungus.
+40. **Confetti** – Decorative, falls slowly, no effect.
+
+### SOLIDS (40–49)
+41. **Grass** – Grows on dirt, burns, spreads.
+42. **Metal** – Solid, conducts electricity, rusts with water.
+43. **Gold** – Solid, does not rust, valuable.
+44. **Ice** – Solid, melts to water, slippery.
+45. **Glass** – Solid, fragile, shatters with force.
+46. **Brick** – Solid, strong, resists fire.
+47. **Obsidian** – Solid, forms from lava + water, very strong.
+48. **Diamond** – Solid, extremely hard, rare.
+49. **Copper** – Solid, conducts electricity, can oxidize.
+50. **Rubber** – Solid, bouncy, burns.
+
+### ORGANIC (50–59)
+51. **Leaf** – Organic, falls, burns, decomposes.
+52. **Moss** – Grows on stone, spreads with water.
+53. **Vine** – Grows, climbs, burns.
+54. **Fungus** – Grows from spores/slime, spreads.
+55. **Seed** – Grows into plants on dirt.
+56. **Flower** – Grows from seed, decorative, burns.
+57. **Algae** – Grows in water, spreads.
+58. **Coral** – Grows in water, forms solid structures.
+59. **Wax** – Solid, melts with heat, burns.
+60. **Flesh** – Organic, can bleed, burns.
+
+### SPECIAL (60–69)
+61. **Person** – Moves, interacts, can take damage.
+62. **Clone** – Copies behavior of person/materials.
+63. **Void** – Destroys any material it touches.
+64. **Fuse** – Burns quickly, triggers explosives.
+65. **TNT** – Explosive, detonates with fire.
+66. **C4** – Powerful explosive, remote detonation.
+67. **Firework** – Explodes with colors, decorative.
+68. **Lightning** – Instant, burns, electrifies.
+69. **Portal In** – Teleports materials to Portal Out.
+70. **Portal Out** – Receives materials from Portal In.
+
+### FANTASY (70–79)
+71. **Magic** – Unpredictable, transforms materials.
+72. **Crystal** – Grows, refracts light, hard.
+73. **Ectoplasm** – Ghostly, passes through solids.
+74. **Antimatter** – Destroys everything on contact.
+75. **Fairy Dust** – Makes materials float, sparkly.
+76. **Dragon Fire** – Extremely hot, burns anything.
+77. **Frost** – Freezes liquids, spreads cold.
+78. **Ember** – Hot, ignites flammable materials.
+79. **Stardust** – Rare, glows, magical effects.
+80. **Void Dust** – Erases materials, like mini-void.
 
 ---
 
