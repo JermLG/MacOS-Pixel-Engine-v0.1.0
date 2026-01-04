@@ -1,0 +1,22 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "Build PixelEngine (Makefile)",
+			"type": "shell",
+			"command": "make",
+			"args": [],
+			"problemMatcher": [
+				"$gcc"
+			],
+			"group": "build"
+		},
+		{
+			"label": "Run PixelEngine",
+			"type": "shell",
+			"command": "make run",
+			"args": [],
+			"group": "test"
+		}
+	]
+}
