@@ -103,9 +103,28 @@ using PixelEngine::MaterialID;
 - (void)updateMousePosition:(NSEvent*)event {
     NSPoint locationInView = [self convertPoint:event.locationInWindow fromView:nil];
 
-    // Flip Y coordinate (Cocoa origin is bottom-left, we want top-left)
-    _inputState->mouse_x = static_cast<int32_t>(locationInView.x);
-    _inputState->mouse_y = static_cast<int32_t>(self.bounds.size.height - locationInView.y);
+    // Get current view size
+    CGFloat viewWidth = self.bounds.size.width;
+    CGFloat viewHeight = self.bounds.size.height;
+
+    // Update view size in input state
+    _inputState->view_width = static_cast<int32_t>(viewWidth);
+    _inputState->view_height = static_cast<int32_t>(viewHeight);
+
+    // Scale mouse coordinates from view space to world space
+    // This maps the view coordinates to WORLD_WIDTH x WORLD_HEIGHT
+    CGFloat scaleX = static_cast<CGFloat>(PixelEngine::WORLD_WIDTH) / viewWidth;
+    CGFloat scaleY = static_cast<CGFloat>(PixelEngine::WORLD_HEIGHT) / viewHeight;
+
+    // Flip Y coordinate (Cocoa origin is bottom-left, we want top-left) and scale
+    _inputState->mouse_x = static_cast<int32_t>(locationInView.x * scaleX);
+    _inputState->mouse_y = static_cast<int32_t>((viewHeight - locationInView.y) * scaleY);
+
+    // Clamp to world bounds
+    if (_inputState->mouse_x < 0) _inputState->mouse_x = 0;
+    if (_inputState->mouse_x >= PixelEngine::WORLD_WIDTH) _inputState->mouse_x = PixelEngine::WORLD_WIDTH - 1;
+    if (_inputState->mouse_y < 0) _inputState->mouse_y = 0;
+    if (_inputState->mouse_y >= PixelEngine::WORLD_HEIGHT) _inputState->mouse_y = PixelEngine::WORLD_HEIGHT - 1;
 }
 
 - (void)keyDown:(NSEvent*)event {
@@ -306,7 +325,8 @@ bool Platform::initialize(int32_t window_width, int32_t window_height, const cha
         NSRect windowRect = NSMakeRect(0, 0, window_width, window_height);
         NSWindowStyleMask styleMask = NSWindowStyleMaskTitled |
                                       NSWindowStyleMaskClosable |
-                                      NSWindowStyleMaskMiniaturizable;
+                                      NSWindowStyleMaskMiniaturizable |
+                                      NSWindowStyleMaskResizable;
 
         NSWindow* window = [[NSWindow alloc] initWithContentRect:windowRect
                                                         styleMask:styleMask
@@ -315,6 +335,10 @@ bool Platform::initialize(int32_t window_width, int32_t window_height, const cha
 
         [window setTitle:[NSString stringWithUTF8String:title]];
         [window center];
+
+        // Set minimum size to prevent window from being too small
+        [window setMinSize:NSMakeSize(400, 300)];
+
         window_ = (__bridge_retained void*)window;
 
         // Create Metal device

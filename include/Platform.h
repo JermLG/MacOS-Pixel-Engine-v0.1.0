@@ -18,6 +18,10 @@ struct InputState {
     int32_t mouse_x;
     int32_t mouse_y;
 
+    // Current window/view size (updated on resize)
+    int32_t view_width;
+    int32_t view_height;
+
     // Current material to spawn (controlled by keyboard)
     MaterialID selected_material;
 
@@ -48,6 +52,8 @@ struct InputState {
         , mouse_right_down(false)
         , mouse_x(0)
         , mouse_y(0)
+        , view_width(WORLD_WIDTH)
+        , view_height(WORLD_HEIGHT)
         , selected_material(MaterialID::Sand)
         , brush_radius(5)
         , brush_shape(BrushShape::Circle)

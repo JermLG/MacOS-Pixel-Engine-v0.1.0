@@ -397,13 +397,27 @@ private:
 
             // SPECIAL CASE: People spawn ONE AT A TIME (no brush)
             if (input.mouse_left_down && input.selected_material == MaterialID::Person) {
-                // Only spawn person if cell is empty or passable
+                // Allow spawning person on more stable materials
                 if (world_.in_bounds(x, y)) {
                     MaterialID current = world_.get_material(x, y);
-                    bool can_spawn = (current == MaterialID::Empty ||
-                                     current == MaterialID::Water ||
-                                     current == MaterialID::Steam ||
-                                     current == MaterialID::Smoke);
+                    bool can_spawn = (
+                        current == MaterialID::Empty ||
+                        current == MaterialID::Water ||
+                        current == MaterialID::Steam ||
+                        current == MaterialID::Smoke ||
+                        current == MaterialID::Sand ||
+                        current == MaterialID::Grass ||
+                        current == MaterialID::Dirt ||
+                        current == MaterialID::Brick ||
+                        current == MaterialID::Wood ||
+                        current == MaterialID::Metal ||
+                        current == MaterialID::Obsidian ||
+                        current == MaterialID::Diamond ||
+                        current == MaterialID::Gold ||
+                        current == MaterialID::Ice ||
+                        current == MaterialID::Rubber ||
+                        current == MaterialID::Copper
+                    );
 
                     if (can_spawn) {
                         // Clear cell state
