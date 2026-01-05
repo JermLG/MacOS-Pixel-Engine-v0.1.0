@@ -248,6 +248,47 @@ using PixelEngine::MaterialID;
             // Next page
             _inputState->next_page = true;
             break;
+        case 'l':
+        case 'L':
+            // Line tool
+            _inputState->tool_mode = PixelEngine::ToolMode::Line;
+            _inputState->shape_drawing = false;
+            NSLog(@"Tool mode: Line");
+            break;
+        case 'r':
+        case 'R':
+            // Rectangle tool
+            _inputState->tool_mode = PixelEngine::ToolMode::Rectangle;
+            _inputState->shape_drawing = false;
+            NSLog(@"Tool mode: Rectangle");
+            break;
+        case 'o':
+        case 'O':
+            // Circle/Oval tool
+            _inputState->tool_mode = PixelEngine::ToolMode::Circle;
+            _inputState->shape_drawing = false;
+            NSLog(@"Tool mode: Circle");
+            break;
+        case 'e':
+        case 'E':
+            // Fill tool (E for fill, since F is already Fire)
+            _inputState->tool_mode = PixelEngine::ToolMode::Fill;
+            _inputState->shape_drawing = false;
+            NSLog(@"Tool mode: Fill");
+            break;
+        case 'd':
+        case 'D':
+            // Back to brush (D for Draw)
+            _inputState->tool_mode = PixelEngine::ToolMode::Brush;
+            _inputState->shape_drawing = false;
+            NSLog(@"Tool mode: Brush");
+            break;
+        case 'x':
+        case 'X':
+            // Toggle filled vs outline shapes
+            _inputState->filled_shapes = !_inputState->filled_shapes;
+            NSLog(@"Shapes: %s", _inputState->filled_shapes ? "Filled" : "Outline");
+            break;
         default:
             break;
     }

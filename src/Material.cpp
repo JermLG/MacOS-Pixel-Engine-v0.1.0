@@ -2999,6 +2999,9 @@ void update_rubber(World& world, int32_t x, int32_t y) {
 // ============================================================================
 
 void update_leaf(World& world, int32_t x, int32_t y) {
+    // Check for combinations (leaf + water = algae)
+    if (try_material_combination(world, x, y)) return;
+
     // Leaves flutter down slowly
     Cell& cell = world.get_cell(x, y);
     uint32_t rand = world.random_int();
@@ -3033,6 +3036,9 @@ void update_leaf(World& world, int32_t x, int32_t y) {
 }
 
 void update_moss(World& world, int32_t x, int32_t y) {
+    // Check for combinations
+    if (try_material_combination(world, x, y)) return;
+
     // Moss spreads slowly on stone/brick/wood
     if ((world.random_int() & 127) == 0) {
         uint32_t dir = world.random_int() & 3;
@@ -3062,6 +3068,9 @@ void update_moss(World& world, int32_t x, int32_t y) {
 }
 
 void update_vine(World& world, int32_t x, int32_t y) {
+    // Check for combinations
+    if (try_material_combination(world, x, y)) return;
+
     // Vines grow downward slowly
     if ((world.random_int() & 63) == 0) {
         if (world.in_bounds(x, y + 1) && world.get_material(x, y + 1) == MaterialID::Empty) {
@@ -3084,6 +3093,9 @@ void update_vine(World& world, int32_t x, int32_t y) {
 }
 
 void update_fungus(World& world, int32_t x, int32_t y) {
+    // Check for combinations
+    if (try_material_combination(world, x, y)) return;
+
     // Fungus spreads slowly and releases spores
     if ((world.random_int() & 255) == 0) {
         // Spread
@@ -3131,6 +3143,9 @@ void update_seed(World& world, int32_t x, int32_t y) {
 }
 
 void update_flower(World& world, int32_t x, int32_t y) {
+    // Check for combinations
+    if (try_material_combination(world, x, y)) return;
+
     // Flowers are static but burn and can release seeds
     for (int dy = -1; dy <= 1; dy++) {
         for (int dx = -1; dx <= 1; dx++) {
@@ -3147,6 +3162,9 @@ void update_flower(World& world, int32_t x, int32_t y) {
 }
 
 void update_algae(World& world, int32_t x, int32_t y) {
+    // Check for combinations
+    if (try_material_combination(world, x, y)) return;
+
     // Algae floats in water and slowly spreads
     bool in_water = false;
     for (int dy = -1; dy <= 1; dy++) {
@@ -3169,6 +3187,9 @@ void update_algae(World& world, int32_t x, int32_t y) {
 }
 
 void update_coral(World& world, int32_t x, int32_t y) {
+    // Check for combinations
+    if (try_material_combination(world, x, y)) return;
+
     // Coral grows slowly underwater
     bool underwater = false;
     for (int dy = -1; dy <= 1; dy++) {
@@ -3194,6 +3215,9 @@ void update_coral(World& world, int32_t x, int32_t y) {
 }
 
 void update_wax(World& world, int32_t x, int32_t y) {
+    // Check for combinations
+    if (try_material_combination(world, x, y)) return;
+
     // Wax melts near fire
     for (int dy = -1; dy <= 1; dy++) {
         for (int dx = -1; dx <= 1; dx++) {

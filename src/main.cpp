@@ -10,15 +10,21 @@
 
 using namespace PixelEngine;
 
-// All materials organized by category for the palette
+// All materials organized by category for the dropdown menus
 struct MaterialEntry {
     MaterialID id;
     const char* name;
 };
 
-// Materials organized into pages (10 per page)
-static const MaterialEntry ALL_MATERIALS[] = {
-    // Page 0: Basic (original materials)
+struct MaterialCategory {
+    const char* name;
+    const MaterialEntry* materials;
+    int count;
+    bool is_open;  // Runtime state - whether dropdown is expanded
+};
+
+// Category: Basic
+static const MaterialEntry BASIC_MATERIALS[] = {
     {MaterialID::Sand, "Sand"},
     {MaterialID::Water, "Water"},
     {MaterialID::Stone, "Stone"},
@@ -28,12 +34,12 @@ static const MaterialEntry ALL_MATERIALS[] = {
     {MaterialID::Wood, "Wood"},
     {MaterialID::Acid, "Acid"},
     {MaterialID::Lava, "Lava"},
-    {MaterialID::Ash, "Ash"},
-
-    // Page 1: More Basic + Powders
     {MaterialID::Grass, "Grass"},
-    {MaterialID::Smoke, "Smoke"},
-    {MaterialID::Person, "Person"},
+};
+
+// Category: Powders
+static const MaterialEntry POWDER_MATERIALS[] = {
+    {MaterialID::Ash, "Ash"},
     {MaterialID::Dirt, "Dirt"},
     {MaterialID::Gravel, "Gravel"},
     {MaterialID::Snow, "Snow"},
@@ -41,10 +47,12 @@ static const MaterialEntry ALL_MATERIALS[] = {
     {MaterialID::Salt, "Salt"},
     {MaterialID::Coal, "Coal"},
     {MaterialID::Rust, "Rust"},
-
-    // Page 2: More Powders + Liquids
     {MaterialID::Sawdust, "Sawdust"},
-    {MaterialID::Glass_Powder, "GlassPwdr"},
+    {MaterialID::Glass_Powder, "Glass Pwdr"},
+};
+
+// Category: Liquids
+static const MaterialEntry LIQUID_MATERIALS[] = {
     {MaterialID::Honey, "Honey"},
     {MaterialID::Mud, "Mud"},
     {MaterialID::Blood, "Blood"},
@@ -53,11 +61,14 @@ static const MaterialEntry ALL_MATERIALS[] = {
     {MaterialID::Milk, "Milk"},
     {MaterialID::Alcohol, "Alcohol"},
     {MaterialID::Mercury, "Mercury"},
-
-    // Page 3: More Liquids + Gases
     {MaterialID::Petrol, "Petrol"},
     {MaterialID::Glue, "Glue"},
-    {MaterialID::Toxic_Gas, "ToxicGas"},
+};
+
+// Category: Gases
+static const MaterialEntry GAS_MATERIALS[] = {
+    {MaterialID::Smoke, "Smoke"},
+    {MaterialID::Toxic_Gas, "Toxic Gas"},
     {MaterialID::Hydrogen, "Hydrogen"},
     {MaterialID::Helium, "Helium"},
     {MaterialID::Methane, "Methane"},
@@ -65,9 +76,11 @@ static const MaterialEntry ALL_MATERIALS[] = {
     {MaterialID::Plasma, "Plasma"},
     {MaterialID::Dust, "Dust"},
     {MaterialID::Spore, "Spore"},
-
-    // Page 4: More Gases + Solids
     {MaterialID::Confetti, "Confetti"},
+};
+
+// Category: Solids
+static const MaterialEntry SOLID_MATERIALS[] = {
     {MaterialID::Metal, "Metal"},
     {MaterialID::Gold, "Gold"},
     {MaterialID::Ice, "Ice"},
@@ -77,8 +90,10 @@ static const MaterialEntry ALL_MATERIALS[] = {
     {MaterialID::Diamond, "Diamond"},
     {MaterialID::Copper, "Copper"},
     {MaterialID::Rubber, "Rubber"},
+};
 
-    // Page 5: Organic
+// Category: Organic
+static const MaterialEntry ORGANIC_MATERIALS[] = {
     {MaterialID::Leaf, "Leaf"},
     {MaterialID::Moss, "Moss"},
     {MaterialID::Vine, "Vine"},
@@ -89,8 +104,11 @@ static const MaterialEntry ALL_MATERIALS[] = {
     {MaterialID::Coral, "Coral"},
     {MaterialID::Wax, "Wax"},
     {MaterialID::Flesh, "Flesh"},
+};
 
-    // Page 6: Special
+// Category: Special
+static const MaterialEntry SPECIAL_MATERIALS[] = {
+    {MaterialID::Person, "Person"},
     {MaterialID::Clone, "Clone"},
     {MaterialID::Void, "Void"},
     {MaterialID::Fuse, "Fuse"},
@@ -98,25 +116,27 @@ static const MaterialEntry ALL_MATERIALS[] = {
     {MaterialID::C4, "C4"},
     {MaterialID::Firework, "Firework"},
     {MaterialID::Lightning, "Lightning"},
-    {MaterialID::Portal_In, "PortalIn"},
-    {MaterialID::Portal_Out, "PortalOut"},
-    {MaterialID::Magic, "Magic"},
+    {MaterialID::Portal_In, "Portal In"},
+    {MaterialID::Portal_Out, "Portal Out"},
+};
 
-    // Page 7: Fantasy
+// Category: Fantasy
+static const MaterialEntry FANTASY_MATERIALS[] = {
+    {MaterialID::Magic, "Magic"},
     {MaterialID::Crystal, "Crystal"},
     {MaterialID::Ectoplasm, "Ectoplasm"},
-    {MaterialID::Antimatter, "Antimattr"},
-    {MaterialID::Fairy_Dust, "FairyDust"},
-    {MaterialID::Dragon_Fire, "DragonFire"},
+    {MaterialID::Antimatter, "Antimatter"},
+    {MaterialID::Fairy_Dust, "Fairy Dust"},
+    {MaterialID::Dragon_Fire, "Dragon Fire"},
     {MaterialID::Frost, "Frost"},
     {MaterialID::Ember, "Ember"},
     {MaterialID::Stardust, "Stardust"},
-    {MaterialID::Void_Dust, "VoidDust"},
+    {MaterialID::Void_Dust, "Void Dust"},
 };
 
-static const int MATERIALS_PER_PAGE = 10;
-static const int TOTAL_MATERIALS = sizeof(ALL_MATERIALS) / sizeof(ALL_MATERIALS[0]);
-static const int TOTAL_PAGES = (TOTAL_MATERIALS + MATERIALS_PER_PAGE - 1) / MATERIALS_PER_PAGE;
+#define ARRAY_COUNT(arr) (sizeof(arr) / sizeof(arr[0]))
+
+static const int NUM_CATEGORIES = 8;
 
 // Application class - ties everything together
 class PixelEngineApp {
@@ -132,9 +152,20 @@ public:
         , fps_timer_(0.0f)
         , current_fps_(60.0f)
         , active_cells_display_(0)
-        , current_page_(0) {
+        , open_category_(-1)
+        , scroll_offset_(0) {
 
         pixel_buffer_.resize(WORLD_WIDTH * WORLD_HEIGHT);
+
+        // Initialize categories array
+        categories_[0] = {"Basic", BASIC_MATERIALS, (int)ARRAY_COUNT(BASIC_MATERIALS)};
+        categories_[1] = {"Powders", POWDER_MATERIALS, (int)ARRAY_COUNT(POWDER_MATERIALS)};
+        categories_[2] = {"Liquids", LIQUID_MATERIALS, (int)ARRAY_COUNT(LIQUID_MATERIALS)};
+        categories_[3] = {"Gases", GAS_MATERIALS, (int)ARRAY_COUNT(GAS_MATERIALS)};
+        categories_[4] = {"Solids", SOLID_MATERIALS, (int)ARRAY_COUNT(SOLID_MATERIALS)};
+        categories_[5] = {"Organic", ORGANIC_MATERIALS, (int)ARRAY_COUNT(ORGANIC_MATERIALS)};
+        categories_[6] = {"Special", SPECIAL_MATERIALS, (int)ARRAY_COUNT(SPECIAL_MATERIALS)};
+        categories_[7] = {"Fantasy", FANTASY_MATERIALS, (int)ARRAY_COUNT(FANTASY_MATERIALS)};
     }
 
     bool initialize() {
@@ -204,7 +235,16 @@ private:
     float fps_timer_;
     float current_fps_;
     uint32_t active_cells_display_;
-    int current_page_;
+
+    // Dropdown UI state
+    struct CategoryState {
+        const char* name;
+        const MaterialEntry* materials;
+        int count;
+    };
+    CategoryState categories_[NUM_CATEGORIES];
+    int open_category_;  // -1 = all closed, 0-7 = which category is open
+    int scroll_offset_;  // For scrolling within a dropdown
 
     void create_initial_world() {
         // Create border walls
@@ -260,45 +300,216 @@ private:
         }
     }
 
-    // Returns: 0 = no click in palette, 1 = material selected, 2 = page changed
-    int check_material_palette_click(int32_t mx, int32_t my, MaterialID& clicked_material) {
-        // Material palette coordinates (must match render_material_palette)
-        int palette_x = WORLD_WIDTH - 160;
-        int nav_y = 25;  // Page navigation row
-        int materials_start_y = 50;  // Materials start below nav
-        int swatch_size = 20;
-        int spacing = 28;
+    // UI Layout constants
+    static constexpr int UI_PANEL_X = WORLD_WIDTH - 145;
+    static constexpr int UI_PANEL_WIDTH = 140;
+    static constexpr int UI_HEADER_HEIGHT = 18;
+    static constexpr int UI_ITEM_HEIGHT = 16;
+    static constexpr int UI_SWATCH_SIZE = 12;
+    static constexpr int UI_PADDING = 4;
 
-        // Check page navigation clicks
-        // "< Prev" button area (left side of nav row)
-        if (my >= nav_y && my <= nav_y + 15) {
-            if (mx >= palette_x && mx <= palette_x + 35 && current_page_ > 0) {
-                current_page_--;
-                return 2;  // Page changed
+    // Calculate total UI height for hit testing
+    int get_ui_total_height() const {
+        int height = 30;  // Title + spacing
+        for (int i = 0; i < NUM_CATEGORIES; i++) {
+            height += UI_HEADER_HEIGHT + 2;  // Category header
+            if (open_category_ == i) {
+                height += categories_[i].count * UI_ITEM_HEIGHT;  // Expanded items
             }
-            // "Next >" button area (right side of nav row)
-            if (mx >= palette_x + 100 && mx <= palette_x + 145 && current_page_ < TOTAL_PAGES - 1) {
-                current_page_++;
-                return 2;  // Page changed
+        }
+        height += 30;  // Selected material display at bottom
+        return height;
+    }
+
+    // Helper to place a single cell of material
+    void place_material_cell(int32_t x, int32_t y, MaterialID material) {
+        if (world_.in_bounds(x, y)) {
+            Cell& cell = world_.get_cell(x, y);
+            cell.flags = 0;
+            cell.velocity_y = 0;
+            world_.set_material(x, y, material);
+        }
+    }
+
+    // Draw a line of material using Bresenham's algorithm with thickness
+    void draw_line(int32_t x0, int32_t y0, int32_t x1, int32_t y1, MaterialID material, int32_t thickness = 3) {
+        int32_t dx = std::abs(x1 - x0);
+        int32_t dy = std::abs(y1 - y0);
+        int32_t sx = (x0 < x1) ? 1 : -1;
+        int32_t sy = (y0 < y1) ? 1 : -1;
+        int32_t err = dx - dy;
+
+        while (true) {
+            // Draw a thick point at current position
+            for (int32_t ty = -thickness/2; ty <= thickness/2; ty++) {
+                for (int32_t tx = -thickness/2; tx <= thickness/2; tx++) {
+                    place_material_cell(x0 + tx, y0 + ty, material);
+                }
+            }
+
+            if (x0 == x1 && y0 == y1) break;
+
+            int32_t e2 = 2 * err;
+            if (e2 > -dy) {
+                err -= dy;
+                x0 += sx;
+            }
+            if (e2 < dx) {
+                err += dx;
+                y0 += sy;
+            }
+        }
+    }
+
+    // Draw a rectangle (filled or outline)
+    void draw_rectangle(int32_t x0, int32_t y0, int32_t x1, int32_t y1, MaterialID material, bool filled) {
+        int32_t left = std::min(x0, x1);
+        int32_t right = std::max(x0, x1);
+        int32_t top = std::min(y0, y1);
+        int32_t bottom = std::max(y0, y1);
+
+        if (filled) {
+            for (int32_t y = top; y <= bottom; y++) {
+                for (int32_t x = left; x <= right; x++) {
+                    place_material_cell(x, y, material);
+                }
+            }
+        } else {
+            // Draw outline with thickness
+            int32_t thickness = 2;
+            // Top and bottom edges
+            for (int32_t x = left; x <= right; x++) {
+                for (int32_t t = 0; t < thickness; t++) {
+                    place_material_cell(x, top + t, material);
+                    place_material_cell(x, bottom - t, material);
+                }
+            }
+            // Left and right edges
+            for (int32_t y = top; y <= bottom; y++) {
+                for (int32_t t = 0; t < thickness; t++) {
+                    place_material_cell(left + t, y, material);
+                    place_material_cell(right - t, y, material);
+                }
+            }
+        }
+    }
+
+    // Draw an ellipse (filled or outline) using midpoint algorithm
+    void draw_ellipse(int32_t x0, int32_t y0, int32_t x1, int32_t y1, MaterialID material, bool filled) {
+        int32_t cx = (x0 + x1) / 2;
+        int32_t cy = (y0 + y1) / 2;
+        int32_t rx = std::abs(x1 - x0) / 2;
+        int32_t ry = std::abs(y1 - y0) / 2;
+
+        if (rx == 0 || ry == 0) {
+            // Degenerate to line
+            draw_line(x0, y0, x1, y1, material, 2);
+            return;
+        }
+
+        if (filled) {
+            // Filled ellipse - scan each row
+            for (int32_t y = -ry; y <= ry; y++) {
+                // Calculate x extent for this row using ellipse equation
+                // (x/rx)^2 + (y/ry)^2 = 1
+                // x = rx * sqrt(1 - (y/ry)^2)
+                float yf = static_cast<float>(y) / static_cast<float>(ry);
+                float xf = std::sqrt(1.0f - yf * yf);
+                int32_t xExtent = static_cast<int32_t>(xf * rx);
+
+                for (int32_t x = -xExtent; x <= xExtent; x++) {
+                    place_material_cell(cx + x, cy + y, material);
+                }
+            }
+        } else {
+            // Outline ellipse using parametric approach
+            int32_t thickness = 2;
+            int steps = std::max(rx, ry) * 4;
+            for (int i = 0; i < steps; i++) {
+                float angle = 2.0f * 3.14159f * i / steps;
+                int32_t x = cx + static_cast<int32_t>(rx * std::cos(angle));
+                int32_t y = cy + static_cast<int32_t>(ry * std::sin(angle));
+                for (int32_t ty = -thickness/2; ty <= thickness/2; ty++) {
+                    for (int32_t tx = -thickness/2; tx <= thickness/2; tx++) {
+                        place_material_cell(x + tx, y + ty, material);
+                    }
+                }
+            }
+        }
+    }
+
+    // Flood fill algorithm
+    void flood_fill(int32_t x, int32_t y, MaterialID fill_material) {
+        if (!world_.in_bounds(x, y)) return;
+
+        MaterialID target_material = world_.get_material(x, y);
+        if (target_material == fill_material) return;  // Already the fill color
+
+        // Use a stack-based flood fill to avoid recursion depth issues
+        std::vector<std::pair<int32_t, int32_t>> stack;
+        stack.push_back({x, y});
+
+        int max_fill = 50000;  // Safety limit
+        int filled = 0;
+
+        while (!stack.empty() && filled < max_fill) {
+            auto [cx, cy] = stack.back();
+            stack.pop_back();
+
+            if (!world_.in_bounds(cx, cy)) continue;
+            if (world_.get_material(cx, cy) != target_material) continue;
+
+            place_material_cell(cx, cy, fill_material);
+            filled++;
+
+            // Add neighbors
+            stack.push_back({cx + 1, cy});
+            stack.push_back({cx - 1, cy});
+            stack.push_back({cx, cy + 1});
+            stack.push_back({cx, cy - 1});
+        }
+    }
+
+    // Returns: 0 = no click in UI, 1 = material selected, 2 = category toggled
+    int check_dropdown_click(int32_t mx, int32_t my, MaterialID& clicked_material) {
+        // Check if click is within the UI panel area
+        if (mx < UI_PANEL_X - 5 || mx > WORLD_WIDTH) {
+            return 0;  // Not in UI
+        }
+
+        int y = 10;  // Start position
+
+        // Skip title area
+        y += 20;
+
+        // Check each category
+        for (int cat = 0; cat < NUM_CATEGORIES; cat++) {
+            // Category header click area
+            if (my >= y && my < y + UI_HEADER_HEIGHT) {
+                // Toggle this category
+                if (open_category_ == cat) {
+                    open_category_ = -1;  // Close it
+                } else {
+                    open_category_ = cat;  // Open it (closes others)
+                }
+                scroll_offset_ = 0;
+                return 2;  // Category toggled
+            }
+            y += UI_HEADER_HEIGHT + 2;
+
+            // If this category is open, check material items
+            if (open_category_ == cat) {
+                for (int i = 0; i < categories_[cat].count; i++) {
+                    if (my >= y && my < y + UI_ITEM_HEIGHT) {
+                        clicked_material = categories_[cat].materials[i].id;
+                        return 1;  // Material selected
+                    }
+                    y += UI_ITEM_HEIGHT;
+                }
             }
         }
 
-        // Check material swatch clicks
-        int start_idx = current_page_ * MATERIALS_PER_PAGE;
-        int end_idx = std::min(start_idx + MATERIALS_PER_PAGE, TOTAL_MATERIALS);
-
-        int item_y = materials_start_y;
-        for (int i = start_idx; i < end_idx; i++) {
-            // Check if click is within this material's button area (whole row is clickable)
-            if (mx >= palette_x - 5 && mx <= palette_x + 150 &&
-                my >= item_y && my <= item_y + swatch_size) {
-                clicked_material = ALL_MATERIALS[i].id;
-                return 1;  // Material selected
-            }
-            item_y += spacing;
-        }
-
-        return 0;  // No click in palette
+        return 0;  // Click was in UI but not on any interactive element
     }
 
     void handle_input() {
@@ -345,53 +556,143 @@ private:
             std::cout << "Bloom intensity: " << renderer_.params().bloom_intensity << "\n";
         }
 
-        // Page navigation
+        // Category navigation with keyboard (prev/next cycle through categories)
         if (input.prev_page) {
-            if (current_page_ > 0) {
-                current_page_--;
-                std::cout << "Page " << (current_page_ + 1) << "/" << TOTAL_PAGES << "\n";
+            if (open_category_ > 0) {
+                open_category_--;
+            } else if (open_category_ == -1) {
+                open_category_ = NUM_CATEGORIES - 1;
+            } else {
+                open_category_ = -1;  // Close all
             }
             input.prev_page = false;
         }
         if (input.next_page) {
-            if (current_page_ < TOTAL_PAGES - 1) {
-                current_page_++;
-                std::cout << "Page " << (current_page_ + 1) << "/" << TOTAL_PAGES << "\n";
+            if (open_category_ < NUM_CATEGORIES - 1) {
+                open_category_++;
+            } else {
+                open_category_ = -1;  // Close all
             }
             input.next_page = false;
         }
 
-        // Check for material palette clicks (only on initial click)
+        // Check for UI clicks (only on initial click)
         static bool was_mouse_down = false;
         bool is_mouse_down = input.mouse_left_down;
 
         if (is_mouse_down && !was_mouse_down) {
-            // Mouse just clicked
+            int32_t mx = input.mouse_x;
+            int32_t my = input.mouse_y;
+
+            // Check brush palette clicks (left panel)
+            if (mx >= BRUSH_PANEL_X && mx <= BRUSH_PANEL_X + BRUSH_PANEL_WIDTH &&
+                my >= BRUSH_PANEL_Y && my <= BRUSH_PANEL_Y + 230) {
+
+                // Check tool button clicks
+                int btn_x = BRUSH_PANEL_X + 5;
+                int btn_y = BRUSH_PANEL_Y + 20;  // After title
+                ToolMode tools[] = {ToolMode::Brush, ToolMode::Line, ToolMode::Rectangle, ToolMode::Circle, ToolMode::Fill};
+
+                for (int i = 0; i < 5; i++) {
+                    if (mx >= btn_x && mx < btn_x + BRUSH_BTN_SIZE &&
+                        my >= btn_y && my < btn_y + BRUSH_BTN_SIZE) {
+                        input.tool_mode = tools[i];
+                        input.shape_drawing = false;
+                        was_mouse_down = is_mouse_down;
+                        return;
+                    }
+                    // Move to next position (2 columns)
+                    if (i % 2 == 0) {
+                        btn_x += BRUSH_BTN_SPACING + 20;
+                    } else {
+                        btn_x = BRUSH_PANEL_X + 5;
+                        btn_y += BRUSH_BTN_SPACING;
+                    }
+                }
+
+                was_mouse_down = is_mouse_down;
+                return;  // Click was in brush palette, consume it
+            }
+
+            // Check material dropdown clicks (right panel)
             MaterialID clicked_mat;
-            int click_result = check_material_palette_click(input.mouse_x, input.mouse_y, clicked_mat);
+            int click_result = check_dropdown_click(mx, my, clicked_mat);
             if (click_result == 1) {
-                // Material selected
                 input.selected_material = clicked_mat;
-                std::cout << "Selected material via UI click\n";
                 was_mouse_down = is_mouse_down;
-                return;  // Don't place materials when clicking UI
+                return;
             } else if (click_result == 2) {
-                // Page changed
-                std::cout << "Page " << (current_page_ + 1) << "/" << TOTAL_PAGES << "\n";
                 was_mouse_down = is_mouse_down;
-                return;  // Don't place materials when clicking UI
+                return;
             }
         }
 
         was_mouse_down = is_mouse_down;
 
+        // Get current mouse position
+        int32_t mx = input.mouse_x;
+        int32_t my = input.mouse_y;
+
+        // Don't interact if clicking in the right UI area
+        int ui_height = get_ui_total_height();
+        bool in_ui = (mx >= UI_PANEL_X - 5 && my <= ui_height + 10);
+        // Also check left brush palette area
+        if (mx <= BRUSH_PANEL_X + BRUSH_PANEL_WIDTH + 5 && my <= 240) {
+            in_ui = true;
+        }
+
+        // ===== SHAPE TOOLS (Line, Rectangle, Circle) =====
+        if (input.tool_mode == ToolMode::Line ||
+            input.tool_mode == ToolMode::Rectangle ||
+            input.tool_mode == ToolMode::Circle) {
+
+            if (input.mouse_left_down && !in_ui) {
+                if (!input.shape_drawing) {
+                    // Start drawing a shape
+                    input.shape_start_x = mx;
+                    input.shape_start_y = my;
+                    input.shape_drawing = true;
+                }
+                // While drawing, preview is handled in render
+            } else if (input.shape_drawing) {
+                // Mouse released - commit the shape
+                if (input.tool_mode == ToolMode::Line) {
+                    draw_line(input.shape_start_x, input.shape_start_y, mx, my, input.selected_material);
+                } else if (input.tool_mode == ToolMode::Rectangle) {
+                    draw_rectangle(input.shape_start_x, input.shape_start_y, mx, my,
+                                   input.selected_material, input.filled_shapes);
+                } else if (input.tool_mode == ToolMode::Circle) {
+                    draw_ellipse(input.shape_start_x, input.shape_start_y, mx, my,
+                                 input.selected_material, input.filled_shapes);
+                }
+                input.shape_drawing = false;
+            }
+
+            // Right click cancels shape drawing
+            if (input.mouse_right_down && input.shape_drawing) {
+                input.shape_drawing = false;
+            }
+
+            return;  // Don't process brush tool when in shape mode
+        }
+
+        // ===== FILL TOOL =====
+        if (input.tool_mode == ToolMode::Fill) {
+            static bool fill_was_down = false;
+            if (input.mouse_left_down && !fill_was_down && !in_ui) {
+                flood_fill(mx, my, input.selected_material);
+            }
+            fill_was_down = input.mouse_left_down;
+            return;  // Don't process brush tool when in fill mode
+        }
+
+        // ===== BRUSH TOOL MODE =====
         // Place materials with mouse
         if (input.mouse_left_down || input.mouse_right_down) {
-            int32_t x = input.mouse_x;
-            int32_t y = input.mouse_y;
+            int32_t x = mx;
+            int32_t y = my;
 
-            // Don't place materials if clicking in the palette area
-            if (x >= WORLD_WIDTH - 165 && y <= 370) {
+            if (in_ui) {
                 return;
             }
 
@@ -581,165 +882,475 @@ private:
         }
     }
 
+    // Find material name by ID (searches all categories)
+    const char* find_material_name(MaterialID id) const {
+        for (int cat = 0; cat < NUM_CATEGORIES; cat++) {
+            for (int i = 0; i < categories_[cat].count; i++) {
+                if (categories_[cat].materials[i].id == id) {
+                    return categories_[cat].materials[i].name;
+                }
+            }
+        }
+        return "Unknown";
+    }
+
     void render_material_palette() {
-        const uint32_t bg_color = 0xC0000000;  // More opaque black
-        const uint32_t text_color = 0xFFFFFFFF;  // White
-        const uint32_t selected_border = 0xFFFFFF00;  // Yellow
-        const uint32_t highlight_color = 0xFFFFFF00;  // Yellow for selected name
-        const uint32_t nav_color = 0xFF00FFFF;  // Cyan for navigation
-        const uint32_t dim_color = 0x80808080;  // Dim gray for disabled
+        // Colors
+        const uint32_t bg_color = 0xE0181818;        // Dark gray background
+        const uint32_t header_bg = 0xE0303030;      // Slightly lighter for headers
+        const uint32_t header_open_bg = 0xE0404050; // Purple tint when open
+        const uint32_t text_color = 0xFFFFFFFF;     // White
+        const uint32_t text_dim = 0xFFAAAAAA;       // Dim gray text
+        const uint32_t selected_color = 0xFFFFFF00; // Yellow for selected
+        const uint32_t arrow_color = 0xFF00FFFF;    // Cyan arrows
+
+        const auto& input = platform_.get_input_state();
+        int x = UI_PANEL_X;
+        int y = 10;
+
+        // Calculate panel height
+        int panel_height = get_ui_total_height();
+
+        // Draw main background panel
+        draw_filled_rect(x - 5, 5, UI_PANEL_WIDTH + 10, panel_height, bg_color);
+
+        // Title
+        draw_text(x, y, "MATERIALS", text_color);
+        y += 20;
+
+        // Draw each category
+        for (int cat = 0; cat < NUM_CATEGORIES; cat++) {
+            bool is_open = (open_category_ == cat);
+
+            // Category header background
+            uint32_t hdr_bg = is_open ? header_open_bg : header_bg;
+            draw_filled_rect(x - 3, y, UI_PANEL_WIDTH + 6, UI_HEADER_HEIGHT, hdr_bg);
+
+            // Arrow indicator (> or v)
+            if (is_open) {
+                draw_text(x, y + 4, "V", arrow_color);
+            } else {
+                draw_text(x, y + 4, ">", arrow_color);
+            }
+
+            // Category name
+            draw_text(x + 12, y + 4, std::string(categories_[cat].name), text_color);
+
+            // Item count
+            std::string count_str = "(" + std::to_string(categories_[cat].count) + ")";
+            draw_text(x + 90, y + 4, count_str, text_dim);
+
+            y += UI_HEADER_HEIGHT + 2;
+
+            // If category is open, draw its materials
+            if (is_open) {
+                for (int i = 0; i < categories_[cat].count; i++) {
+                    const MaterialEntry& mat = categories_[cat].materials[i];
+                    bool is_selected = (input.selected_material == mat.id);
+
+                    // Highlight background for selected material
+                    if (is_selected) {
+                        draw_filled_rect(x - 3, y, UI_PANEL_WIDTH + 6, UI_ITEM_HEIGHT, 0xE0404080);
+                    }
+
+                    // Material color swatch
+                    Color mat_color = material_system_.get_material(mat.id).base_color;
+                    uint32_t swatch_color = mat_color.to_rgba32();
+                    draw_filled_rect(x + 8, y + 2, UI_SWATCH_SIZE, UI_SWATCH_SIZE, swatch_color);
+
+                    // Swatch border
+                    if (is_selected) {
+                        // Yellow border for selected
+                        draw_filled_rect(x + 7, y + 1, UI_SWATCH_SIZE + 2, 1, selected_color);
+                        draw_filled_rect(x + 7, y + 2 + UI_SWATCH_SIZE, UI_SWATCH_SIZE + 2, 1, selected_color);
+                        draw_filled_rect(x + 7, y + 1, 1, UI_SWATCH_SIZE + 2, selected_color);
+                        draw_filled_rect(x + 8 + UI_SWATCH_SIZE, y + 1, 1, UI_SWATCH_SIZE + 2, selected_color);
+                    }
+
+                    // Material name
+                    uint32_t name_color = is_selected ? selected_color : text_color;
+                    draw_text(x + 8 + UI_SWATCH_SIZE + 6, y + 3, std::string(mat.name), name_color);
+
+                    y += UI_ITEM_HEIGHT;
+                }
+            }
+        }
+
+        // Selected material display at bottom
+        y += 5;
+        draw_filled_rect(x - 5, y, UI_PANEL_WIDTH + 10, 25, 0xE0000000);
+
+        // Get selected material info
+        const char* selected_name = find_material_name(input.selected_material);
+        Color sel_color = material_system_.get_material(input.selected_material).base_color;
+
+        // Draw selected material swatch
+        draw_filled_rect(x, y + 5, 16, 16, sel_color.to_rgba32());
+
+        // Draw selected material name
+        draw_text(x + 22, y + 8, std::string(selected_name), selected_color);
+    }
+
+    // Brush Palette UI constants
+    static constexpr int BRUSH_PANEL_X = 5;
+    static constexpr int BRUSH_PANEL_Y = 5;
+    static constexpr int BRUSH_PANEL_WIDTH = 110;
+    static constexpr int BRUSH_BTN_SIZE = 22;
+    static constexpr int BRUSH_BTN_SPACING = 26;
+
+    // Get tool name string
+    const char* get_tool_name(ToolMode mode) const {
+        switch (mode) {
+            case ToolMode::Brush: return "Brush";
+            case ToolMode::Line: return "Line";
+            case ToolMode::Rectangle: return "Rect";
+            case ToolMode::Circle: return "Circle";
+            case ToolMode::Fill: return "Fill";
+            default: return "???";
+        }
+    }
+
+    void render_brush_palette() {
+        const uint32_t bg_color = 0xE0181818;
+        const uint32_t btn_color = 0xE0303030;
+        const uint32_t btn_selected = 0xE0505080;
+        const uint32_t text_color = 0xFFFFFFFF;
+        const uint32_t text_dim = 0xFFAAAAAA;
+        const uint32_t highlight = 0xFFFFFF00;
 
         const auto& input = platform_.get_input_state();
 
-        // Material palette - right side of screen
-        int palette_x = WORLD_WIDTH - 160;
-        int palette_y = 10;
-        int swatch_size = 20;
-        int spacing = 28;
+        int x = BRUSH_PANEL_X;
+        int y = BRUSH_PANEL_Y;
 
-        // Background panel (extended for all materials)
-        draw_filled_rect(palette_x - 5, palette_y - 5, 155, 380, bg_color);
+        // Calculate panel height
+        int panel_height = 230;
+
+        // Draw background
+        draw_filled_rect(x, y, BRUSH_PANEL_WIDTH, panel_height, bg_color);
 
         // Title
-        draw_text(palette_x, palette_y, "MATERIALS", text_color);
-        palette_y += 15;
+        draw_text(x + 5, y + 5, "TOOLS", text_color);
+        y += 20;
 
-        // Page navigation
-        // "< Prev" button
-        if (current_page_ > 0) {
-            draw_text(palette_x, palette_y, "PREV", nav_color);
-        } else {
-            draw_text(palette_x, palette_y, "PREV", dim_color);
-        }
+        // Tool buttons - 2 columns
+        struct ToolButton {
+            ToolMode mode;
+            const char* label;
+            const char* key;
+        };
+        ToolButton tools[] = {
+            {ToolMode::Brush, "D", "D"},
+            {ToolMode::Line, "L", "L"},
+            {ToolMode::Rectangle, "R", "R"},
+            {ToolMode::Circle, "O", "O"},
+            {ToolMode::Fill, "E", "E"},
+        };
 
-        // Page number
-        std::string page_str = std::to_string(current_page_ + 1) + "/" + std::to_string(TOTAL_PAGES);
-        draw_text(palette_x + 45, palette_y, page_str, text_color);
+        int btn_x = x + 5;
+        int btn_y = y;
+        for (int i = 0; i < 5; i++) {
+            bool selected = (input.tool_mode == tools[i].mode);
+            uint32_t btn_bg = selected ? btn_selected : btn_color;
 
-        // "Next >" button
-        if (current_page_ < TOTAL_PAGES - 1) {
-            draw_text(palette_x + 100, palette_y, "NEXT", nav_color);
-        } else {
-            draw_text(palette_x + 100, palette_y, "NEXT", dim_color);
-        }
+            // Draw button
+            draw_filled_rect(btn_x, btn_y, BRUSH_BTN_SIZE, BRUSH_BTN_SIZE, btn_bg);
 
-        palette_y += 25;
-
-        // Materials on current page
-        int start_idx = current_page_ * MATERIALS_PER_PAGE;
-        int end_idx = std::min(start_idx + MATERIALS_PER_PAGE, TOTAL_MATERIALS);
-
-        for (int i = start_idx; i < end_idx; i++) {
-            const MaterialEntry& mat = ALL_MATERIALS[i];
-
-            // Get material color
-            Color mat_color = material_system_.get_material(mat.id).base_color;
-            uint32_t color = mat_color.to_rgba32();
-
-            // Draw swatch
-            draw_filled_rect(palette_x, palette_y, swatch_size, swatch_size, color);
-
-            // Draw border if selected
-            if (input.selected_material == mat.id) {
-                // Top border
-                draw_filled_rect(palette_x - 2, palette_y - 2, swatch_size + 4, 2, selected_border);
-                // Bottom border
-                draw_filled_rect(palette_x - 2, palette_y + swatch_size, swatch_size + 4, 2, selected_border);
-                // Left border
-                draw_filled_rect(palette_x - 2, palette_y - 2, 2, swatch_size + 4, selected_border);
-                // Right border
-                draw_filled_rect(palette_x + swatch_size, palette_y - 2, 2, swatch_size + 4, selected_border);
+            // Draw selection border
+            if (selected) {
+                draw_filled_rect(btn_x - 1, btn_y - 1, BRUSH_BTN_SIZE + 2, 1, highlight);
+                draw_filled_rect(btn_x - 1, btn_y + BRUSH_BTN_SIZE, BRUSH_BTN_SIZE + 2, 1, highlight);
+                draw_filled_rect(btn_x - 1, btn_y - 1, 1, BRUSH_BTN_SIZE + 2, highlight);
+                draw_filled_rect(btn_x + BRUSH_BTN_SIZE, btn_y - 1, 1, BRUSH_BTN_SIZE + 2, highlight);
             }
 
-            // Draw index number (1-based within page)
-            int page_idx = i - start_idx;
-            std::string idx_str;
-            if (page_idx < 10) {
-                idx_str = std::to_string(page_idx);
+            // Draw label
+            draw_text(btn_x + 7, btn_y + 7, tools[i].label, text_color);
+
+            // Move to next position (2 columns)
+            if (i % 2 == 0) {
+                btn_x += BRUSH_BTN_SPACING + 20;
             } else {
-                idx_str = " ";
-            }
-            draw_text(palette_x + swatch_size + 5, palette_y + 2, idx_str, text_color);
-
-            // Draw material name
-            draw_text(palette_x + swatch_size + 18, palette_y + 2, std::string(mat.name), text_color);
-
-            palette_y += spacing;
-        }
-
-        // Display selected material name prominently at bottom
-        palette_y = 355;
-        draw_filled_rect(palette_x - 5, palette_y - 5, 155, 25, 0xE0000000);  // Darker background
-
-        // Find selected material name
-        const char* selected_name = "Unknown";
-        for (int i = 0; i < TOTAL_MATERIALS; i++) {
-            if (ALL_MATERIALS[i].id == input.selected_material) {
-                selected_name = ALL_MATERIALS[i].name;
-                break;
+                btn_x = x + 5;
+                btn_y += BRUSH_BTN_SPACING;
             }
         }
 
-        // Draw "SEL:" label
-        draw_text(palette_x, palette_y, "SEL", text_color);
+        y = btn_y + BRUSH_BTN_SPACING + 5;
 
-        // Draw selected material name in yellow
-        draw_text(palette_x + 32, palette_y, std::string(selected_name), highlight_color);
+        // Current tool name
+        draw_text(x + 5, y, get_tool_name(input.tool_mode), highlight);
+        y += 15;
+
+        // Divider
+        draw_filled_rect(x + 5, y, BRUSH_PANEL_WIDTH - 10, 1, 0xFF404040);
+        y += 8;
+
+        // Brush size (for brush tool)
+        if (input.tool_mode == ToolMode::Brush) {
+            draw_text(x + 5, y, "SIZE", text_dim);
+            y += 12;
+
+            // Size indicator
+            std::string size_str = std::to_string(input.brush_radius);
+            draw_text(x + 5, y, size_str, text_color);
+
+            // Size bar
+            int bar_width = 60;
+            int bar_x = x + 30;
+            draw_filled_rect(bar_x, y + 2, bar_width, 6, btn_color);
+            int fill_width = (input.brush_radius * bar_width) / 20;
+            draw_filled_rect(bar_x, y + 2, fill_width, 6, highlight);
+
+            y += 15;
+
+            // Brush shape
+            draw_text(x + 5, y, "SHAPE", text_dim);
+            y += 12;
+            draw_text(x + 5, y,
+                      (input.brush_shape == BrushShape::Circle) ? "Circle" : "Square",
+                      text_color);
+            y += 15;
+        }
+
+        // Fill mode for shape tools
+        if (input.tool_mode == ToolMode::Rectangle || input.tool_mode == ToolMode::Circle) {
+            draw_text(x + 5, y, "MODE", text_dim);
+            y += 12;
+            draw_text(x + 5, y,
+                      input.filled_shapes ? "Filled" : "Outline",
+                      text_color);
+            draw_text(x + 60, y, "(X)", text_dim);
+            y += 15;
+        }
+
+        // Keyboard hints at bottom
+        y = BRUSH_PANEL_Y + panel_height - 25;
+        draw_filled_rect(x, y - 5, BRUSH_PANEL_WIDTH, 30, 0xE0000000);
+        draw_text(x + 5, y, "[/] Size", text_dim);
+        draw_text(x + 5, y + 10, "B Shape", text_dim);
     }
 
     void render_debug_gui() {
-        const uint32_t bg_color = 0x80000000;  // Semi-transparent black
-        const uint32_t text_color = 0xFFFFFFFF;  // White
-        const uint32_t warning_color = 0xFF0000FF;  // Red
+        const uint32_t bg_color = 0x80000000;
+        const uint32_t text_color = 0xFFFFFFFF;
+        const uint32_t warning_color = 0xFF0000FF;
 
-        // Draw background panel
-        draw_filled_rect(5, 5, 250, 100, bg_color);
+        // Draw background panel (shifted right to not overlap brush palette)
+        int panel_x = BRUSH_PANEL_X + BRUSH_PANEL_WIDTH + 10;
+        draw_filled_rect(panel_x, 5, 150, 55, bg_color);
 
         // Draw FPS
         int y = 10;
-        draw_text(10, y, "FPS: " + std::to_string(static_cast<int>(current_fps_)),
+        draw_text(panel_x + 5, y, "FPS: " + std::to_string(static_cast<int>(current_fps_)),
                   current_fps_ < 50.0f ? warning_color : text_color);
 
         // Draw active chunks
         y += 15;
-        draw_text(10, y, "Chunks: " + std::to_string(simulation_.get_active_chunks()), text_color);
+        draw_text(panel_x + 5, y, "Chunks: " + std::to_string(simulation_.get_active_chunks()), text_color);
 
         // Draw active cells
         y += 15;
-        draw_text(10, y, "Cells: " + std::to_string(active_cells_display_), text_color);
-
-        // Controls help
-        y += 20;
-        draw_text(10, y, "Tab: Toggle GUI", text_color);
-        y += 10;
-        draw_text(10, y, "C: Clear World", text_color);
-
-        // Brush info
-        y += 15;
-        const auto& input = platform_.get_input_state();
-        std::string brush_info = "Brush: ";
-        brush_info += std::to_string(input.brush_radius);
-        brush_info += " ";
-        brush_info += (input.brush_shape == BrushShape::Circle) ? "Circle" : "Square";
-        draw_text(10, y, brush_info, text_color);
-        y += 10;
-        draw_text(10, y, "[/]: Size  B: Shape", text_color);
+        draw_text(panel_x + 5, y, "Cells: " + std::to_string(active_cells_display_), text_color);
     }
 
-    void render_brush_preview() {
-        const auto& input = platform_.get_input_state();
-        int32_t x = input.mouse_x;
-        int32_t y = input.mouse_y;
-        int32_t brush_radius = input.brush_radius;
-        BrushShape brush_shape = input.brush_shape;
+    // Draw a line preview in the pixel buffer (for visualization only)
+    void draw_line_preview(int32_t x0, int32_t y0, int32_t x1, int32_t y1, uint32_t color) {
+        int32_t thickness = 3;
 
-        // Don't show preview if in UI area
-        if (x >= WORLD_WIDTH - 165 && y <= 370) {
+        int32_t dx = std::abs(x1 - x0);
+        int32_t dy = std::abs(y1 - y0);
+        int32_t sx = (x0 < x1) ? 1 : -1;
+        int32_t sy = (y0 < y1) ? 1 : -1;
+        int32_t err = dx - dy;
+
+        while (true) {
+            // Draw a thick point at current position
+            for (int32_t ty = -thickness/2; ty <= thickness/2; ty++) {
+                for (int32_t tx = -thickness/2; tx <= thickness/2; tx++) {
+                    int32_t px = x0 + tx;
+                    int32_t py = y0 + ty;
+                    if (px >= 0 && px < WORLD_WIDTH && py >= 0 && py < WORLD_HEIGHT) {
+                        pixel_buffer_[py * WORLD_WIDTH + px] = color;
+                    }
+                }
+            }
+
+            if (x0 == x1 && y0 == y1) break;
+
+            int32_t e2 = 2 * err;
+            if (e2 > -dy) {
+                err -= dy;
+                x0 += sx;
+            }
+            if (e2 < dx) {
+                err += dx;
+                y0 += sy;
+            }
+        }
+    }
+
+    // Draw rectangle preview
+    void draw_rect_preview(int32_t x0, int32_t y0, int32_t x1, int32_t y1, uint32_t color, bool filled) {
+        int32_t left = std::min(x0, x1);
+        int32_t right = std::max(x0, x1);
+        int32_t top = std::min(y0, y1);
+        int32_t bottom = std::max(y0, y1);
+
+        if (filled) {
+            for (int32_t py = top; py <= bottom; py++) {
+                for (int32_t px = left; px <= right; px++) {
+                    if (px >= 0 && px < WORLD_WIDTH && py >= 0 && py < WORLD_HEIGHT) {
+                        pixel_buffer_[py * WORLD_WIDTH + px] = color;
+                    }
+                }
+            }
+        } else {
+            // Outline only
+            for (int32_t px = left; px <= right; px++) {
+                if (px >= 0 && px < WORLD_WIDTH) {
+                    if (top >= 0 && top < WORLD_HEIGHT)
+                        pixel_buffer_[top * WORLD_WIDTH + px] = color;
+                    if (bottom >= 0 && bottom < WORLD_HEIGHT)
+                        pixel_buffer_[bottom * WORLD_WIDTH + px] = color;
+                }
+            }
+            for (int32_t py = top; py <= bottom; py++) {
+                if (py >= 0 && py < WORLD_HEIGHT) {
+                    if (left >= 0 && left < WORLD_WIDTH)
+                        pixel_buffer_[py * WORLD_WIDTH + left] = color;
+                    if (right >= 0 && right < WORLD_WIDTH)
+                        pixel_buffer_[py * WORLD_WIDTH + right] = color;
+                }
+            }
+        }
+    }
+
+    // Draw ellipse preview
+    void draw_ellipse_preview(int32_t x0, int32_t y0, int32_t x1, int32_t y1, uint32_t color, bool filled) {
+        int32_t cx = (x0 + x1) / 2;
+        int32_t cy = (y0 + y1) / 2;
+        int32_t rx = std::abs(x1 - x0) / 2;
+        int32_t ry = std::abs(y1 - y0) / 2;
+
+        if (rx == 0 || ry == 0) {
+            draw_line_preview(x0, y0, x1, y1, color);
             return;
         }
 
-        // Preview color - semi-transparent white
-        uint32_t preview_color = 0x80FFFFFF;
+        if (filled) {
+            for (int32_t dy = -ry; dy <= ry; dy++) {
+                float yf = static_cast<float>(dy) / static_cast<float>(ry);
+                float xf = std::sqrt(1.0f - yf * yf);
+                int32_t xExtent = static_cast<int32_t>(xf * rx);
+
+                for (int32_t dx = -xExtent; dx <= xExtent; dx++) {
+                    int32_t px = cx + dx;
+                    int32_t py = cy + dy;
+                    if (px >= 0 && px < WORLD_WIDTH && py >= 0 && py < WORLD_HEIGHT) {
+                        pixel_buffer_[py * WORLD_WIDTH + px] = color;
+                    }
+                }
+            }
+        } else {
+            int steps = std::max(rx, ry) * 4;
+            for (int i = 0; i < steps; i++) {
+                float angle = 2.0f * 3.14159f * i / steps;
+                int32_t px = cx + static_cast<int32_t>(rx * std::cos(angle));
+                int32_t py = cy + static_cast<int32_t>(ry * std::sin(angle));
+                if (px >= 0 && px < WORLD_WIDTH && py >= 0 && py < WORLD_HEIGHT) {
+                    pixel_buffer_[py * WORLD_WIDTH + px] = color;
+                }
+            }
+        }
+    }
+
+    void render_tool_preview() {
+        const auto& input = platform_.get_input_state();
+        int32_t x = input.mouse_x;
+        int32_t y = input.mouse_y;
+
+        // Don't show preview if in right UI area
+        int ui_height = get_ui_total_height();
+        if (x >= UI_PANEL_X - 5 && y <= ui_height + 10) {
+            return;
+        }
+        // Don't show preview if in left brush palette area
+        if (x <= BRUSH_PANEL_X + BRUSH_PANEL_WIDTH + 5 && y <= 240) {
+            return;
+        }
+
+        uint32_t preview_color = 0x80FFFFFF;  // Semi-transparent white
+        uint32_t cursor_color = input.shape_drawing ? 0xFFFF0000 : 0xFF00FFFF;
+
+        // ===== SHAPE TOOLS PREVIEW =====
+        if (input.tool_mode == ToolMode::Line ||
+            input.tool_mode == ToolMode::Rectangle ||
+            input.tool_mode == ToolMode::Circle) {
+
+            if (input.shape_drawing) {
+                // Draw preview shape from start to current mouse position
+                if (input.tool_mode == ToolMode::Line) {
+                    draw_line_preview(input.shape_start_x, input.shape_start_y, x, y, preview_color);
+                } else if (input.tool_mode == ToolMode::Rectangle) {
+                    draw_rect_preview(input.shape_start_x, input.shape_start_y, x, y,
+                                      preview_color, input.filled_shapes);
+                } else if (input.tool_mode == ToolMode::Circle) {
+                    draw_ellipse_preview(input.shape_start_x, input.shape_start_y, x, y,
+                                         preview_color, input.filled_shapes);
+                }
+
+                // Draw start point marker (green)
+                for (int32_t dy = -2; dy <= 2; dy++) {
+                    for (int32_t dx = -2; dx <= 2; dx++) {
+                        int32_t px = input.shape_start_x + dx;
+                        int32_t py = input.shape_start_y + dy;
+                        if (px >= 0 && px < WORLD_WIDTH && py >= 0 && py < WORLD_HEIGHT) {
+                            pixel_buffer_[py * WORLD_WIDTH + px] = 0xFF00FF00;
+                        }
+                    }
+                }
+            }
+
+            // Draw crosshair at cursor
+            for (int32_t i = -5; i <= 5; i++) {
+                if (x + i >= 0 && x + i < WORLD_WIDTH && y >= 0 && y < WORLD_HEIGHT) {
+                    pixel_buffer_[y * WORLD_WIDTH + (x + i)] = cursor_color;
+                }
+                if (x >= 0 && x < WORLD_WIDTH && y + i >= 0 && y + i < WORLD_HEIGHT) {
+                    pixel_buffer_[(y + i) * WORLD_WIDTH + x] = cursor_color;
+                }
+            }
+            return;
+        }
+
+        // ===== FILL TOOL PREVIEW =====
+        if (input.tool_mode == ToolMode::Fill) {
+            // Draw a bucket icon / target at cursor
+            uint32_t fill_color = 0xFF00FFFF;
+            for (int32_t i = -8; i <= 8; i++) {
+                if (x + i >= 0 && x + i < WORLD_WIDTH && y >= 0 && y < WORLD_HEIGHT) {
+                    pixel_buffer_[y * WORLD_WIDTH + (x + i)] = fill_color;
+                }
+                if (x >= 0 && x < WORLD_WIDTH && y + i >= 0 && y + i < WORLD_HEIGHT) {
+                    pixel_buffer_[(y + i) * WORLD_WIDTH + x] = fill_color;
+                }
+            }
+            // Draw a circle around it
+            for (int angle = 0; angle < 360; angle += 15) {
+                float rad = angle * 3.14159f / 180.0f;
+                int32_t px = x + static_cast<int32_t>(6 * std::cos(rad));
+                int32_t py = y + static_cast<int32_t>(6 * std::sin(rad));
+                if (px >= 0 && px < WORLD_WIDTH && py >= 0 && py < WORLD_HEIGHT) {
+                    pixel_buffer_[py * WORLD_WIDTH + px] = fill_color;
+                }
+            }
+            return;
+        }
+
+        // ===== BRUSH TOOL PREVIEW =====
+        int32_t brush_radius = input.brush_radius;
+        BrushShape brush_shape = input.brush_shape;
 
         // Draw brush outline
         for (int32_t dy = -brush_radius; dy <= brush_radius; ++dy) {
@@ -747,16 +1358,12 @@ private:
                 bool is_edge = false;
 
                 if (brush_shape == BrushShape::Circle) {
-                    // Circular brush
                     int dist_sq = dx * dx + dy * dy;
                     int radius_sq = brush_radius * brush_radius;
-
-                    // Draw pixel if on the edge (within 1 pixel of radius)
                     if (dist_sq <= radius_sq && dist_sq > (brush_radius - 1) * (brush_radius - 1)) {
                         is_edge = true;
                     }
                 } else {
-                    // Square brush - draw outline only
                     if (std::abs(dx) == brush_radius || std::abs(dy) == brush_radius) {
                         is_edge = true;
                     }
@@ -765,7 +1372,6 @@ private:
                 if (is_edge) {
                     int32_t px = x + dx;
                     int32_t py = y + dy;
-
                     if (px >= 0 && px < WORLD_WIDTH && py >= 0 && py < WORLD_HEIGHT) {
                         pixel_buffer_[py * WORLD_WIDTH + px] = preview_color;
                     }
@@ -775,7 +1381,7 @@ private:
 
         // Draw center crosshair
         if (x >= 0 && x < WORLD_WIDTH && y >= 0 && y < WORLD_HEIGHT) {
-            pixel_buffer_[y * WORLD_WIDTH + x] = 0xFFFF0000;  // Red center
+            pixel_buffer_[y * WORLD_WIDTH + x] = 0xFFFF0000;
         }
     }
 
@@ -898,11 +1504,12 @@ private:
         // Enhance people rendering (make them visible with 2x2 size and outline)
         render_enhanced_people();
 
-        // Always show material palette
-        render_material_palette();
+        // Always show UI panels
+        render_material_palette();  // Right side - materials
+        render_brush_palette();     // Left side - tools
 
-        // Draw brush preview at cursor
-        render_brush_preview();
+        // Draw tool preview at cursor
+        render_tool_preview();
 
         // Render debug GUI overlay if enabled
         if (platform_.get_input_state().show_debug_gui) {

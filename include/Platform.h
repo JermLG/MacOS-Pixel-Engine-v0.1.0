@@ -11,6 +11,15 @@ enum class BrushShape : uint8_t {
     Square = 1
 };
 
+// Tool mode enum
+enum class ToolMode : uint8_t {
+    Brush = 0,      // Normal brush for placing materials
+    Line = 1,       // Line tool for drawing platforms
+    Rectangle = 2,  // Rectangle tool (click and drag)
+    Circle = 3,     // Circle/ellipse tool (click and drag)
+    Fill = 4        // Flood fill tool
+};
+
 // Input state
 struct InputState {
     bool mouse_left_down;
@@ -28,6 +37,17 @@ struct InputState {
     // Brush settings
     int32_t brush_radius;
     BrushShape brush_shape;
+
+    // Tool mode
+    ToolMode tool_mode;
+
+    // Shape tool state (for line, rectangle, circle tools)
+    bool shape_drawing;     // Currently drawing a shape
+    int32_t shape_start_x;  // Start point of shape
+    int32_t shape_start_y;
+
+    // Tool options
+    bool filled_shapes;     // Draw filled shapes vs outlines only
 
     // Clear world flag (set by keyboard, cleared after processing)
     bool clear_world;
@@ -57,6 +77,11 @@ struct InputState {
         , selected_material(MaterialID::Sand)
         , brush_radius(5)
         , brush_shape(BrushShape::Circle)
+        , tool_mode(ToolMode::Brush)
+        , shape_drawing(false)
+        , shape_start_x(0)
+        , shape_start_y(0)
+        , filled_shapes(true)
         , clear_world(false)
         , show_debug_gui(true)
         , toggle_post_processing(false)
