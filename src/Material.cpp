@@ -792,8 +792,211 @@ Color MaterialSystem::get_material_color(MaterialID id) {
 
 namespace Materials {
 
+// ============================================================================
+// MATERIAL COMBINATION SYSTEM
+// ============================================================================
+// When certain materials touch, they can combine to create new materials.
+// This creates interesting emergent gameplay and chemistry-like interactions.
+
+struct MaterialCombination {
+    MaterialID mat_a;
+    MaterialID mat_b;
+    MaterialID result_a;  // What mat_a becomes (Empty to consume)
+    MaterialID result_b;  // What mat_b becomes (Empty to consume)
+    int chance;           // 1 in N chance per frame (higher = rarer)
+};
+
+// Combination recipes - order doesn't matter for matching
+static const MaterialCombination COMBINATIONS[] = {
+    // === POWDER + LIQUID COMBINATIONS ===
+    // Sand + Water = Mud (wet sand)
+    {MaterialID::Sand, MaterialID::Water, MaterialID::Mud, MaterialID::Empty, 8},
+    // Dirt + Water = Mud
+    {MaterialID::Dirt, MaterialID::Water, MaterialID::Mud, MaterialID::Empty, 4},
+    // Salt + Water = Water (dissolves, salt disappears)
+    {MaterialID::Salt, MaterialID::Water, MaterialID::Empty, MaterialID::Water, 16},
+    // Sand + Lava = Glass
+    {MaterialID::Sand, MaterialID::Lava, MaterialID::Glass, MaterialID::Stone, 4},
+    // Glass_Powder + Lava = Glass
+    {MaterialID::Glass_Powder, MaterialID::Lava, MaterialID::Glass, MaterialID::Stone, 2},
+
+    // === POWDER + POWDER COMBINATIONS ===
+    // Coal + Gunpowder = More Gunpowder (amplifies)
+    {MaterialID::Coal, MaterialID::Gunpowder, MaterialID::Gunpowder, MaterialID::Gunpowder, 32},
+    // Sawdust + Coal = Coal (compresses)
+    {MaterialID::Sawdust, MaterialID::Coal, MaterialID::Coal, MaterialID::Empty, 64},
+    // Ash + Water = Mud (muddy ash)
+    {MaterialID::Ash, MaterialID::Water, MaterialID::Mud, MaterialID::Empty, 8},
+    // Snow + Snow = Ice (compacting) - rare
+    {MaterialID::Snow, MaterialID::Snow, MaterialID::Ice, MaterialID::Empty, 128},
+
+    // === LIQUID + LIQUID COMBINATIONS ===
+    // Water + Lava = Steam + Obsidian
+    {MaterialID::Water, MaterialID::Lava, MaterialID::Steam, MaterialID::Obsidian, 2},
+    // Oil + Water = stays separate (oil floats - handled by density)
+    // Acid + Water = diluted (acid weakens)
+    {MaterialID::Acid, MaterialID::Water, MaterialID::Poison, MaterialID::Empty, 16},
+    // Blood + Water = diluted blood (becomes water)
+    {MaterialID::Blood, MaterialID::Water, MaterialID::Water, MaterialID::Empty, 32},
+    // Honey + Water = diluted (becomes slime)
+    {MaterialID::Honey, MaterialID::Water, MaterialID::Slime, MaterialID::Empty, 16},
+    // Milk + Acid = curdled (becomes slime)
+    {MaterialID::Milk, MaterialID::Acid, MaterialID::Slime, MaterialID::Empty, 8},
+    // Alcohol + Fire = more fire (spreads)
+    {MaterialID::Alcohol, MaterialID::Fire, MaterialID::Fire, MaterialID::Fire, 2},
+    // Petrol + Fire = explosion/fire
+    {MaterialID::Petrol, MaterialID::Fire, MaterialID::Fire, MaterialID::Fire, 1},
+    // Mercury + Acid = Toxic Gas
+    {MaterialID::Mercury, MaterialID::Acid, MaterialID::Toxic_Gas, MaterialID::Empty, 8},
+
+    // === ORGANIC COMBINATIONS ===
+    // Seed + Water = Flower (growth)
+    {MaterialID::Seed, MaterialID::Water, MaterialID::Flower, MaterialID::Empty, 64},
+    // Seed + Dirt = Grass
+    {MaterialID::Seed, MaterialID::Dirt, MaterialID::Grass, MaterialID::Empty, 32},
+    // Leaf + Water = Algae
+    {MaterialID::Leaf, MaterialID::Water, MaterialID::Algae, MaterialID::Empty, 64},
+    // Fungus + Flesh = more Fungus (infection)
+    {MaterialID::Fungus, MaterialID::Flesh, MaterialID::Fungus, MaterialID::Fungus, 16},
+    // Moss + Water = Algae
+    {MaterialID::Moss, MaterialID::Water, MaterialID::Algae, MaterialID::Empty, 64},
+
+    // === METAL COMBINATIONS ===
+    // Copper + Acid = Rust + Toxic Gas
+    {MaterialID::Copper, MaterialID::Acid, MaterialID::Rust, MaterialID::Toxic_Gas, 32},
+    // Metal + Acid = Rust
+    {MaterialID::Metal, MaterialID::Acid, MaterialID::Rust, MaterialID::Empty, 64},
+    // Metal + Water = Rust (slow oxidation)
+    {MaterialID::Metal, MaterialID::Water, MaterialID::Rust, MaterialID::Water, 256},
+
+    // === FANTASY/MAGIC COMBINATIONS ===
+    // Stardust + Water = Magic
+    {MaterialID::Stardust, MaterialID::Water, MaterialID::Magic, MaterialID::Empty, 8},
+    // Fairy_Dust + Fire = Magic
+    {MaterialID::Fairy_Dust, MaterialID::Fire, MaterialID::Magic, MaterialID::Empty, 4},
+    // Void_Dust + any light = consumes it
+    {MaterialID::Void_Dust, MaterialID::Fire, MaterialID::Void_Dust, MaterialID::Empty, 2},
+    {MaterialID::Void_Dust, MaterialID::Spark, MaterialID::Void_Dust, MaterialID::Empty, 2},
+    // Crystal + Magic = Diamond
+    {MaterialID::Crystal, MaterialID::Magic, MaterialID::Diamond, MaterialID::Empty, 32},
+    // Ember + Water = Steam + Ash
+    {MaterialID::Ember, MaterialID::Water, MaterialID::Steam, MaterialID::Ash, 4},
+    // Frost + Water = Ice
+    {MaterialID::Frost, MaterialID::Water, MaterialID::Ice, MaterialID::Empty, 4},
+    // Frost + Fire = Steam (cancels out)
+    {MaterialID::Frost, MaterialID::Fire, MaterialID::Steam, MaterialID::Empty, 2},
+    // Dragon_Fire + Water = Steam (lots of it)
+    {MaterialID::Dragon_Fire, MaterialID::Water, MaterialID::Steam, MaterialID::Steam, 1},
+    // Ectoplasm + Flesh = more Ectoplasm (ghostly infection)
+    {MaterialID::Ectoplasm, MaterialID::Flesh, MaterialID::Ectoplasm, MaterialID::Ectoplasm, 16},
+    // Magic + Stone = Crystal
+    {MaterialID::Magic, MaterialID::Stone, MaterialID::Crystal, MaterialID::Empty, 32},
+    // Magic + Sand = Gold (transmutation!)
+    {MaterialID::Magic, MaterialID::Sand, MaterialID::Gold, MaterialID::Empty, 64},
+    // Magic + Coal = Diamond
+    {MaterialID::Magic, MaterialID::Coal, MaterialID::Diamond, MaterialID::Empty, 48},
+
+    // === EXPLOSIVE COMBINATIONS ===
+    // Gunpowder + Spark = Fire (ignition)
+    {MaterialID::Gunpowder, MaterialID::Spark, MaterialID::Fire, MaterialID::Fire, 1},
+    // Hydrogen + Spark = Fire (explosion)
+    {MaterialID::Hydrogen, MaterialID::Spark, MaterialID::Fire, MaterialID::Fire, 1},
+    // Methane + Spark = Fire
+    {MaterialID::Methane, MaterialID::Spark, MaterialID::Fire, MaterialID::Fire, 1},
+
+    // === SPECIAL COMBINATIONS ===
+    // Clone + any material handled separately in update_clone
+    // Antimatter combinations handled in update_antimatter
+    // Plasma destroys most things - handled in update_plasma
+};
+
+static const int NUM_COMBINATIONS = sizeof(COMBINATIONS) / sizeof(COMBINATIONS[0]);
+
+// Check if a material at position (x, y) can combine with any neighbors
+// Returns true if a combination occurred
+static bool try_material_combination(World& world, int32_t x, int32_t y) {
+    MaterialID my_mat = world.get_material(x, y);
+    if (my_mat == MaterialID::Empty) return false;
+
+    // Check all 8 neighbors
+    for (int dy = -1; dy <= 1; dy++) {
+        for (int dx = -1; dx <= 1; dx++) {
+            if (dx == 0 && dy == 0) continue;
+
+            int nx = x + dx, ny = y + dy;
+            if (!world.in_bounds(nx, ny)) continue;
+
+            MaterialID neighbor_mat = world.get_material(nx, ny);
+            if (neighbor_mat == MaterialID::Empty) continue;
+
+            // Check all combination recipes
+            for (int i = 0; i < NUM_COMBINATIONS; i++) {
+                const MaterialCombination& combo = COMBINATIONS[i];
+
+                bool match_forward = (my_mat == combo.mat_a && neighbor_mat == combo.mat_b);
+                bool match_reverse = (my_mat == combo.mat_b && neighbor_mat == combo.mat_a);
+
+                if (match_forward || match_reverse) {
+                    // Random chance check
+                    if ((world.random_int() % combo.chance) == 0) {
+                        if (match_forward) {
+                            // Apply combination
+                            world.set_material(x, y, combo.result_a);
+                            world.set_material(nx, ny, combo.result_b);
+
+                            // Initialize new materials if needed
+                            if (combo.result_a == MaterialID::Fire || combo.result_a == MaterialID::Steam ||
+                                combo.result_a == MaterialID::Smoke || combo.result_a == MaterialID::Toxic_Gas) {
+                                world.get_cell(x, y).set_lifetime(30);
+                            }
+                            if (combo.result_b == MaterialID::Fire || combo.result_b == MaterialID::Steam ||
+                                combo.result_b == MaterialID::Smoke || combo.result_b == MaterialID::Toxic_Gas) {
+                                world.get_cell(nx, ny).set_lifetime(30);
+                            }
+                            if (combo.result_a == MaterialID::Magic) {
+                                world.get_cell(x, y).set_lifetime(40);
+                            }
+                            if (combo.result_b == MaterialID::Magic) {
+                                world.get_cell(nx, ny).set_lifetime(40);
+                            }
+                        } else {
+                            // Reverse match - swap results
+                            world.set_material(x, y, combo.result_b);
+                            world.set_material(nx, ny, combo.result_a);
+
+                            if (combo.result_b == MaterialID::Fire || combo.result_b == MaterialID::Steam ||
+                                combo.result_b == MaterialID::Smoke || combo.result_b == MaterialID::Toxic_Gas) {
+                                world.get_cell(x, y).set_lifetime(30);
+                            }
+                            if (combo.result_a == MaterialID::Fire || combo.result_a == MaterialID::Steam ||
+                                combo.result_a == MaterialID::Smoke || combo.result_a == MaterialID::Toxic_Gas) {
+                                world.get_cell(nx, ny).set_lifetime(30);
+                            }
+                            if (combo.result_b == MaterialID::Magic) {
+                                world.get_cell(x, y).set_lifetime(40);
+                            }
+                            if (combo.result_a == MaterialID::Magic) {
+                                world.get_cell(nx, ny).set_lifetime(40);
+                            }
+                        }
+                        return true;
+                    }
+                }
+            }
+        }
+    }
+    return false;
+}
+
+// ============================================================================
+// END MATERIAL COMBINATION SYSTEM
+// ============================================================================
+
 // Sand: Falls down, slides diagonally if blocked
 void update_sand(World& world, int32_t x, int32_t y) {
+    // Check for material combinations first
+    if (try_material_combination(world, x, y)) return;
+
     Cell& cell = world.get_cell(x, y);
 
     // Apply gravity (accelerate downward)
@@ -841,6 +1044,9 @@ void update_sand(World& world, int32_t x, int32_t y) {
 
 // Water: Fast flowing liquid with path tracing and lateral flow
 void update_water(World& world, int32_t x, int32_t y) {
+    // Check for material combinations first
+    if (try_material_combination(world, x, y)) return;
+
     Cell& cell = world.get_cell(x, y);
 
     // Apply gravity
@@ -2152,6 +2358,8 @@ static void generic_slow_liquid_update(World& world, int32_t x, int32_t y, int s
 // ============================================================================
 
 void update_dirt(World& world, int32_t x, int32_t y) {
+    // Check for material combinations (e.g., dirt + water = mud)
+    if (try_material_combination(world, x, y)) return;
     generic_powder_update(world, x, y, 2, 12);
 }
 
@@ -2160,6 +2368,8 @@ void update_gravel(World& world, int32_t x, int32_t y) {
 }
 
 void update_snow(World& world, int32_t x, int32_t y) {
+    // Check for combinations (snow + snow = ice)
+    if (try_material_combination(world, x, y)) return;
     // Snow melts near fire/lava
     for (int dy = -1; dy <= 1; dy++) {
         for (int dx = -1; dx <= 1; dx++) {
@@ -2210,6 +2420,8 @@ void update_gunpowder(World& world, int32_t x, int32_t y) {
 }
 
 void update_salt(World& world, int32_t x, int32_t y) {
+    // Check for combinations (salt dissolves in water)
+    if (try_material_combination(world, x, y)) return;
     // Salt dissolves in water
     for (int dy = -1; dy <= 1; dy++) {
         for (int dx = -1; dx <= 1; dx++) {
@@ -2228,6 +2440,9 @@ void update_salt(World& world, int32_t x, int32_t y) {
 }
 
 void update_coal(World& world, int32_t x, int32_t y) {
+    // Check for combinations (coal + magic = diamond)
+    if (try_material_combination(world, x, y)) return;
+
     Cell& cell = world.get_cell(x, y);
 
     // Coal burns like wood when ignited
@@ -2279,6 +2494,8 @@ void update_rust(World& world, int32_t x, int32_t y) {
 }
 
 void update_sawdust(World& world, int32_t x, int32_t y) {
+    // Check for combinations (sawdust + coal = coal)
+    if (try_material_combination(world, x, y)) return;
     // Sawdust is very flammable
     for (int dy = -1; dy <= 1; dy++) {
         for (int dx = -1; dx <= 1; dx++) {
@@ -2319,6 +2536,8 @@ void update_glass_powder(World& world, int32_t x, int32_t y) {
 // ============================================================================
 
 void update_honey(World& world, int32_t x, int32_t y) {
+    // Check for combinations (honey + water = slime)
+    if (try_material_combination(world, x, y)) return;
     generic_slow_liquid_update(world, x, y, 3);  // Very slow
 }
 
@@ -2343,6 +2562,8 @@ void update_mud(World& world, int32_t x, int32_t y) {
 }
 
 void update_blood(World& world, int32_t x, int32_t y) {
+    // Check for combinations (blood + water = diluted)
+    if (try_material_combination(world, x, y)) return;
     // Blood behaves like water but slower
     generic_slow_liquid_update(world, x, y, 0);
 }
@@ -2371,10 +2592,14 @@ void update_slime(World& world, int32_t x, int32_t y) {
 }
 
 void update_milk(World& world, int32_t x, int32_t y) {
+    // Check for combinations (milk + acid = slime)
+    if (try_material_combination(world, x, y)) return;
     update_water(world, x, y);  // Flows like water
 }
 
 void update_alcohol(World& world, int32_t x, int32_t y) {
+    // Check for combinations (alcohol + fire = more fire)
+    if (try_material_combination(world, x, y)) return;
     // Alcohol is flammable
     for (int dy = -1; dy <= 1; dy++) {
         for (int dx = -1; dx <= 1; dx++) {
@@ -2393,6 +2618,8 @@ void update_alcohol(World& world, int32_t x, int32_t y) {
 }
 
 void update_mercury(World& world, int32_t x, int32_t y) {
+    // Check for combinations (mercury + acid = toxic gas)
+    if (try_material_combination(world, x, y)) return;
     // Mercury is very dense - sinks through most things
     // Try to fall faster
     Cell& cell = world.get_cell(x, y);
@@ -2445,6 +2672,8 @@ void update_mercury(World& world, int32_t x, int32_t y) {
 }
 
 void update_petrol(World& world, int32_t x, int32_t y) {
+    // Check for combinations (petrol + fire = big fire)
+    if (try_material_combination(world, x, y)) return;
     // Petrol is very flammable, like oil but more reactive
     for (int dy = -1; dy <= 1; dy++) {
         for (int dx = -1; dx <= 1; dx++) {
@@ -2880,6 +3109,8 @@ void update_fungus(World& world, int32_t x, int32_t y) {
 }
 
 void update_seed(World& world, int32_t x, int32_t y) {
+    // Check for combinations (seed + water = flower, seed + dirt = grass)
+    if (try_material_combination(world, x, y)) return;
     // Seeds fall and can grow into plants
     if (world.in_bounds(x, y + 1)) {
         MaterialID below = world.get_material(x, y + 1);
@@ -3328,6 +3559,9 @@ void update_portal_out(World& world, int32_t x, int32_t y) {
 // ============================================================================
 
 void update_magic(World& world, int32_t x, int32_t y) {
+    // Check for combinations (magic + sand = gold, magic + coal = diamond, etc.)
+    if (try_material_combination(world, x, y)) return;
+
     Cell& cell = world.get_cell(x, y);
     if (cell.get_lifetime() == 0) {
         cell.set_lifetime(40);
@@ -3360,6 +3594,8 @@ void update_magic(World& world, int32_t x, int32_t y) {
 }
 
 void update_crystal(World& world, int32_t x, int32_t y) {
+    // Check for combinations (crystal + magic = diamond)
+    if (try_material_combination(world, x, y)) return;
     // Crystal grows slowly
     if ((world.random_int() & 511) == 0) {
         uint32_t dir = world.random_int() & 3;
@@ -3422,6 +3658,8 @@ void update_antimatter(World& world, int32_t x, int32_t y) {
 }
 
 void update_fairy_dust(World& world, int32_t x, int32_t y) {
+    // Check for combinations (fairy_dust + fire = magic)
+    if (try_material_combination(world, x, y)) return;
     // Fairy dust floats around and heals people
     for (int dy = -1; dy <= 1; dy++) {
         for (int dx = -1; dx <= 1; dx++) {
@@ -3493,6 +3731,9 @@ void update_dragon_fire(World& world, int32_t x, int32_t y) {
 }
 
 void update_frost(World& world, int32_t x, int32_t y) {
+    // Check for combinations (frost + water = ice, frost + fire = steam)
+    if (try_material_combination(world, x, y)) return;
+
     Cell& cell = world.get_cell(x, y);
     if (cell.get_lifetime() == 0) {
         cell.set_lifetime(40);
@@ -3554,6 +3795,8 @@ void update_ember(World& world, int32_t x, int32_t y) {
 }
 
 void update_stardust(World& world, int32_t x, int32_t y) {
+    // Check for combinations (stardust + water = magic)
+    if (try_material_combination(world, x, y)) return;
     // Stardust floats gently and sparkles
     uint32_t rand = world.random_int();
     int dx = (rand & 3) - 1;
@@ -3566,6 +3809,8 @@ void update_stardust(World& world, int32_t x, int32_t y) {
 }
 
 void update_void_dust(World& world, int32_t x, int32_t y) {
+    // Check for combinations (void_dust + fire/spark = consumes it)
+    if (try_material_combination(world, x, y)) return;
     // Void dust slowly erases things it touches
     for (int dy = -1; dy <= 1; dy++) {
         for (int dx = -1; dx <= 1; dx++) {
