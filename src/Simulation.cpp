@@ -433,6 +433,9 @@ void Simulation::update_cell(int32_t x, int32_t y, MaterialID material) {
         case MaterialID::Void_Dust:
             Materials::update_void_dust(world_, x, y);
             break;
+        case MaterialID::Life:
+            Materials::update_life(world_, x, y);
+            break;
 
         default:
             break;

@@ -128,10 +128,11 @@ void World::swap_cells(int32_t x1, int32_t y1, int32_t x2, int32_t y2) {
     Cell& cell1 = get_cell(x1, y1);
     Cell& cell2 = get_cell(x2, y2);
 
-    // Swap material IDs
-    MaterialID temp = cell1.material_id;
-    cell1.material_id = cell2.material_id;
-    cell2.material_id = temp;
+    // Swap entire cell contents (material_id, flags, velocity_y)
+    // This preserves all per-cell state like health, lifetime, direction
+    Cell temp = cell1;
+    cell1 = cell2;
+    cell2 = temp;
 }
 
 Chunk* World::get_chunk(int32_t chunk_x, int32_t chunk_y) {

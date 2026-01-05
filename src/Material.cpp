@@ -1,8 +1,63 @@
 #include "Material.h"
 #include "World.h"
 #include <random>
+#include <cmath>
 
 namespace PixelEngine {
+
+// ============================================================================
+// PERSON AI SYSTEM - Village Building & Lifelike Behavior
+// ============================================================================
+
+// AI Goals/States for people
+enum class PersonGoal : uint8_t {
+    Idle = 0,           // Just wandering around
+    Exploring = 1,      // Looking for good building spots
+    GatheringMaterial = 2, // Finding/moving toward building materials
+    Building = 3,       // Actively constructing
+    Socializing = 4,    // Following/interacting with others
+    Fleeing = 5,        // Running from danger
+    Resting = 6         // Taking a break (regenerating)
+};
+
+// Building types
+enum class BuildingType : uint8_t {
+    None = 0,
+    SmallHut = 1,       // 5x4 simple shelter
+    House = 2,          // 8x6 proper house with roof
+    Tower = 3,          // 4x10 tall structure
+    Wall = 4,           // Defensive wall segment
+    Platform = 5        // Simple floor/bridge
+};
+
+// Village tracking - global state for coordinated building
+struct VillageData {
+    static constexpr int MAX_BUILDINGS = 20;
+    int32_t building_centers_x[MAX_BUILDINGS];
+    int32_t building_centers_y[MAX_BUILDINGS];
+    BuildingType building_types[MAX_BUILDINGS];
+    int building_count;
+    int32_t village_center_x;
+    int32_t village_center_y;
+    bool initialized;
+
+    VillageData() : building_count(0), village_center_x(-1), village_center_y(-1), initialized(false) {
+        for (int i = 0; i < MAX_BUILDINGS; i++) {
+            building_centers_x[i] = -1;
+            building_centers_y[i] = -1;
+            building_types[i] = BuildingType::None;
+        }
+    }
+};
+
+// Global village data (shared across all people)
+static VillageData g_village;
+
+// Helper: Simple deterministic random from seed
+static uint32_t person_rand(uint32_t& seed) {
+    seed = seed * 1664525u + 1013904223u;
+    return seed;
+}
 
 // Get color with random variation
 Color MaterialDef::get_color(std::mt19937& rng) const {
@@ -778,6 +833,15 @@ void MaterialSystem::initialize_materials() {
         0.15f,
         Color(30, 0, 50),  // Very dark purple
         20
+    );
+
+    // Life (falling spawner particle - creates Person on safe ground)
+    materials_[static_cast<size_t>(MaterialID::Life)] = MaterialDef(
+        MaterialID::Life,
+        MaterialState::Powder,  // Falls like a particle
+        0.8f,
+        Color(255, 200, 255),  // Bright pink/magenta glow
+        30  // High variation for sparkle effect
     );
 }
 
@@ -1806,7 +1870,170 @@ void update_smoke(World& world, int32_t x, int32_t y) {
     }
 }
 
-// Person: Goofy autonomous agent with personality, social behavior, and physical comedy
+// ============================================================================
+// Person: Village-Building AI with Lifelike Movement
+// ============================================================================
+// People now build houses and form villages! They have distinct personalities,
+// realistic movement patterns, and cooperate to construct structures.
+
+// Helper: Check if material is solid ground for walking/standing
+static bool is_person_ground(MaterialID m) {
+    return m == MaterialID::Stone || m == MaterialID::Wood ||
+           m == MaterialID::Grass || m == MaterialID::Sand ||
+           m == MaterialID::Brick || m == MaterialID::Dirt ||
+           m == MaterialID::Metal || m == MaterialID::Person;
+}
+
+// Helper: Check if material is passable for movement
+static bool is_passable(MaterialID m) {
+    return m == MaterialID::Empty || m == MaterialID::Water ||
+           m == MaterialID::Steam || m == MaterialID::Smoke ||
+           m == MaterialID::Helium || m == MaterialID::Hydrogen;
+}
+
+// Helper: Find ground level at a given x position (scan downward)
+// Returns the Y coordinate of the first empty cell that has solid ground below it
+static int32_t find_ground_level(World& world, int32_t x, int32_t start_y) {
+    // Start from a reasonable height and scan down
+    int32_t scan_start = std::max(1, start_y);
+    for (int32_t y = scan_start; y < WORLD_HEIGHT - 1; y++) {
+        if (world.in_bounds(x, y) && world.in_bounds(x, y + 1)) {
+            MaterialID here = world.get_material(x, y);
+            MaterialID below = world.get_material(x, y + 1);
+            // Found empty space with solid ground below
+            if (is_passable(here) && is_person_ground(below)) {
+                return y;
+            }
+        }
+    }
+    return -1; // No ground found
+}
+
+// Helper: Check if an area is clear for building
+static bool is_area_clear(World& world, int32_t x, int32_t y, int32_t width, int32_t height) {
+    for (int32_t dy = 0; dy < height; dy++) {
+        for (int32_t dx = 0; dx < width; dx++) {
+            int32_t cx = x + dx;
+            int32_t cy = y - dy; // Build upward
+            if (!world.in_bounds(cx, cy)) return false;
+            MaterialID m = world.get_material(cx, cy);
+            if (m != MaterialID::Empty && m != MaterialID::Steam &&
+                m != MaterialID::Smoke && m != MaterialID::Water) {
+                return false;
+            }
+        }
+    }
+    return true;
+}
+
+// Helper: Place a block of building material
+static void place_building_block(World& world, int32_t x, int32_t y, MaterialID material) {
+    if (world.in_bounds(x, y)) {
+        MaterialID current = world.get_material(x, y);
+        if (current == MaterialID::Empty || current == MaterialID::Steam ||
+            current == MaterialID::Smoke) {
+            world.set_material(x, y, material);
+        }
+    }
+}
+
+// Build a small hut (5 wide, 4 tall)
+static void build_small_hut(World& world, int32_t base_x, int32_t base_y, uint32_t& /*seed*/) {
+    // Floor
+    for (int dx = 0; dx < 5; dx++) {
+        place_building_block(world, base_x + dx, base_y, MaterialID::Wood);
+    }
+
+    // Walls (3 tall)
+    for (int dy = 1; dy <= 3; dy++) {
+        place_building_block(world, base_x, base_y - dy, MaterialID::Wood);
+        place_building_block(world, base_x + 4, base_y - dy, MaterialID::Wood);
+    }
+
+    // Roof (simple flat roof)
+    for (int dx = 0; dx < 5; dx++) {
+        place_building_block(world, base_x + dx, base_y - 4, MaterialID::Stone);
+    }
+
+    // Door opening (leave middle open)
+    // The door is implicitly the gap in the middle of the front wall
+}
+
+// Build a proper house (8 wide, 6 tall with peaked roof)
+static void build_house(World& world, int32_t base_x, int32_t base_y, uint32_t& /*seed*/) {
+    // Foundation
+    for (int dx = 0; dx < 8; dx++) {
+        place_building_block(world, base_x + dx, base_y, MaterialID::Stone);
+    }
+
+    // Walls (4 tall)
+    for (int dy = 1; dy <= 4; dy++) {
+        // Left wall
+        place_building_block(world, base_x, base_y - dy, MaterialID::Brick);
+        // Right wall
+        place_building_block(world, base_x + 7, base_y - dy, MaterialID::Brick);
+        // Back wall sections (with window gap in middle)
+        if (dy != 2 && dy != 3) {
+            for (int dx = 1; dx < 7; dx++) {
+                // Skip door area (middle 2 blocks at bottom)
+                if (dy == 1 && (dx == 3 || dx == 4)) continue;
+            }
+        }
+    }
+
+    // Front and back walls with gaps
+    for (int dx = 1; dx < 7; dx++) {
+        // Back wall top
+        place_building_block(world, base_x + dx, base_y - 4, MaterialID::Brick);
+        // Skip middle for door at ground level
+        if (dx != 3 && dx != 4) {
+            place_building_block(world, base_x + dx, base_y - 1, MaterialID::Brick);
+        }
+    }
+
+    // Peaked roof
+    for (int level = 0; level < 3; level++) {
+        int start = level;
+        int end = 8 - level;
+        for (int dx = start; dx < end; dx++) {
+            place_building_block(world, base_x + dx, base_y - 5 - level, MaterialID::Wood);
+        }
+    }
+}
+
+// Build a tower (4 wide, 10 tall)
+static void build_tower(World& world, int32_t base_x, int32_t base_y, uint32_t& /*seed*/) {
+    // Foundation
+    for (int dx = 0; dx < 4; dx++) {
+        place_building_block(world, base_x + dx, base_y, MaterialID::Stone);
+    }
+
+    // Tower walls (8 tall)
+    for (int dy = 1; dy <= 8; dy++) {
+        place_building_block(world, base_x, base_y - dy, MaterialID::Stone);
+        place_building_block(world, base_x + 3, base_y - dy, MaterialID::Stone);
+        // Windows every 3 levels
+        if (dy % 3 != 0) {
+            place_building_block(world, base_x + 1, base_y - dy, MaterialID::Stone);
+            place_building_block(world, base_x + 2, base_y - dy, MaterialID::Stone);
+        }
+    }
+
+    // Crenellations at top
+    place_building_block(world, base_x, base_y - 9, MaterialID::Stone);
+    place_building_block(world, base_x + 3, base_y - 9, MaterialID::Stone);
+    place_building_block(world, base_x, base_y - 10, MaterialID::Stone);
+    place_building_block(world, base_x + 3, base_y - 10, MaterialID::Stone);
+}
+
+// Build a platform/bridge
+static void build_platform(World& world, int32_t base_x, int32_t base_y, int32_t length, uint32_t& /*seed*/) {
+    for (int dx = 0; dx < length; dx++) {
+        place_building_block(world, base_x + dx, base_y, MaterialID::Wood);
+    }
+}
+
+// Main person update function - simplified for stable movement
 void update_person(World& world, int32_t x, int32_t y) {
     Cell& cell = world.get_cell(x, y);
 
@@ -1817,422 +2044,127 @@ void update_person(World& world, int32_t x, int32_t y) {
         return;
     }
 
-    // Behavior frame counter (0-63)
-    uint8_t frame = cell.get_reproduction_cooldown();
-    cell.set_reproduction_cooldown((frame + 1) & 63);
+    // Frame counter (0-63) for timing behaviors
+    uint8_t frame = cell.get_lifetime();
+    cell.set_lifetime((frame + 1) & 63);
 
-    // ========================================
-    // DETERMINISTIC PERSONALITY SYSTEM
-    // ========================================
-    // Each person has a unique "personality" based on their spawn position
-    // This never changes, giving consistent character traits
-    uint32_t personality = static_cast<uint32_t>(x * 73856093) ^ static_cast<uint32_t>(y * 19349663);
+    // Get stable personality from health
+    uint8_t personality = cell.get_health();
+    bool is_jumpy = (personality & 0x02) != 0;
 
-    // Personality traits (derived from personality hash)
-    bool is_jumpy = (personality & 0x03) == 0;        // 25% are extra bouncy
-    bool is_social = (personality & 0x0C) < 0x08;     // 50% seek others
-    bool is_curious = (personality & 0x30) < 0x20;    // 50% investigate things
-    bool is_cautious = (personality & 0xC0) == 0;     // 25% are extra careful
-    bool is_clumsy = (personality & 0x300) == 0;      // 25% trip and stumble
-
-    // Per-frame randomness (deterministic but varies each frame)
-    uint32_t seed = personality ^ (frame * 83492791u);
-    auto rand = [&seed]() -> uint32_t {
-        seed = seed * 1664525u + 1013904223u;
-        return seed;
-    };
-
+    // Get facing direction
     bool facing_right = cell.get_person_facing_right();
 
     // ========================================
-    // ENVIRONMENTAL SCAN (3x3 neighborhood)
+    // GRAVITY - Always check if we should fall
     // ========================================
-    bool touching_fire = false, touching_lava = false, in_water = false;
-    bool near_acid = false;
-    int people_left = 0, people_right = 0;
-    int fire_direction = 0;  // -1 = left, +1 = right, 0 = both/none
-    bool something_interesting = false;
-
-    for (int dy = -1; dy <= 1; dy++) {
-        for (int dx = -1; dx <= 1; dx++) {
-            if (dx == 0 && dy == 0) continue;
-            int nx = x + dx, ny = y + dy;
-            if (!world.in_bounds(nx, ny)) continue;
-
-            MaterialID m = world.get_material(nx, ny);
-            switch (m) {
-                case MaterialID::Fire:
-                    touching_fire = true;
-                    fire_direction += (dx < 0) ? -1 : (dx > 0) ? 1 : 0;
-                    break;
-                case MaterialID::Lava:
-                    touching_lava = true;
-                    fire_direction += (dx < 0) ? -1 : (dx > 0) ? 1 : 0;
-                    break;
-                case MaterialID::Water: in_water = true; break;
-                case MaterialID::Acid: near_acid = true; something_interesting = true; break;
-                case MaterialID::Oil: something_interesting = true; break;  // Slippery!
-                case MaterialID::Person:
-                    if (dx < 0) people_left++;
-                    else if (dx > 0) people_right++;
-                    break;
-                case MaterialID::Sand:
-                case MaterialID::Ash:
-                    if (dy == -1) something_interesting = true;  // Falling stuff above!
-                    break;
-                default: break;
-            }
-        }
+    bool grounded = false;
+    if (world.in_bounds(x, y + 1)) {
+        MaterialID below = world.get_material(x, y + 1);
+        grounded = is_person_ground(below);
     }
 
-    // Extended scan for social behavior (5 pixel radius)
-    int friends_left = 0, friends_right = 0;
-    for (int scan_x = x - 5; scan_x <= x + 5; scan_x++) {
-        if (scan_x == x) continue;
-        for (int scan_y = y - 2; scan_y <= y + 2; scan_y++) {
-            if (world.in_bounds(scan_x, scan_y) &&
-                world.get_material(scan_x, scan_y) == MaterialID::Person) {
-                if (scan_x < x) friends_left++;
-                else friends_right++;
-            }
-        }
-    }
-
-    // ========================================
-    // DAMAGE & DEATH
-    // ========================================
-    if (touching_lava) {
-        cell.damage_health(25);
-    } else if (touching_fire) {
-        cell.damage_health(12);
-    } else if (near_acid && (rand() & 7) == 0) {
-        cell.damage_health(8);
-    }
-
-    if (in_water && (rand() & 63) == 0) {
-        cell.damage_health(3);  // Slow drowning
-    }
-
-    if (cell.get_health() == 0) {
-        world.set_material(x, y, MaterialID::Smoke);
-        world.get_cell(x, y).set_lifetime(20);
-        return;
-    }
-
-    // ========================================
-    // PHYSICS: GROUNDED CHECK
-    // ========================================
-    auto is_solid_ground = [](MaterialID m) {
-        return m == MaterialID::Stone || m == MaterialID::Wood ||
-               m == MaterialID::Grass || m == MaterialID::Sand ||
-               m == MaterialID::Person;
-    };
-
-    bool grounded = world.in_bounds(x, y + 1) && is_solid_ground(world.get_material(x, y + 1));
-
-    // ========================================
-    // FALLING BEHAVIOR (with personality!)
-    // ========================================
     if (!grounded) {
-        // Flail wildly - jumpy people flail more
-        uint32_t flail_chance = is_jumpy ? 1u : 2u;
-        if ((rand() & 3) < flail_chance) {
-            cell.set_person_facing_right(!facing_right);
-        }
-
-        // Try to grab ledges if cautious
-        if (is_cautious) {
-            for (int dx = -1; dx <= 1; dx += 2) {
-                int ledge_x = x + dx;
-                if (world.in_bounds(ledge_x, y) && is_solid_ground(world.get_material(ledge_x, y))) {
-                    // Found a ledge! Try to grab it
-                    if (world.in_bounds(ledge_x, y - 1) &&
-                        world.get_material(ledge_x, y - 1) == MaterialID::Empty) {
-                        if (world.try_move_cell(x, y, ledge_x, y - 1)) {
-                            return;  // Grabbed ledge!
-                        }
-                    }
-                }
-            }
-        }
-
-        // Fall
+        // Try to fall
         if (world.try_move_cell(x, y, x, y + 1)) {
             return;
         }
-
-        // Just landed - clumsy people stumble
-        if (is_clumsy && (rand() & 3) == 0) {
-            int stumble_dir = (rand() & 1) ? 1 : -1;
-            int stumble_x = x + stumble_dir;
-            if (world.in_bounds(stumble_x, y) &&
-                world.get_material(stumble_x, y) == MaterialID::Empty) {
-                world.try_move_cell(x, y, stumble_x, y);
-            }
+        // Can't fall - we're stuck somehow, try moving sideways
+        int side = facing_right ? 1 : -1;
+        if (world.in_bounds(x + side, y + 1) && is_passable(world.get_material(x + side, y + 1))) {
+            world.try_move_cell(x, y, x + side, y + 1);
         }
-        cell.set_person_facing_right(!facing_right);  // Turn on landing
         return;
     }
 
     // ========================================
-    // STATE: PANIC (Fire/Lava nearby)
+    // GROUNDED MOVEMENT - Only move every 4 frames
     // ========================================
-    if (touching_fire || touching_lava) {
-        // MAXIMUM PANIC! Flip direction constantly
-        if ((rand() & 1) == 0) {
-            // Smart escape: run away from fire
-            if (fire_direction < 0) facing_right = true;
-            else if (fire_direction > 0) facing_right = false;
-            else facing_right = !facing_right;  // Fire everywhere - spin!
-            cell.set_person_facing_right(facing_right);
+    if ((frame & 3) != 0) {
+        return;  // Skip this frame - stand still
+    }
+
+    int dir = facing_right ? 1 : -1;
+    int next_x = x + dir;
+
+    // Bounds check
+    if (!world.in_bounds(next_x, y)) {
+        cell.set_person_facing_right(!facing_right);
+        return;
+    }
+
+    MaterialID ahead = world.get_material(next_x, y);
+
+    // ===== CASE 1: Path is clear - walk forward =====
+    if (is_passable(ahead)) {
+        world.try_move_cell(x, y, next_x, y);
+        return;
+    }
+
+    // ===== CASE 2: Blocked by another person - wait or go around =====
+    if (ahead == MaterialID::Person) {
+        // 50% chance to turn around, 50% chance to wait
+        if ((frame & 4) != 0) {
+            cell.set_person_facing_right(!facing_right);
+        }
+        return;
+    }
+
+    // ===== CASE 3: Blocked by solid - try to climb or jump =====
+
+    // Try climbing 1-3 pixels
+    for (int h = 1; h <= 3; h++) {
+        int climb_y = y - h;
+
+        // Check space above us is clear
+        bool can_go_up = true;
+        for (int check_y = y - 1; check_y >= climb_y; check_y--) {
+            if (!world.in_bounds(x, check_y) || !is_passable(world.get_material(x, check_y))) {
+                can_go_up = false;
+                break;
+            }
+        }
+        if (!can_go_up) break;  // Can't go higher
+
+        // Check destination is clear
+        if (world.in_bounds(next_x, climb_y) && is_passable(world.get_material(next_x, climb_y))) {
+            if (world.try_move_cell(x, y, next_x, climb_y)) {
+                return;  // Climbed successfully
+            }
+        }
+    }
+
+    // Try jumping (only on certain frames)
+    if ((frame & 15) == 0) {
+        int jump_height = is_jumpy ? 4 : 2;
+
+        // Find how high we can jump
+        int actual_height = 0;
+        for (int h = 1; h <= jump_height; h++) {
+            if (world.in_bounds(x, y - h) && is_passable(world.get_material(x, y - h))) {
+                actual_height = h;
+            } else {
+                break;
+            }
         }
 
-        // Desperate jumping (70% chance)
-        if ((rand() & 7) < 6) {
-            // Try diagonal jump away from fire
-            int jump_dx = (fire_direction <= 0) ? 1 : -1;
-            if (world.in_bounds(x + jump_dx, y - 1) &&
-                world.get_material(x + jump_dx, y - 1) == MaterialID::Empty) {
-                if (world.try_move_cell(x, y, x + jump_dx, y - 1)) {
-                    return;  // Panic leap!
-                }
-            }
-            // Just jump straight up
-            if (world.in_bounds(x, y - 1) &&
-                (world.get_material(x, y - 1) == MaterialID::Empty ||
-                 world.get_material(x, y - 1) == MaterialID::Water)) {
-                if (world.try_move_cell(x, y, x, y - 1)) {
+        if (actual_height >= 2) {
+            // Try diagonal jump
+            if (world.in_bounds(next_x, y - actual_height) &&
+                is_passable(world.get_material(next_x, y - actual_height))) {
+                if (world.try_move_cell(x, y, next_x, y - actual_height)) {
                     return;
                 }
             }
-        }
-
-        // Run! (always try to move when panicking)
-        int escape_dx = facing_right ? 1 : -1;
-        int escape_x = x + escape_dx;
-        if (world.in_bounds(escape_x, y)) {
-            MaterialID target = world.get_material(escape_x, y);
-            if (target == MaterialID::Empty || target == MaterialID::Water ||
-                target == MaterialID::Steam || target == MaterialID::Smoke) {
-                world.try_move_cell(x, y, escape_x, y);
-            }
-        }
-        return;  // Don't do normal behavior when panicking
-    }
-
-    // ========================================
-    // STATE: SWIMMING (in water)
-    // ========================================
-    if (in_water) {
-        // Thrash around trying to stay afloat
-        if ((rand() & 3) == 0) {
-            cell.set_person_facing_right(!facing_right);  // Spin in water
-        }
-
-        // Try to swim up (50% of frames)
-        if ((rand() & 1) == 0 && world.in_bounds(x, y - 1)) {
-            MaterialID above = world.get_material(x, y - 1);
-            if (above == MaterialID::Empty || above == MaterialID::Water ||
-                above == MaterialID::Steam) {
-                if (world.try_move_cell(x, y, x, y - 1)) {
-                    return;  // Swimming up!
-                }
-            }
-        }
-
-        // Slow horizontal movement in water
-        if ((rand() & 3) == 0) {
-            int swim_dx = facing_right ? 1 : -1;
-            int swim_x = x + swim_dx;
-            if (world.in_bounds(swim_x, y)) {
-                MaterialID target = world.get_material(swim_x, y);
-                if (target == MaterialID::Empty || target == MaterialID::Water) {
-                    world.try_move_cell(x, y, swim_x, y);
-                }
-            }
-        }
-        return;  // Water behavior only
-    }
-
-    // ========================================
-    // STATE: SOCIAL BEHAVIOR (follow/avoid others)
-    // ========================================
-    if (is_social && (friends_left > 0 || friends_right > 0)) {
-        // Social people move toward groups
-        if (friends_left > friends_right && !facing_right) {
-            // Already heading toward friends, keep going
-        } else if (friends_right > friends_left && facing_right) {
-            // Already heading toward friends
-        } else if (friends_left > friends_right) {
-            // Turn toward friends
-            if ((rand() & 3) == 0) {
-                facing_right = false;
-                cell.set_person_facing_right(facing_right);
-            }
-        } else if (friends_right > friends_left) {
-            if ((rand() & 3) == 0) {
-                facing_right = true;
-                cell.set_person_facing_right(facing_right);
+            // Try straight up jump
+            if (world.try_move_cell(x, y, x, y - actual_height)) {
+                return;
             }
         }
     }
 
-    // Avoid bumping into adjacent people (personal space!)
-    if (people_left > 0 && !facing_right) {
-        facing_right = true;
-        cell.set_person_facing_right(facing_right);
-        // Sometimes hop away
-        if ((rand() & 3) == 0 && world.in_bounds(x, y - 1) &&
-            world.get_material(x, y - 1) == MaterialID::Empty) {
-            world.try_move_cell(x, y, x, y - 1);
-            return;
-        }
-    } else if (people_right > 0 && facing_right) {
-        facing_right = false;
-        cell.set_person_facing_right(facing_right);
-        if ((rand() & 3) == 0 && world.in_bounds(x, y - 1) &&
-            world.get_material(x, y - 1) == MaterialID::Empty) {
-            world.try_move_cell(x, y, x, y - 1);
-            return;
-        }
-    }
-
-    // ========================================
-    // STATE: CURIOSITY (investigate interesting stuff)
-    // ========================================
-    if (is_curious && something_interesting && (rand() & 7) < 2) {
-        // Look around! Do a little hop and turn
-        if (world.in_bounds(x, y - 1) && world.get_material(x, y - 1) == MaterialID::Empty) {
-            world.try_move_cell(x, y, x, y - 1);
-            cell.set_person_facing_right(!facing_right);  // Look the other way
-            return;
-        }
-    }
-
-    // Cautious people back away from acid
-    if (is_cautious && near_acid) {
-        facing_right = !facing_right;
-        cell.set_person_facing_right(facing_right);
-        int retreat_x = x + (facing_right ? 1 : -1);
-        if (world.in_bounds(retreat_x, y) &&
-            world.get_material(retreat_x, y) == MaterialID::Empty) {
-            world.try_move_cell(x, y, retreat_x, y);
-        }
-        return;
-    }
-
-    // ========================================
-    // IDLE ANIMATIONS (personality-based)
-    // ========================================
-
-    // Jumpy people hop frequently
-    if (is_jumpy && (frame & 7) == 0 && (rand() & 3) == 0) {
-        if (world.in_bounds(x, y - 1) && world.get_material(x, y - 1) == MaterialID::Empty) {
-            if (world.try_move_cell(x, y, x, y - 1)) {
-                return;  // Boing!
-            }
-        }
-    }
-
-    // Everyone fidgets sometimes
-    if ((frame & 15) == 0 && (rand() & 7) == 0) {
-        // Quick direction change (double-take)
-        cell.set_person_facing_right(!facing_right);
-        if ((rand() & 1) == 0) {
-            cell.set_person_facing_right(facing_right);  // Look back
-        }
-    }
-
-    // Clumsy people occasionally trip even when standing still
-    if (is_clumsy && (rand() & 63) == 0) {
-        int trip_dir = (rand() & 1) ? 1 : -1;
-        int trip_x = x + trip_dir;
-        if (world.in_bounds(trip_x, y) && world.get_material(trip_x, y) == MaterialID::Empty) {
-            // Trip and stumble
-            world.try_move_cell(x, y, trip_x, y);
-            cell.set_person_facing_right(trip_dir > 0);
-            return;
-        }
-    }
-
-    // ========================================
-    // RANDOM DIRECTION CHANGES
-    // ========================================
-    uint32_t change_chance = is_cautious ? 8u : 5u;  // Cautious people are more decisive
-    if ((rand() & 15) < change_chance) {
-        facing_right = !facing_right;
-        cell.set_person_facing_right(facing_right);
-    }
-
-    // ========================================
-    // LEDGE DETECTION
-    // ========================================
-    int ahead_x = x + (facing_right ? 1 : -1);
-    bool ledge_ahead = false;
-    if (world.in_bounds(ahead_x, y + 1)) {
-        MaterialID ground_ahead = world.get_material(ahead_x, y + 1);
-        ledge_ahead = !is_solid_ground(ground_ahead);
-    }
-
-    if (ledge_ahead) {
-        // Cautious people always stop
-        if (is_cautious) {
-            facing_right = !facing_right;
-            cell.set_person_facing_right(facing_right);
-            // Hop backward nervously
-            if ((rand() & 3) == 0 && world.in_bounds(x, y - 1) &&
-                world.get_material(x, y - 1) == MaterialID::Empty) {
-                world.try_move_cell(x, y, x, y - 1);
-            }
-            return;
-        }
-        // Others might risk it (15% YOLO)
-        if ((rand() & 7) < 7) {  // 87.5% turn around
-            facing_right = !facing_right;
-            cell.set_person_facing_right(facing_right);
-            return;
-        }
-        // YOLO! Walk off the edge
-    }
-
-    // ========================================
-    // MOVEMENT: WALK FORWARD
-    // ========================================
-    int walk_x = x + (facing_right ? 1 : -1);
-
-    if (!world.in_bounds(walk_x, y)) {
-        cell.set_person_facing_right(!facing_right);
-        return;
-    }
-
-    MaterialID target = world.get_material(walk_x, y);
-    bool walkable = (target == MaterialID::Empty || target == MaterialID::Water ||
-                    target == MaterialID::Steam || target == MaterialID::Smoke);
-
-    if (walkable) {
-        // Walk!
-        if (world.try_move_cell(x, y, walk_x, y)) {
-            return;
-        }
-    } else {
-        // Obstacle - try to climb (1 pixel hop)
-        if (world.in_bounds(walk_x, y - 1)) {
-            MaterialID above = world.get_material(walk_x, y - 1);
-            if (above == MaterialID::Empty || above == MaterialID::Steam) {
-                if (world.try_move_cell(x, y, walk_x, y - 1)) {
-                    return;  // Hopped over!
-                }
-            }
-        }
-        // Can't pass - turn around
-        cell.set_person_facing_right(!facing_right);
-    }
-
-    // Health regeneration (very slow, only when safe)
-    if (!touching_fire && !touching_lava && !near_acid &&
-        (rand() & 255) == 0 && cell.get_health() < 100) {
-        cell.set_health(cell.get_health() + 1);
-    }
+    // Can't move forward - turn around
+    cell.set_person_facing_right(!facing_right);
 }
 
 // ============================================================================
@@ -3851,6 +3783,165 @@ void update_void_dust(World& world, int32_t x, int32_t y) {
     }
 
     generic_powder_update(world, x, y, 1, 6);
+}
+
+// Helper: Check if a location is safe for spawning a person
+static bool is_safe_spawn_location(World& world, int32_t x, int32_t y) {
+    // Must have solid ground below
+    if (!world.in_bounds(x, y + 1)) return false;
+    MaterialID below = world.get_material(x, y + 1);
+
+    // Check for solid ground materials
+    bool has_ground = (below == MaterialID::Stone || below == MaterialID::Wood ||
+                       below == MaterialID::Grass || below == MaterialID::Sand ||
+                       below == MaterialID::Brick || below == MaterialID::Dirt ||
+                       below == MaterialID::Metal || below == MaterialID::Ice ||
+                       below == MaterialID::Glass || below == MaterialID::Obsidian ||
+                       below == MaterialID::Diamond || below == MaterialID::Copper ||
+                       below == MaterialID::Gold || below == MaterialID::Crystal ||
+                       below == MaterialID::Rubber || below == MaterialID::Coral);
+
+    if (!has_ground) return false;
+
+    // Check that current position is empty/passable
+    MaterialID here = world.get_material(x, y);
+    if (here != MaterialID::Life && here != MaterialID::Empty &&
+        here != MaterialID::Steam && here != MaterialID::Smoke) {
+        return false;
+    }
+
+    // Check for nearby dangers (fire, lava, acid)
+    for (int dy = -2; dy <= 2; dy++) {
+        for (int dx = -2; dx <= 2; dx++) {
+            int nx = x + dx, ny = y + dy;
+            if (world.in_bounds(nx, ny)) {
+                MaterialID m = world.get_material(nx, ny);
+                if (m == MaterialID::Fire || m == MaterialID::Lava ||
+                    m == MaterialID::Acid || m == MaterialID::Dragon_Fire ||
+                    m == MaterialID::Plasma) {
+                    return false;  // Too dangerous!
+                }
+            }
+        }
+    }
+
+    // Check for water (drowning risk)
+    for (int dy = -1; dy <= 1; dy++) {
+        for (int dx = -1; dx <= 1; dx++) {
+            int nx = x + dx, ny = y + dy;
+            if (world.in_bounds(nx, ny)) {
+                MaterialID m = world.get_material(nx, ny);
+                if (m == MaterialID::Water) {
+                    return false;  // Would drown
+                }
+            }
+        }
+    }
+
+    return true;
+}
+
+void update_life(World& world, int32_t x, int32_t y) {
+    Cell& cell = world.get_cell(x, y);
+
+    // Lifetime countdown (sparkle effect uses this)
+    uint8_t life = cell.get_lifetime();
+    if (life == 0) {
+        cell.set_lifetime(63);  // Reset sparkle timer
+    }
+    cell.decrement_lifetime();
+
+    // Check if we can spawn a person here (safe landing)
+    if (is_safe_spawn_location(world, x, y)) {
+        // Transform into a Person!
+        world.set_material(x, y, MaterialID::Person);
+        Cell& person = world.get_cell(x, y);
+        // Random health between 80-127 gives unique personality per person
+        // (health is used as personality seed, so each spawn is different)
+        person.set_health(80 + (world.random_int() & 47));
+        person.set_person_facing_right((world.random_int() & 1) != 0);
+        person.set_lifetime(0);  // Reset frame counter
+
+        // Create a small sparkle effect around spawn point
+        for (int i = 0; i < 3; i++) {
+            int sx = x + ((world.random_int() & 3) - 1);
+            int sy = y - 1 - (world.random_int() & 1);
+            if (world.in_bounds(sx, sy) && world.get_material(sx, sy) == MaterialID::Empty) {
+                world.set_material(sx, sy, MaterialID::Spark);
+                world.get_cell(sx, sy).set_lifetime(5 + (world.random_int() & 7));
+            }
+        }
+        return;
+    }
+
+    // If in a dangerous situation, die with a puff
+    MaterialID here = world.get_material(x, y);
+    if (here != MaterialID::Life) {
+        // Somehow displaced - just disappear
+        return;
+    }
+
+    // Check for immediate danger and die if necessary
+    for (int dy = -1; dy <= 1; dy++) {
+        for (int dx = -1; dx <= 1; dx++) {
+            if (dx == 0 && dy == 0) continue;
+            int nx = x + dx, ny = y + dy;
+            if (world.in_bounds(nx, ny)) {
+                MaterialID m = world.get_material(nx, ny);
+                if (m == MaterialID::Fire || m == MaterialID::Lava ||
+                    m == MaterialID::Acid || m == MaterialID::Dragon_Fire) {
+                    // Die in a puff of smoke
+                    world.set_material(x, y, MaterialID::Smoke);
+                    world.get_cell(x, y).set_lifetime(10);
+                    return;
+                }
+            }
+        }
+    }
+
+    // Fall down like a powder but with some floating
+    // Try to move down
+    if (world.in_bounds(x, y + 1)) {
+        MaterialID below = world.get_material(x, y + 1);
+        if (below == MaterialID::Empty || below == MaterialID::Steam ||
+            below == MaterialID::Smoke || below == MaterialID::Helium ||
+            below == MaterialID::Hydrogen) {
+            world.try_move_cell(x, y, x, y + 1);
+            return;
+        }
+
+        // Try diagonal down (like powder)
+        int dir = (world.random_int() & 1) ? 1 : -1;
+        if (world.in_bounds(x + dir, y + 1)) {
+            MaterialID diag = world.get_material(x + dir, y + 1);
+            if (diag == MaterialID::Empty || diag == MaterialID::Steam ||
+                diag == MaterialID::Smoke) {
+                world.try_move_cell(x, y, x + dir, y + 1);
+                return;
+            }
+        }
+        // Try other diagonal
+        if (world.in_bounds(x - dir, y + 1)) {
+            MaterialID diag = world.get_material(x - dir, y + 1);
+            if (diag == MaterialID::Empty || diag == MaterialID::Steam ||
+                diag == MaterialID::Smoke) {
+                world.try_move_cell(x, y, x - dir, y + 1);
+                return;
+            }
+        }
+    }
+
+    // If completely stuck on something that's not safe, try to drift sideways
+    if ((world.random_int() & 7) == 0) {
+        int dir = (world.random_int() & 1) ? 1 : -1;
+        if (world.in_bounds(x + dir, y)) {
+            MaterialID side = world.get_material(x + dir, y);
+            if (side == MaterialID::Empty || side == MaterialID::Steam ||
+                side == MaterialID::Smoke) {
+                world.try_move_cell(x, y, x + dir, y);
+            }
+        }
+    }
 }
 
 } // namespace Materials

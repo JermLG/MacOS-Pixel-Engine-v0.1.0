@@ -108,7 +108,7 @@ static const MaterialEntry ORGANIC_MATERIALS[] = {
 
 // Category: Special
 static const MaterialEntry SPECIAL_MATERIALS[] = {
-    {MaterialID::Person, "Person"},
+    {MaterialID::Life, "Life"},       // Spawns people when landing safely
     {MaterialID::Clone, "Clone"},
     {MaterialID::Void, "Void"},
     {MaterialID::Fuse, "Fuse"},
@@ -696,47 +696,7 @@ private:
                 return;
             }
 
-            // SPECIAL CASE: People spawn ONE AT A TIME (no brush)
-            if (input.mouse_left_down && input.selected_material == MaterialID::Person) {
-                // Allow spawning person on more stable materials
-                if (world_.in_bounds(x, y)) {
-                    MaterialID current = world_.get_material(x, y);
-                    bool can_spawn = (
-                        current == MaterialID::Empty ||
-                        current == MaterialID::Water ||
-                        current == MaterialID::Steam ||
-                        current == MaterialID::Smoke ||
-                        current == MaterialID::Sand ||
-                        current == MaterialID::Grass ||
-                        current == MaterialID::Dirt ||
-                        current == MaterialID::Brick ||
-                        current == MaterialID::Wood ||
-                        current == MaterialID::Metal ||
-                        current == MaterialID::Obsidian ||
-                        current == MaterialID::Diamond ||
-                        current == MaterialID::Gold ||
-                        current == MaterialID::Ice ||
-                        current == MaterialID::Rubber ||
-                        current == MaterialID::Copper
-                    );
-
-                    if (can_spawn) {
-                        // Clear cell state
-                        Cell& cell = world_.get_cell(x, y);
-                        cell.flags = 0;
-                        cell.velocity_y = 0;
-
-                        // Spawn single person at cursor
-                        world_.set_material(x, y, MaterialID::Person);
-                        cell.set_health(100);
-                        cell.set_person_facing_right((world_.random_int() & 1) == 0);
-                        cell.set_reproduction_cooldown(30);
-                    }
-                }
-                return;  // Skip brush logic for people
-            }
-
-            // Use configurable brush for all other materials
+            // Use configurable brush for all materials (including Life)
             int32_t brush_radius = input.brush_radius;
             BrushShape brush_shape = input.brush_shape;
 
@@ -1491,6 +1451,42 @@ private:
 
                     if (eye_x >= 0 && eye_x < WORLD_WIDTH && eye_y >= 0 && eye_y < WORLD_HEIGHT) {
                         pixel_buffer_[eye_y * WORLD_WIDTH + eye_x] = 0xFF000000;  // Black "eye" shows facing
+                    }
+                }
+
+                // Also render Life particles with a sparkle effect
+                if (world_.get_material(x, y) == MaterialID::Life) {
+                    Cell& cell = world_.get_cell(x, y);
+                    uint8_t sparkle = cell.get_lifetime();
+
+                    // Animated sparkle color - cycles between pink and white
+                    uint8_t intensity = 200 + (sparkle & 0x1F) * 2;
+                    uint32_t life_color;
+                    if ((sparkle & 0x08) != 0) {
+                        // Pink phase
+                        life_color = (0xFF << 24) | (intensity << 16) | ((intensity * 3 / 4) << 8) | intensity;
+                    } else {
+                        // White-ish phase
+                        life_color = (0xFF << 24) | (intensity << 16) | (intensity << 8) | (intensity * 3 / 4);
+                    }
+
+                    // Draw the Life particle with a small glow
+                    pixel_buffer_[y * WORLD_WIDTH + x] = life_color;
+
+                    // Add glow effect around it
+                    uint32_t glow_color = 0x40FF80FF;  // Semi-transparent magenta
+                    for (int dy = -1; dy <= 1; dy++) {
+                        for (int dx = -1; dx <= 1; dx++) {
+                            if (dx == 0 && dy == 0) continue;
+                            int gx = x + dx, gy = y + dy;
+                            if (gx >= 0 && gx < WORLD_WIDTH && gy >= 0 && gy < WORLD_HEIGHT) {
+                                MaterialID neighbor = world_.get_material(gx, gy);
+                                if (neighbor == MaterialID::Empty) {
+                                    // Blend glow with existing pixel (simple additive)
+                                    pixel_buffer_[gy * WORLD_WIDTH + gx] = glow_color;
+                                }
+                            }
+                        }
                     }
                 }
             }

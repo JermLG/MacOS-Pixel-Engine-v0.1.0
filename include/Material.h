@@ -199,6 +199,9 @@ void update_void_dust(World& world, int32_t x, int32_t y);
 // Rust (powder) - missing from above
 void update_rust(World& world, int32_t x, int32_t y);
 
+// Life (spawner particle) - falls and creates Person on safe ground
+void update_life(World& world, int32_t x, int32_t y);
+
 } // namespace Materials
 
 } // namespace PixelEngine

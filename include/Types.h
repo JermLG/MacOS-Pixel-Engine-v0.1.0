@@ -102,6 +102,9 @@ enum class MaterialID : uint8_t {
     Stardust = 78,
     Void_Dust = 79,
 
+    // === SPAWNERS (80+) ===
+    Life = 80,       // Falling particle that spawns Person on safe ground
+
     COUNT
 };
 
