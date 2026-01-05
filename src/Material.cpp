@@ -5,60 +5,6 @@
 
 namespace PixelEngine {
 
-// ============================================================================
-// PERSON AI SYSTEM - Village Building & Lifelike Behavior
-// ============================================================================
-
-// AI Goals/States for people
-enum class PersonGoal : uint8_t {
-    Idle = 0,           // Just wandering around
-    Exploring = 1,      // Looking for good building spots
-    GatheringMaterial = 2, // Finding/moving toward building materials
-    Building = 3,       // Actively constructing
-    Socializing = 4,    // Following/interacting with others
-    Fleeing = 5,        // Running from danger
-    Resting = 6         // Taking a break (regenerating)
-};
-
-// Building types
-enum class BuildingType : uint8_t {
-    None = 0,
-    SmallHut = 1,       // 5x4 simple shelter
-    House = 2,          // 8x6 proper house with roof
-    Tower = 3,          // 4x10 tall structure
-    Wall = 4,           // Defensive wall segment
-    Platform = 5        // Simple floor/bridge
-};
-
-// Village tracking - global state for coordinated building
-struct VillageData {
-    static constexpr int MAX_BUILDINGS = 20;
-    int32_t building_centers_x[MAX_BUILDINGS];
-    int32_t building_centers_y[MAX_BUILDINGS];
-    BuildingType building_types[MAX_BUILDINGS];
-    int building_count;
-    int32_t village_center_x;
-    int32_t village_center_y;
-    bool initialized;
-
-    VillageData() : building_count(0), village_center_x(-1), village_center_y(-1), initialized(false) {
-        for (int i = 0; i < MAX_BUILDINGS; i++) {
-            building_centers_x[i] = -1;
-            building_centers_y[i] = -1;
-            building_types[i] = BuildingType::None;
-        }
-    }
-};
-
-// Global village data (shared across all people)
-static VillageData g_village;
-
-// Helper: Simple deterministic random from seed
-static uint32_t person_rand(uint32_t& seed) {
-    seed = seed * 1664525u + 1013904223u;
-    return seed;
-}
-
 // Get color with random variation
 Color MaterialDef::get_color(std::mt19937& rng) const {
     if (color_variance == 0) {
@@ -1937,103 +1883,1892 @@ static void place_building_block(World& world, int32_t x, int32_t y, MaterialID 
     }
 }
 
-// Build a small hut (5 wide, 4 tall)
-static void build_small_hut(World& world, int32_t base_x, int32_t base_y, uint32_t& /*seed*/) {
-    // Floor
-    for (int dx = 0; dx < 5; dx++) {
-        place_building_block(world, base_x + dx, base_y, MaterialID::Wood);
-    }
+// ============================================================================
+// VILLAGE BUILDING SYSTEM - Complex structures with multiple materials
+// ============================================================================
 
-    // Walls (3 tall)
-    for (int dy = 1; dy <= 3; dy++) {
-        place_building_block(world, base_x, base_y - dy, MaterialID::Wood);
-        place_building_block(world, base_x + 4, base_y - dy, MaterialID::Wood);
-    }
+// Building type enumeration - expanded with complex structures
+enum class BuildingType : uint8_t {
+    // === Basic Village (0-9) ===
+    Cottage = 0,      // Small wooden cottage with peaked roof
+    StoneHouse = 1,   // Larger stone house with windows
+    WatchTower = 2,   // Tall stone watchtower
+    Barn = 3,         // Large wooden barn
+    Well = 4,         // Village well
+    Bridge = 5,       // Wooden bridge/platform
+    Fence = 6,        // Simple fence line
+    Shrine = 7,       // Small decorative shrine with crystal
+    Windmill = 8,     // Windmill tower
+    Inn = 9,          // Two-story inn
 
-    // Roof (simple flat roof)
-    for (int dx = 0; dx < 5; dx++) {
-        place_building_block(world, base_x + dx, base_y - 4, MaterialID::Stone);
-    }
+    // === Advanced Structures (10-19) ===
+    Castle = 10,      // Multi-tower castle with battlements
+    Church = 11,      // Tall church with steeple
+    Market = 12,      // Open-air market stalls
+    Lighthouse = 13,  // Tall lighthouse with light
+    Tavern = 14,      // Ground-level tavern
+    Stairs = 15,      // Climbable stairs structure
+    Ladder = 16,      // Vertical ladder for climbing
+    SkywalkBridge = 17, // Elevated bridge between buildings
+    GrandHall = 18,   // Large gathering hall
+    Observatory = 19, // Domed observatory tower
 
-    // Door opening (leave middle open)
-    // The door is implicitly the gap in the middle of the front wall
-}
+    // === Decorative/Infrastructure (20-24) ===
+    Fountain = 20,    // Decorative fountain
+    Statue = 21,      // Stone/copper statue
+    Garden = 22,      // Small walled garden
+    Dock = 23,        // Wooden dock extending out
+    Tower = 24,       // Simple climbable tower with platforms
 
-// Build a proper house (8 wide, 6 tall with peaked roof)
-static void build_house(World& world, int32_t base_x, int32_t base_y, uint32_t& /*seed*/) {
-    // Foundation
-    for (int dx = 0; dx < 8; dx++) {
+    // === VERTICAL STRUCTURES (25-39) - Super climbable! ===
+    SpiralTower = 25,     // Spiral staircase tower (very tall)
+    Scaffolding = 26,     // Construction scaffolding (easy to climb)
+    Skyscraper = 27,      // Multi-story building with floors
+    ClimbingWall = 28,    // Dense climbable wall
+    TreeHouse = 29,       // Elevated platform with ladder
+    MegaTower = 30,       // Extremely tall tower with many platforms
+    ZigzagStairs = 31,    // Zigzag stairs going up
+    Elevator = 32,        // Vertical shaft with platforms
+    Apartment = 33,       // Multi-unit vertical building
+    Pyramid = 34,         // Step pyramid (climbable sides)
+    Pagoda = 35,          // Multi-tier pagoda tower
+    Aqueduct = 36,        // Tall arched aqueduct
+    BellTower = 37,       // Very tall bell tower
+    Crane = 38,           // Construction crane (very tall)
+    SkyPlatform = 39,     // Floating platforms with ladders
+
+    COUNT
+};
+
+// Build a cozy wooden cottage (6 wide, 5 tall with peaked roof)
+static void build_cottage(World& world, int32_t base_x, int32_t base_y, uint32_t seed) {
+    // Stone foundation
+    for (int dx = 0; dx < 6; dx++) {
         place_building_block(world, base_x + dx, base_y, MaterialID::Stone);
     }
 
-    // Walls (4 tall)
-    for (int dy = 1; dy <= 4; dy++) {
-        // Left wall
+    // Wooden walls (3 tall)
+    for (int dy = 1; dy <= 3; dy++) {
+        place_building_block(world, base_x, base_y - dy, MaterialID::Wood);
+        place_building_block(world, base_x + 5, base_y - dy, MaterialID::Wood);
+    }
+
+    // Front wall with door (2-wide opening in middle)
+    for (int dx = 1; dx < 5; dx++) {
+        if (dx != 2 && dx != 3) {  // Door opening
+            place_building_block(world, base_x + dx, base_y - 1, MaterialID::Wood);
+        }
+        place_building_block(world, base_x + dx, base_y - 2, MaterialID::Wood);
+        place_building_block(world, base_x + dx, base_y - 3, MaterialID::Wood);
+    }
+
+    // Window (glass in back wall)
+    if ((seed & 1) != 0) {
+        place_building_block(world, base_x + 2, base_y - 2, MaterialID::Glass);
+        place_building_block(world, base_x + 3, base_y - 2, MaterialID::Glass);
+    }
+
+    // Peaked wooden roof
+    for (int dx = -1; dx <= 6; dx++) {
+        place_building_block(world, base_x + dx, base_y - 4, MaterialID::Wood);
+    }
+    for (int dx = 0; dx <= 5; dx++) {
+        place_building_block(world, base_x + dx, base_y - 5, MaterialID::Wood);
+    }
+    for (int dx = 1; dx <= 4; dx++) {
+        place_building_block(world, base_x + dx, base_y - 6, MaterialID::Wood);
+    }
+    // Roof peak
+    place_building_block(world, base_x + 2, base_y - 7, MaterialID::Wood);
+    place_building_block(world, base_x + 3, base_y - 7, MaterialID::Wood);
+
+    // Chimney on side (brick)
+    if ((seed & 2) != 0) {
+        place_building_block(world, base_x + 5, base_y - 5, MaterialID::Brick);
+        place_building_block(world, base_x + 5, base_y - 6, MaterialID::Brick);
+        place_building_block(world, base_x + 5, base_y - 7, MaterialID::Brick);
+    }
+}
+
+// Build a stone house with windows (9 wide, 7 tall)
+static void build_stone_house(World& world, int32_t base_x, int32_t base_y, uint32_t seed) {
+    // Double-thick stone foundation
+    for (int dx = 0; dx < 9; dx++) {
+        place_building_block(world, base_x + dx, base_y, MaterialID::Stone);
+        place_building_block(world, base_x + dx, base_y + 1, MaterialID::Stone);
+    }
+
+    // Brick walls (5 tall)
+    for (int dy = 1; dy <= 5; dy++) {
         place_building_block(world, base_x, base_y - dy, MaterialID::Brick);
-        // Right wall
-        place_building_block(world, base_x + 7, base_y - dy, MaterialID::Brick);
-        // Back wall sections (with window gap in middle)
-        if (dy != 2 && dy != 3) {
-            for (int dx = 1; dx < 7; dx++) {
-                // Skip door area (middle 2 blocks at bottom)
-                if (dy == 1 && (dx == 3 || dx == 4)) continue;
+        place_building_block(world, base_x + 8, base_y - dy, MaterialID::Brick);
+    }
+
+    // Front/back walls with windows
+    for (int dx = 1; dx < 8; dx++) {
+        for (int dy = 1; dy <= 5; dy++) {
+            // Door opening (middle 2 blocks, bottom 3 rows)
+            if ((dx == 3 || dx == 4) && dy <= 3) continue;
+            // Window openings
+            bool is_window = (dy == 3 || dy == 4) && (dx == 1 || dx == 2 || dx == 5 || dx == 6);
+            if (is_window) {
+                place_building_block(world, base_x + dx, base_y - dy, MaterialID::Glass);
+            } else {
+                place_building_block(world, base_x + dx, base_y - dy, MaterialID::Brick);
             }
         }
     }
 
-    // Front and back walls with gaps
-    for (int dx = 1; dx < 7; dx++) {
-        // Back wall top
-        place_building_block(world, base_x + dx, base_y - 4, MaterialID::Brick);
-        // Skip middle for door at ground level
-        if (dx != 3 && dx != 4) {
-            place_building_block(world, base_x + dx, base_y - 1, MaterialID::Brick);
+    // Flat stone roof with overhang
+    for (int dx = -1; dx <= 9; dx++) {
+        place_building_block(world, base_x + dx, base_y - 6, MaterialID::Stone);
+    }
+
+    // Optional second floor indicator (darker brick trim)
+    if ((seed & 4) != 0) {
+        for (int dx = 0; dx <= 8; dx++) {
+            place_building_block(world, base_x + dx, base_y - 7, MaterialID::Obsidian);
         }
+    }
+}
+
+// Build a watchtower (5 wide, 12 tall)
+static void build_watchtower(World& world, int32_t base_x, int32_t base_y, uint32_t seed) {
+    (void)seed;
+
+    // Wide stone base
+    for (int dx = -1; dx <= 5; dx++) {
+        place_building_block(world, base_x + dx, base_y, MaterialID::Stone);
+    }
+
+    // Tower body (10 tall)
+    for (int dy = 1; dy <= 10; dy++) {
+        place_building_block(world, base_x, base_y - dy, MaterialID::Stone);
+        place_building_block(world, base_x + 4, base_y - dy, MaterialID::Stone);
+
+        // Fill middle with stone, leave windows every 3 levels
+        bool is_window_level = (dy % 3 == 0);
+        if (!is_window_level) {
+            place_building_block(world, base_x + 1, base_y - dy, MaterialID::Stone);
+            place_building_block(world, base_x + 2, base_y - dy, MaterialID::Stone);
+            place_building_block(world, base_x + 3, base_y - dy, MaterialID::Stone);
+        } else {
+            // Windows
+            place_building_block(world, base_x + 1, base_y - dy, MaterialID::Glass);
+            place_building_block(world, base_x + 3, base_y - dy, MaterialID::Glass);
+        }
+    }
+
+    // Door at ground level
+    // (leave base_x+2, base_y-1 and base_y-2 empty)
+
+    // Crenellated top
+    for (int dx = -1; dx <= 5; dx++) {
+        place_building_block(world, base_x + dx, base_y - 11, MaterialID::Stone);
+    }
+    // Merlons (alternating)
+    place_building_block(world, base_x - 1, base_y - 12, MaterialID::Stone);
+    place_building_block(world, base_x + 1, base_y - 12, MaterialID::Stone);
+    place_building_block(world, base_x + 3, base_y - 12, MaterialID::Stone);
+    place_building_block(world, base_x + 5, base_y - 12, MaterialID::Stone);
+}
+
+// Build a barn (12 wide, 8 tall)
+static void build_barn(World& world, int32_t base_x, int32_t base_y, uint32_t seed) {
+    (void)seed;
+
+    // Stone foundation
+    for (int dx = 0; dx < 12; dx++) {
+        place_building_block(world, base_x + dx, base_y, MaterialID::Stone);
+    }
+
+    // Wooden walls (5 tall)
+    for (int dy = 1; dy <= 5; dy++) {
+        place_building_block(world, base_x, base_y - dy, MaterialID::Wood);
+        place_building_block(world, base_x + 11, base_y - dy, MaterialID::Wood);
+        // Partial front wall with large door opening
+        if (dy > 3) {
+            for (int dx = 1; dx < 11; dx++) {
+                place_building_block(world, base_x + dx, base_y - dy, MaterialID::Wood);
+            }
+        } else {
+            // Leave big barn door in middle (5 wide)
+            for (int dx = 1; dx < 4; dx++) {
+                place_building_block(world, base_x + dx, base_y - dy, MaterialID::Wood);
+            }
+            for (int dx = 8; dx < 11; dx++) {
+                place_building_block(world, base_x + dx, base_y - dy, MaterialID::Wood);
+            }
+        }
+    }
+
+    // Gambrel roof (barn-style)
+    for (int dx = 0; dx < 12; dx++) {
+        place_building_block(world, base_x + dx, base_y - 6, MaterialID::Wood);
+    }
+    for (int dx = 1; dx < 11; dx++) {
+        place_building_block(world, base_x + dx, base_y - 7, MaterialID::Wood);
+    }
+    for (int dx = 3; dx < 9; dx++) {
+        place_building_block(world, base_x + dx, base_y - 8, MaterialID::Wood);
+    }
+
+    // Hay loft window
+    place_building_block(world, base_x + 5, base_y - 7, MaterialID::Empty);
+    place_building_block(world, base_x + 6, base_y - 7, MaterialID::Empty);
+}
+
+// Build a village well (5 wide, 4 tall)
+static void build_well(World& world, int32_t base_x, int32_t base_y, uint32_t seed) {
+    (void)seed;
+
+    // Stone base ring
+    for (int dx = 0; dx < 5; dx++) {
+        place_building_block(world, base_x + dx, base_y, MaterialID::Stone);
+    }
+
+    // Well walls (3 tall ring)
+    for (int dy = 1; dy <= 3; dy++) {
+        place_building_block(world, base_x, base_y - dy, MaterialID::Stone);
+        place_building_block(world, base_x + 4, base_y - dy, MaterialID::Stone);
+        // Only place edges for the ring, leave inside for "water" view
+        if (dy == 3) {
+            place_building_block(world, base_x + 1, base_y - dy, MaterialID::Stone);
+            place_building_block(world, base_x + 2, base_y - dy, MaterialID::Stone);
+            place_building_block(world, base_x + 3, base_y - dy, MaterialID::Stone);
+        }
+    }
+
+    // Well posts (wood)
+    place_building_block(world, base_x, base_y - 4, MaterialID::Wood);
+    place_building_block(world, base_x + 4, base_y - 4, MaterialID::Wood);
+    place_building_block(world, base_x, base_y - 5, MaterialID::Wood);
+    place_building_block(world, base_x + 4, base_y - 5, MaterialID::Wood);
+
+    // Roof beam
+    for (int dx = 0; dx < 5; dx++) {
+        place_building_block(world, base_x + dx, base_y - 6, MaterialID::Wood);
+    }
+}
+
+// Build a wooden bridge/platform
+static void build_bridge(World& world, int32_t base_x, int32_t base_y, uint32_t seed) {
+    int length = 8 + (seed & 7);  // 8-15 long
+
+    // Main platform
+    for (int dx = 0; dx < length; dx++) {
+        place_building_block(world, base_x + dx, base_y, MaterialID::Wood);
+    }
+
+    // Railings
+    for (int dx = 0; dx < length; dx += 2) {
+        place_building_block(world, base_x + dx, base_y - 1, MaterialID::Wood);
+    }
+
+    // Support posts at ends
+    for (int dy = 1; dy <= 3; dy++) {
+        place_building_block(world, base_x, base_y + dy, MaterialID::Wood);
+        place_building_block(world, base_x + length - 1, base_y + dy, MaterialID::Wood);
+    }
+}
+
+// Build a simple fence line
+static void build_fence(World& world, int32_t base_x, int32_t base_y, uint32_t seed) {
+    int length = 6 + (seed & 7);  // 6-13 long
+
+    for (int dx = 0; dx < length; dx++) {
+        place_building_block(world, base_x + dx, base_y, MaterialID::Wood);
+        // Fence posts every 3 blocks
+        if (dx % 3 == 0) {
+            place_building_block(world, base_x + dx, base_y - 1, MaterialID::Wood);
+            place_building_block(world, base_x + dx, base_y - 2, MaterialID::Wood);
+        } else {
+            place_building_block(world, base_x + dx, base_y - 1, MaterialID::Wood);
+        }
+    }
+}
+
+// Build a decorative shrine (4 wide, 6 tall)
+static void build_shrine(World& world, int32_t base_x, int32_t base_y, uint32_t seed) {
+    (void)seed;
+
+    // Stone platform
+    for (int dx = -1; dx <= 4; dx++) {
+        place_building_block(world, base_x + dx, base_y, MaterialID::Stone);
+    }
+
+    // Pillars
+    for (int dy = 1; dy <= 4; dy++) {
+        place_building_block(world, base_x, base_y - dy, MaterialID::Stone);
+        place_building_block(world, base_x + 3, base_y - dy, MaterialID::Stone);
+    }
+
+    // Roof
+    for (int dx = -1; dx <= 4; dx++) {
+        place_building_block(world, base_x + dx, base_y - 5, MaterialID::Stone);
+    }
+    place_building_block(world, base_x + 1, base_y - 6, MaterialID::Stone);
+    place_building_block(world, base_x + 2, base_y - 6, MaterialID::Stone);
+
+    // Crystal centerpiece
+    place_building_block(world, base_x + 1, base_y - 1, MaterialID::Crystal);
+    place_building_block(world, base_x + 2, base_y - 1, MaterialID::Crystal);
+    place_building_block(world, base_x + 1, base_y - 2, MaterialID::Crystal);
+    place_building_block(world, base_x + 2, base_y - 2, MaterialID::Crystal);
+}
+
+// Build a windmill (6 wide, 14 tall)
+static void build_windmill(World& world, int32_t base_x, int32_t base_y, uint32_t seed) {
+    (void)seed;
+
+    // Stone foundation
+    for (int dx = 0; dx < 6; dx++) {
+        place_building_block(world, base_x + dx, base_y, MaterialID::Stone);
+    }
+
+    // Tapered brick tower
+    for (int dy = 1; dy <= 4; dy++) {
+        for (int dx = 0; dx < 6; dx++) {
+            if (dx == 2 || dx == 3) {
+                // Door at ground, windows higher
+                if (dy > 2) {
+                    place_building_block(world, base_x + dx, base_y - dy, MaterialID::Brick);
+                }
+            } else {
+                place_building_block(world, base_x + dx, base_y - dy, MaterialID::Brick);
+            }
+        }
+    }
+
+    // Narrower upper section
+    for (int dy = 5; dy <= 8; dy++) {
+        place_building_block(world, base_x + 1, base_y - dy, MaterialID::Brick);
+        place_building_block(world, base_x + 4, base_y - dy, MaterialID::Brick);
+        // Window in middle
+        if (dy != 6 && dy != 7) {
+            place_building_block(world, base_x + 2, base_y - dy, MaterialID::Brick);
+            place_building_block(world, base_x + 3, base_y - dy, MaterialID::Brick);
+        } else {
+            place_building_block(world, base_x + 2, base_y - dy, MaterialID::Glass);
+            place_building_block(world, base_x + 3, base_y - dy, MaterialID::Glass);
+        }
+    }
+
+    // Top cap
+    for (int dx = 1; dx <= 4; dx++) {
+        place_building_block(world, base_x + dx, base_y - 9, MaterialID::Wood);
+    }
+    place_building_block(world, base_x + 2, base_y - 10, MaterialID::Wood);
+    place_building_block(world, base_x + 3, base_y - 10, MaterialID::Wood);
+
+    // Windmill blades (simple cross pattern with wood)
+    // Horizontal blade
+    for (int dx = -3; dx <= 8; dx++) {
+        place_building_block(world, base_x + dx, base_y - 7, MaterialID::Wood);
+    }
+    // Vertical blade
+    for (int dy = 4; dy <= 10; dy++) {
+        place_building_block(world, base_x + 2, base_y - dy, MaterialID::Wood);
+        place_building_block(world, base_x + 3, base_y - dy, MaterialID::Wood);
+    }
+}
+
+// Build a two-story inn (14 wide, 10 tall)
+static void build_inn(World& world, int32_t base_x, int32_t base_y, uint32_t seed) {
+    (void)seed;
+
+    // Large stone foundation
+    for (int dx = 0; dx < 14; dx++) {
+        place_building_block(world, base_x + dx, base_y, MaterialID::Stone);
+    }
+
+    // First floor walls (brick)
+    for (int dy = 1; dy <= 4; dy++) {
+        place_building_block(world, base_x, base_y - dy, MaterialID::Brick);
+        place_building_block(world, base_x + 13, base_y - dy, MaterialID::Brick);
+        for (int dx = 1; dx < 13; dx++) {
+            // Main door (3 wide)
+            if ((dx >= 5 && dx <= 7) && dy <= 3) continue;
+            // Windows
+            bool is_window = (dy == 2 || dy == 3) && (dx == 2 || dx == 3 || dx == 10 || dx == 11);
+            if (is_window) {
+                place_building_block(world, base_x + dx, base_y - dy, MaterialID::Glass);
+            } else {
+                place_building_block(world, base_x + dx, base_y - dy, MaterialID::Brick);
+            }
+        }
+    }
+
+    // Second floor (slightly inset)
+    for (int dy = 5; dy <= 7; dy++) {
+        place_building_block(world, base_x + 1, base_y - dy, MaterialID::Wood);
+        place_building_block(world, base_x + 12, base_y - dy, MaterialID::Wood);
+        for (int dx = 2; dx < 12; dx++) {
+            // Windows on second floor
+            bool is_window = (dy == 5 || dy == 6) && (dx == 3 || dx == 4 || dx == 9 || dx == 10);
+            if (is_window) {
+                place_building_block(world, base_x + dx, base_y - dy, MaterialID::Glass);
+            } else {
+                place_building_block(world, base_x + dx, base_y - dy, MaterialID::Wood);
+            }
+        }
+    }
+
+    // Floor separator (stone trim)
+    for (int dx = 0; dx < 14; dx++) {
+        place_building_block(world, base_x + dx, base_y - 5, MaterialID::Stone);
     }
 
     // Peaked roof
     for (int level = 0; level < 3; level++) {
         int start = level;
-        int end = 8 - level;
+        int end = 14 - level;
         for (int dx = start; dx < end; dx++) {
-            place_building_block(world, base_x + dx, base_y - 5 - level, MaterialID::Wood);
+            place_building_block(world, base_x + dx, base_y - 8 - level, MaterialID::Wood);
         }
+    }
+
+    // Chimney
+    place_building_block(world, base_x + 11, base_y - 9, MaterialID::Brick);
+    place_building_block(world, base_x + 11, base_y - 10, MaterialID::Brick);
+    place_building_block(world, base_x + 11, base_y - 11, MaterialID::Brick);
+
+    // Sign post (copper decoration)
+    place_building_block(world, base_x + 4, base_y - 4, MaterialID::Copper);
+    place_building_block(world, base_x + 3, base_y - 4, MaterialID::Copper);
+}
+
+// ============================================================================
+// ADVANCED STRUCTURES - Complex multi-level buildings with climbable features
+// ============================================================================
+
+// Build a grand castle with towers and battlements (25 wide, 20 tall)
+static void build_castle(World& world, int32_t base_x, int32_t base_y, uint32_t seed) {
+    (void)seed;
+
+    // Main foundation
+    for (int dx = 0; dx < 25; dx++) {
+        place_building_block(world, base_x + dx, base_y, MaterialID::Stone);
+        place_building_block(world, base_x + dx, base_y + 1, MaterialID::Stone);
+    }
+
+    // Main castle walls (10 tall)
+    for (int dy = 1; dy <= 10; dy++) {
+        // Outer walls
+        place_building_block(world, base_x, base_y - dy, MaterialID::Stone);
+        place_building_block(world, base_x + 24, base_y - dy, MaterialID::Stone);
+
+        // Fill walls with windows
+        for (int dx = 1; dx < 24; dx++) {
+            // Gate opening (middle 5 blocks, bottom 5 rows)
+            if (dx >= 10 && dx <= 14 && dy <= 5) continue;
+            // Arrow slit windows
+            bool is_window = (dy == 6 || dy == 8) && (dx % 4 == 2);
+            if (is_window) {
+                place_building_block(world, base_x + dx, base_y - dy, MaterialID::Glass);
+            } else {
+                place_building_block(world, base_x + dx, base_y - dy, MaterialID::Stone);
+            }
+        }
+    }
+
+    // Battlements/crenellations on top
+    for (int dx = 0; dx < 25; dx += 2) {
+        place_building_block(world, base_x + dx, base_y - 11, MaterialID::Stone);
+        place_building_block(world, base_x + dx, base_y - 12, MaterialID::Stone);
+    }
+
+    // Left tower (taller)
+    for (int dy = 10; dy <= 16; dy++) {
+        for (int dx = 0; dx < 5; dx++) {
+            place_building_block(world, base_x + dx, base_y - dy, MaterialID::Stone);
+        }
+    }
+    // Tower crenellations
+    for (int dx = 0; dx < 5; dx += 2) {
+        place_building_block(world, base_x + dx, base_y - 17, MaterialID::Stone);
+        place_building_block(world, base_x + dx, base_y - 18, MaterialID::Stone);
+    }
+
+    // Right tower
+    for (int dy = 10; dy <= 16; dy++) {
+        for (int dx = 20; dx < 25; dx++) {
+            place_building_block(world, base_x + dx, base_y - dy, MaterialID::Stone);
+        }
+    }
+    for (int dx = 20; dx < 25; dx += 2) {
+        place_building_block(world, base_x + dx, base_y - 17, MaterialID::Stone);
+        place_building_block(world, base_x + dx, base_y - 18, MaterialID::Stone);
+    }
+
+    // Center keep (above gate)
+    for (int dy = 10; dy <= 14; dy++) {
+        for (int dx = 8; dx < 17; dx++) {
+            if (dx == 12 && dy <= 12) continue;  // Keep door
+            place_building_block(world, base_x + dx, base_y - dy, MaterialID::Stone);
+        }
+    }
+    // Keep roof
+    for (int level = 0; level < 3; level++) {
+        for (int dx = 9 + level; dx < 16 - level; dx++) {
+            place_building_block(world, base_x + dx, base_y - 15 - level, MaterialID::Wood);
+        }
+    }
+
+    // Interior stairs for climbing (people can use these!)
+    for (int step = 0; step < 8; step++) {
+        place_building_block(world, base_x + 2 + step, base_y - 1 - step, MaterialID::Stone);
+        place_building_block(world, base_x + 22 - step, base_y - 1 - step, MaterialID::Stone);
+    }
+
+    // Walkway inside castle walls
+    for (int dx = 4; dx < 21; dx++) {
+        place_building_block(world, base_x + dx, base_y - 8, MaterialID::Stone);
     }
 }
 
-// Build a tower (4 wide, 10 tall)
-static void build_tower(World& world, int32_t base_x, int32_t base_y, uint32_t& /*seed*/) {
+// Build a church with tall steeple (10 wide, 18 tall)
+static void build_church(World& world, int32_t base_x, int32_t base_y, uint32_t seed) {
+    (void)seed;
+
     // Foundation
-    for (int dx = 0; dx < 4; dx++) {
+    for (int dx = 0; dx < 10; dx++) {
         place_building_block(world, base_x + dx, base_y, MaterialID::Stone);
     }
 
-    // Tower walls (8 tall)
-    for (int dy = 1; dy <= 8; dy++) {
+    // Main building walls (6 tall)
+    for (int dy = 1; dy <= 6; dy++) {
         place_building_block(world, base_x, base_y - dy, MaterialID::Stone);
-        place_building_block(world, base_x + 3, base_y - dy, MaterialID::Stone);
-        // Windows every 3 levels
-        if (dy % 3 != 0) {
-            place_building_block(world, base_x + 1, base_y - dy, MaterialID::Stone);
-            place_building_block(world, base_x + 2, base_y - dy, MaterialID::Stone);
+        place_building_block(world, base_x + 9, base_y - dy, MaterialID::Stone);
+        for (int dx = 1; dx < 9; dx++) {
+            // Doorway
+            if ((dx == 4 || dx == 5) && dy <= 3) continue;
+            // Stained glass windows
+            bool is_window = (dy >= 3 && dy <= 5) && (dx == 2 || dx == 7);
+            if (is_window) {
+                place_building_block(world, base_x + dx, base_y - dy, MaterialID::Crystal);  // Colorful!
+            } else {
+                place_building_block(world, base_x + dx, base_y - dy, MaterialID::Stone);
+            }
         }
     }
 
-    // Crenellations at top
-    place_building_block(world, base_x, base_y - 9, MaterialID::Stone);
-    place_building_block(world, base_x + 3, base_y - 9, MaterialID::Stone);
-    place_building_block(world, base_x, base_y - 10, MaterialID::Stone);
-    place_building_block(world, base_x + 3, base_y - 10, MaterialID::Stone);
+    // Peaked roof
+    for (int level = 0; level < 4; level++) {
+        for (int dx = level; dx < 10 - level; dx++) {
+            place_building_block(world, base_x + dx, base_y - 7 - level, MaterialID::Wood);
+        }
+    }
+
+    // Steeple/bell tower (centered)
+    for (int dy = 11; dy <= 16; dy++) {
+        place_building_block(world, base_x + 4, base_y - dy, MaterialID::Stone);
+        place_building_block(world, base_x + 5, base_y - dy, MaterialID::Stone);
+    }
+    // Steeple point
+    place_building_block(world, base_x + 4, base_y - 17, MaterialID::Copper);
+    place_building_block(world, base_x + 5, base_y - 17, MaterialID::Copper);
+    place_building_block(world, base_x + 4, base_y - 18, MaterialID::Gold);  // Cross top
+
+    // Bell opening
+    place_building_block(world, base_x + 4, base_y - 14, MaterialID::Empty);
+    place_building_block(world, base_x + 5, base_y - 14, MaterialID::Empty);
 }
 
-// Build a platform/bridge
-static void build_platform(World& world, int32_t base_x, int32_t base_y, int32_t length, uint32_t& /*seed*/) {
-    for (int dx = 0; dx < length; dx++) {
-        place_building_block(world, base_x + dx, base_y, MaterialID::Wood);
+// Build market stalls (18 wide, 6 tall)
+static void build_market(World& world, int32_t base_x, int32_t base_y, uint32_t seed) {
+    // 3 connected stalls
+    for (int stall = 0; stall < 3; stall++) {
+        int sx = base_x + stall * 6;
+
+        // Counter
+        for (int dx = 0; dx < 5; dx++) {
+            place_building_block(world, sx + dx, base_y, MaterialID::Wood);
+            place_building_block(world, sx + dx, base_y - 1, MaterialID::Wood);
+        }
+
+        // Support posts
+        place_building_block(world, sx, base_y - 2, MaterialID::Wood);
+        place_building_block(world, sx, base_y - 3, MaterialID::Wood);
+        place_building_block(world, sx + 4, base_y - 2, MaterialID::Wood);
+        place_building_block(world, sx + 4, base_y - 3, MaterialID::Wood);
+
+        // Awning/roof
+        MaterialID awning = (stall == 0) ? MaterialID::Brick :
+                           (stall == 1) ? MaterialID::Wood : MaterialID::Stone;
+        for (int dx = -1; dx < 6; dx++) {
+            place_building_block(world, sx + dx, base_y - 4, awning);
+        }
+
+        // Goods display (varied by seed)
+        MaterialID goods = ((seed >> stall) & 3) == 0 ? MaterialID::Crystal :
+                          ((seed >> stall) & 3) == 1 ? MaterialID::Gold :
+                          ((seed >> stall) & 3) == 2 ? MaterialID::Copper : MaterialID::Glass;
+        place_building_block(world, sx + 1, base_y - 2, goods);
+        place_building_block(world, sx + 3, base_y - 2, goods);
     }
 }
 
-// Main person update function - simplified for stable movement
+// Build a lighthouse (6 wide, 22 tall)
+static void build_lighthouse(World& world, int32_t base_x, int32_t base_y, uint32_t seed) {
+    (void)seed;
+
+    // Wide stone base
+    for (int dx = -1; dx <= 6; dx++) {
+        place_building_block(world, base_x + dx, base_y, MaterialID::Stone);
+        place_building_block(world, base_x + dx, base_y + 1, MaterialID::Stone);
+    }
+
+    // Tapered tower - starts 6 wide, narrows to 4
+    for (int dy = 1; dy <= 6; dy++) {
+        for (int dx = 0; dx < 6; dx++) {
+            if (dx == 2 || dx == 3) {
+                if (dy <= 3) continue;  // Door
+            }
+            place_building_block(world, base_x + dx, base_y - dy, MaterialID::Brick);
+        }
+    }
+
+    // Middle section (narrower)
+    for (int dy = 7; dy <= 14; dy++) {
+        place_building_block(world, base_x + 1, base_y - dy, MaterialID::Brick);
+        place_building_block(world, base_x + 4, base_y - dy, MaterialID::Brick);
+        // Spiral windows
+        bool is_window = ((dy - 7) % 3 == 1);
+        if (!is_window) {
+            place_building_block(world, base_x + 2, base_y - dy, MaterialID::Brick);
+            place_building_block(world, base_x + 3, base_y - dy, MaterialID::Brick);
+        } else {
+            place_building_block(world, base_x + 2, base_y - dy, MaterialID::Glass);
+            place_building_block(world, base_x + 3, base_y - dy, MaterialID::Glass);
+        }
+    }
+
+    // Light chamber
+    for (int dx = 0; dx < 6; dx++) {
+        place_building_block(world, base_x + dx, base_y - 15, MaterialID::Stone);
+    }
+    // Glass walls of light chamber
+    for (int dy = 16; dy <= 18; dy++) {
+        place_building_block(world, base_x + 1, base_y - dy, MaterialID::Glass);
+        place_building_block(world, base_x + 4, base_y - dy, MaterialID::Glass);
+        place_building_block(world, base_x + 2, base_y - dy, MaterialID::Glass);
+        place_building_block(world, base_x + 3, base_y - dy, MaterialID::Glass);
+    }
+
+    // Roof cap
+    for (int dx = 0; dx < 6; dx++) {
+        place_building_block(world, base_x + dx, base_y - 19, MaterialID::Copper);
+    }
+    place_building_block(world, base_x + 2, base_y - 20, MaterialID::Copper);
+    place_building_block(world, base_x + 3, base_y - 20, MaterialID::Copper);
+    place_building_block(world, base_x + 2, base_y - 21, MaterialID::Gold);  // Light!
+    place_building_block(world, base_x + 3, base_y - 21, MaterialID::Gold);
+
+    // Interior stairs for climbing
+    for (int step = 0; step < 5; step++) {
+        place_building_block(world, base_x + 2, base_y - 1 - step, MaterialID::Stone);
+    }
+}
+
+// Build a small tavern (8 wide, 5 tall)
+static void build_tavern(World& world, int32_t base_x, int32_t base_y, uint32_t seed) {
+    (void)seed;
+
+    // Foundation
+    for (int dx = 0; dx < 8; dx++) {
+        place_building_block(world, base_x + dx, base_y, MaterialID::Stone);
+    }
+
+    // Walls
+    for (int dy = 1; dy <= 4; dy++) {
+        place_building_block(world, base_x, base_y - dy, MaterialID::Wood);
+        place_building_block(world, base_x + 7, base_y - dy, MaterialID::Wood);
+        for (int dx = 1; dx < 7; dx++) {
+            if ((dx == 3 || dx == 4) && dy <= 2) continue;  // Door
+            bool is_window = (dy == 2 || dy == 3) && (dx == 1 || dx == 6);
+            if (is_window) {
+                place_building_block(world, base_x + dx, base_y - dy, MaterialID::Glass);
+            } else {
+                place_building_block(world, base_x + dx, base_y - dy, MaterialID::Wood);
+            }
+        }
+    }
+
+    // Flat roof with overhang
+    for (int dx = -1; dx <= 8; dx++) {
+        place_building_block(world, base_x + dx, base_y - 5, MaterialID::Wood);
+    }
+
+    // Sign (like a pub sign)
+    place_building_block(world, base_x - 1, base_y - 3, MaterialID::Wood);
+    place_building_block(world, base_x - 1, base_y - 4, MaterialID::Copper);
+}
+
+// Build climbable stairs (8 wide, variable height)
+static void build_stairs(World& world, int32_t base_x, int32_t base_y, uint32_t seed) {
+    int height = 6 + (seed & 7);  // 6-13 steps
+
+    for (int step = 0; step < height; step++) {
+        // Each step is 1 wide, going up and right
+        for (int w = 0; w < 2; w++) {  // 2 blocks wide for easier climbing
+            place_building_block(world, base_x + step, base_y - step, MaterialID::Stone);
+            // Add railing on one side
+            if (step % 2 == 0) {
+                place_building_block(world, base_x + step, base_y - step - 1, MaterialID::Wood);
+            }
+        }
+    }
+
+    // Platform at top
+    for (int dx = 0; dx < 4; dx++) {
+        place_building_block(world, base_x + height + dx - 1, base_y - height + 1, MaterialID::Stone);
+    }
+}
+
+// Build a vertical ladder (2 wide, variable height)
+static void build_ladder(World& world, int32_t base_x, int32_t base_y, uint32_t seed) {
+    int height = 8 + (seed & 7);  // 8-15 tall
+
+    // Ladder rails
+    for (int dy = 0; dy < height; dy++) {
+        place_building_block(world, base_x, base_y - dy, MaterialID::Wood);
+        place_building_block(world, base_x + 1, base_y - dy, MaterialID::Wood);
+    }
+
+    // Platform at top
+    for (int dx = -1; dx <= 3; dx++) {
+        place_building_block(world, base_x + dx, base_y - height, MaterialID::Wood);
+    }
+}
+
+// Build elevated skywalk bridge (variable length, 8 blocks up)
+static void build_skywalk_bridge(World& world, int32_t base_x, int32_t base_y, uint32_t seed) {
+    int length = 12 + (seed & 7);  // 12-19 long
+    int elevation = 6 + (seed & 3);  // 6-9 blocks high
+
+    // Support pillars at ends
+    for (int dy = 0; dy <= elevation; dy++) {
+        place_building_block(world, base_x + 1, base_y - dy, MaterialID::Stone);
+        place_building_block(world, base_x + length - 2, base_y - dy, MaterialID::Stone);
+    }
+
+    // Bridge deck
+    for (int dx = 0; dx < length; dx++) {
+        place_building_block(world, base_x + dx, base_y - elevation, MaterialID::Wood);
+    }
+
+    // Railings
+    for (int dx = 0; dx < length; dx += 2) {
+        place_building_block(world, base_x + dx, base_y - elevation - 1, MaterialID::Wood);
+    }
+
+    // Stairs up on left side
+    for (int step = 0; step < elevation; step++) {
+        place_building_block(world, base_x - 1 - step, base_y - step, MaterialID::Stone);
+    }
+}
+
+// Build a grand hall (20 wide, 12 tall)
+static void build_grand_hall(World& world, int32_t base_x, int32_t base_y, uint32_t seed) {
+    (void)seed;
+
+    // Large foundation
+    for (int dx = 0; dx < 20; dx++) {
+        place_building_block(world, base_x + dx, base_y, MaterialID::Stone);
+    }
+
+    // Main walls
+    for (int dy = 1; dy <= 8; dy++) {
+        place_building_block(world, base_x, base_y - dy, MaterialID::Stone);
+        place_building_block(world, base_x + 19, base_y - dy, MaterialID::Stone);
+
+        for (int dx = 1; dx < 19; dx++) {
+            // Large doorway
+            if (dx >= 8 && dx <= 11 && dy <= 5) continue;
+            // Tall windows
+            bool is_window = (dy >= 3 && dy <= 7) && (dx == 3 || dx == 6 || dx == 13 || dx == 16);
+            if (is_window) {
+                place_building_block(world, base_x + dx, base_y - dy, MaterialID::Glass);
+            } else {
+                place_building_block(world, base_x + dx, base_y - dy, MaterialID::Stone);
+            }
+        }
+    }
+
+    // Arched roof
+    for (int level = 0; level < 4; level++) {
+        for (int dx = level; dx < 20 - level; dx++) {
+            place_building_block(world, base_x + dx, base_y - 9 - level, MaterialID::Wood);
+        }
+    }
+
+    // Interior pillars (people can climb between them)
+    for (int pillar = 0; pillar < 3; pillar++) {
+        int px = base_x + 4 + pillar * 6;
+        for (int dy = 1; dy <= 7; dy++) {
+            place_building_block(world, px, base_y - dy, MaterialID::Stone);
+        }
+    }
+
+    // Upper walkway (for people to explore)
+    for (int dx = 2; dx < 18; dx++) {
+        place_building_block(world, base_x + dx, base_y - 6, MaterialID::Wood);
+    }
+}
+
+// Build an observatory with dome (8 wide, 16 tall)
+static void build_observatory(World& world, int32_t base_x, int32_t base_y, uint32_t seed) {
+    (void)seed;
+
+    // Foundation
+    for (int dx = 0; dx < 8; dx++) {
+        place_building_block(world, base_x + dx, base_y, MaterialID::Stone);
+    }
+
+    // Tower base (brick)
+    for (int dy = 1; dy <= 8; dy++) {
+        for (int dx = 0; dx < 8; dx++) {
+            if ((dx == 3 || dx == 4) && dy <= 3) continue;  // Door
+            bool is_edge = (dx == 0 || dx == 7);
+            if (is_edge) {
+                place_building_block(world, base_x + dx, base_y - dy, MaterialID::Brick);
+            } else {
+                // Windows on certain levels
+                bool is_window = (dy == 5 || dy == 7) && (dx == 2 || dx == 5);
+                if (is_window) {
+                    place_building_block(world, base_x + dx, base_y - dy, MaterialID::Glass);
+                } else {
+                    place_building_block(world, base_x + dx, base_y - dy, MaterialID::Brick);
+                }
+            }
+        }
+    }
+
+    // Observation platform
+    for (int dx = -1; dx <= 8; dx++) {
+        place_building_block(world, base_x + dx, base_y - 9, MaterialID::Stone);
+    }
+
+    // Dome structure
+    // Bottom ring
+    for (int dx = 1; dx <= 6; dx++) {
+        place_building_block(world, base_x + dx, base_y - 10, MaterialID::Copper);
+    }
+    // Middle ring
+    for (int dx = 2; dx <= 5; dx++) {
+        place_building_block(world, base_x + dx, base_y - 11, MaterialID::Copper);
+        place_building_block(world, base_x + dx, base_y - 12, MaterialID::Copper);
+    }
+    // Top
+    place_building_block(world, base_x + 3, base_y - 13, MaterialID::Copper);
+    place_building_block(world, base_x + 4, base_y - 13, MaterialID::Copper);
+    place_building_block(world, base_x + 3, base_y - 14, MaterialID::Glass);  // Telescope opening
+    place_building_block(world, base_x + 4, base_y - 14, MaterialID::Glass);
+
+    // Crystal telescope
+    place_building_block(world, base_x + 3, base_y - 15, MaterialID::Crystal);
+    place_building_block(world, base_x + 4, base_y - 15, MaterialID::Crystal);
+
+    // Interior spiral stairs
+    for (int step = 0; step < 7; step++) {
+        int sx = (step % 2 == 0) ? 2 : 5;
+        place_building_block(world, base_x + sx, base_y - 1 - step, MaterialID::Stone);
+    }
+}
+
+// Build a decorative fountain (7 wide, 5 tall)
+static void build_fountain(World& world, int32_t base_x, int32_t base_y, uint32_t seed) {
+    (void)seed;
+
+    // Base pool
+    for (int dx = 0; dx < 7; dx++) {
+        place_building_block(world, base_x + dx, base_y, MaterialID::Stone);
+        if (dx > 0 && dx < 6) {
+            place_building_block(world, base_x + dx, base_y - 1, MaterialID::Stone);
+        }
+    }
+    // Pool walls
+    place_building_block(world, base_x, base_y - 1, MaterialID::Stone);
+    place_building_block(world, base_x, base_y - 2, MaterialID::Stone);
+    place_building_block(world, base_x + 6, base_y - 1, MaterialID::Stone);
+    place_building_block(world, base_x + 6, base_y - 2, MaterialID::Stone);
+
+    // Center pillar
+    place_building_block(world, base_x + 3, base_y - 1, MaterialID::Stone);
+    place_building_block(world, base_x + 3, base_y - 2, MaterialID::Stone);
+    place_building_block(world, base_x + 3, base_y - 3, MaterialID::Stone);
+
+    // Top basin
+    place_building_block(world, base_x + 2, base_y - 4, MaterialID::Copper);
+    place_building_block(world, base_x + 3, base_y - 4, MaterialID::Copper);
+    place_building_block(world, base_x + 4, base_y - 4, MaterialID::Copper);
+}
+
+// Build a statue (4 wide, 8 tall)
+static void build_statue(World& world, int32_t base_x, int32_t base_y, uint32_t seed) {
+    // Pedestal
+    for (int dx = 0; dx < 4; dx++) {
+        place_building_block(world, base_x + dx, base_y, MaterialID::Stone);
+        place_building_block(world, base_x + dx, base_y - 1, MaterialID::Stone);
+    }
+    place_building_block(world, base_x + 1, base_y - 2, MaterialID::Stone);
+    place_building_block(world, base_x + 2, base_y - 2, MaterialID::Stone);
+
+    // Figure (varied material by seed)
+    MaterialID statue_mat = (seed & 1) ? MaterialID::Copper : MaterialID::Stone;
+
+    // Body
+    place_building_block(world, base_x + 1, base_y - 3, statue_mat);
+    place_building_block(world, base_x + 2, base_y - 3, statue_mat);
+    place_building_block(world, base_x + 1, base_y - 4, statue_mat);
+    place_building_block(world, base_x + 2, base_y - 4, statue_mat);
+    place_building_block(world, base_x + 1, base_y - 5, statue_mat);
+    place_building_block(world, base_x + 2, base_y - 5, statue_mat);
+
+    // Head
+    place_building_block(world, base_x + 1, base_y - 6, statue_mat);
+    place_building_block(world, base_x + 2, base_y - 6, statue_mat);
+    place_building_block(world, base_x + 1, base_y - 7, statue_mat);
+    place_building_block(world, base_x + 2, base_y - 7, statue_mat);
+
+    // Arms (extended)
+    if (seed & 2) {
+        place_building_block(world, base_x, base_y - 5, statue_mat);
+        place_building_block(world, base_x + 3, base_y - 5, statue_mat);
+    }
+}
+
+// Build a walled garden (12 wide, 4 tall)
+static void build_garden(World& world, int32_t base_x, int32_t base_y, uint32_t seed) {
+    // Stone walls
+    for (int dx = 0; dx < 12; dx++) {
+        place_building_block(world, base_x + dx, base_y, MaterialID::Stone);
+        if (dx == 0 || dx == 11 || dx == 5 || dx == 6) {
+            // Wall posts taller
+            place_building_block(world, base_x + dx, base_y - 1, MaterialID::Stone);
+            place_building_block(world, base_x + dx, base_y - 2, MaterialID::Stone);
+        }
+    }
+
+    // Gate opening in middle (already empty)
+
+    // Plants inside
+    for (int dx = 1; dx < 5; dx++) {
+        MaterialID plant = ((seed + dx) & 3) == 0 ? MaterialID::Flower :
+                          ((seed + dx) & 3) == 1 ? MaterialID::Moss :
+                          ((seed + dx) & 3) == 2 ? MaterialID::Grass : MaterialID::Vine;
+        place_building_block(world, base_x + dx, base_y - 1, plant);
+    }
+    for (int dx = 7; dx < 11; dx++) {
+        MaterialID plant = ((seed + dx) & 3) == 0 ? MaterialID::Flower :
+                          ((seed + dx) & 3) == 1 ? MaterialID::Moss :
+                          ((seed + dx) & 3) == 2 ? MaterialID::Grass : MaterialID::Vine;
+        place_building_block(world, base_x + dx, base_y - 1, plant);
+    }
+
+    // Tree in center of each half
+    place_building_block(world, base_x + 2, base_y - 2, MaterialID::Wood);
+    place_building_block(world, base_x + 2, base_y - 3, MaterialID::Leaf);
+    place_building_block(world, base_x + 9, base_y - 2, MaterialID::Wood);
+    place_building_block(world, base_x + 9, base_y - 3, MaterialID::Leaf);
+}
+
+// Build a wooden dock (variable length, 3 tall)
+static void build_dock(World& world, int32_t base_x, int32_t base_y, uint32_t seed) {
+    int length = 10 + (seed & 7);  // 10-17 long
+
+    // Support posts going down
+    for (int dx = 0; dx < length; dx += 3) {
+        for (int dy = 0; dy < 4; dy++) {
+            place_building_block(world, base_x + dx, base_y + dy, MaterialID::Wood);
+        }
+    }
+
+    // Deck planks
+    for (int dx = 0; dx < length; dx++) {
+        place_building_block(world, base_x + dx, base_y, MaterialID::Wood);
+    }
+
+    // End mooring post
+    place_building_block(world, base_x + length - 1, base_y - 1, MaterialID::Wood);
+    place_building_block(world, base_x + length - 1, base_y - 2, MaterialID::Wood);
+}
+
+// Build a simple climbable tower with platforms (5 wide, 12 tall)
+static void build_tower(World& world, int32_t base_x, int32_t base_y, uint32_t seed) {
+    (void)seed;
+
+    // Foundation
+    for (int dx = 0; dx < 5; dx++) {
+        place_building_block(world, base_x + dx, base_y, MaterialID::Stone);
+    }
+
+    // Tower walls with interior platforms for climbing
+    for (int dy = 1; dy <= 10; dy++) {
+        place_building_block(world, base_x, base_y - dy, MaterialID::Stone);
+        place_building_block(world, base_x + 4, base_y - dy, MaterialID::Stone);
+
+        // Interior platforms every 3 levels (people can climb these!)
+        if (dy % 3 == 0) {
+            for (int dx = 1; dx < 4; dx++) {
+                place_building_block(world, base_x + dx, base_y - dy, MaterialID::Wood);
+            }
+        }
+    }
+
+    // Top platform
+    for (int dx = 0; dx < 5; dx++) {
+        place_building_block(world, base_x + dx, base_y - 11, MaterialID::Stone);
+    }
+    // Crenellations
+    place_building_block(world, base_x, base_y - 12, MaterialID::Stone);
+    place_building_block(world, base_x + 2, base_y - 12, MaterialID::Stone);
+    place_building_block(world, base_x + 4, base_y - 12, MaterialID::Stone);
+}
+
+// ============================================================================
+// VERTICAL STRUCTURES - Super climbable multi-level buildings!
+// ============================================================================
+
+// Build a spiral tower with wrap-around stairs (6 wide, 20 tall)
+static void build_spiral_tower(World& world, int32_t base_x, int32_t base_y, uint32_t seed) {
+    (void)seed;
+    int height = 18;
+
+    // Foundation
+    for (int dx = 0; dx < 6; dx++) {
+        place_building_block(world, base_x + dx, base_y, MaterialID::Stone);
+    }
+
+    // Outer walls
+    for (int dy = 1; dy <= height; dy++) {
+        place_building_block(world, base_x, base_y - dy, MaterialID::Brick);
+        place_building_block(world, base_x + 5, base_y - dy, MaterialID::Brick);
+    }
+
+    // Spiral stairs inside - platforms on alternating sides each level
+    for (int level = 0; level < height / 2; level++) {
+        int level_y = base_y - 2 - (level * 2);
+        if (level % 2 == 0) {
+            // Platforms on left
+            for (int dx = 1; dx <= 3; dx++) {
+                place_building_block(world, base_x + dx, level_y, MaterialID::Wood);
+            }
+        } else {
+            // Platforms on right
+            for (int dx = 2; dx <= 4; dx++) {
+                place_building_block(world, base_x + dx, level_y, MaterialID::Wood);
+            }
+        }
+    }
+
+    // Top observation deck
+    for (int dx = -1; dx <= 6; dx++) {
+        place_building_block(world, base_x + dx, base_y - height - 1, MaterialID::Stone);
+    }
+    // Railings
+    place_building_block(world, base_x - 1, base_y - height - 2, MaterialID::Wood);
+    place_building_block(world, base_x + 6, base_y - height - 2, MaterialID::Wood);
+}
+
+// Build construction scaffolding (8 wide, 15 tall) - super easy to climb!
+static void build_scaffolding(World& world, int32_t base_x, int32_t base_y, uint32_t seed) {
+    (void)seed;
+    int height = 14;
+
+    // Vertical supports
+    for (int dy = 0; dy <= height; dy++) {
+        place_building_block(world, base_x, base_y - dy, MaterialID::Wood);
+        place_building_block(world, base_x + 3, base_y - dy, MaterialID::Wood);
+        place_building_block(world, base_x + 6, base_y - dy, MaterialID::Wood);
+    }
+
+    // Horizontal platforms every 2 levels (very easy climbing!)
+    for (int level = 0; level <= height; level += 2) {
+        for (int dx = 0; dx <= 6; dx++) {
+            place_building_block(world, base_x + dx, base_y - level, MaterialID::Wood);
+        }
+    }
+
+    // Cross bracing for visual interest
+    for (int level = 1; level < height; level += 4) {
+        place_building_block(world, base_x + 1, base_y - level, MaterialID::Wood);
+        place_building_block(world, base_x + 2, base_y - level - 1, MaterialID::Wood);
+        place_building_block(world, base_x + 4, base_y - level, MaterialID::Wood);
+        place_building_block(world, base_x + 5, base_y - level - 1, MaterialID::Wood);
+    }
+}
+
+// Build a skyscraper (10 wide, 25 tall) with many floors
+static void build_skyscraper(World& world, int32_t base_x, int32_t base_y, uint32_t seed) {
+    (void)seed;
+    int floors = 6;
+    int floor_height = 4;
+    int total_height = floors * floor_height;
+
+    // Foundation
+    for (int dx = 0; dx < 10; dx++) {
+        place_building_block(world, base_x + dx, base_y, MaterialID::Stone);
+        place_building_block(world, base_x + dx, base_y + 1, MaterialID::Stone);
+    }
+
+    // Build each floor
+    for (int floor = 0; floor < floors; floor++) {
+        int floor_base = base_y - (floor * floor_height);
+
+        // Walls
+        for (int dy = 1; dy <= floor_height; dy++) {
+            place_building_block(world, base_x, floor_base - dy, MaterialID::Brick);
+            place_building_block(world, base_x + 9, floor_base - dy, MaterialID::Brick);
+
+            // Windows on every floor
+            if (dy == 2 || dy == 3) {
+                place_building_block(world, base_x + 2, floor_base - dy, MaterialID::Glass);
+                place_building_block(world, base_x + 3, floor_base - dy, MaterialID::Glass);
+                place_building_block(world, base_x + 6, floor_base - dy, MaterialID::Glass);
+                place_building_block(world, base_x + 7, floor_base - dy, MaterialID::Glass);
+            }
+        }
+
+        // Floor/ceiling
+        for (int dx = 1; dx < 9; dx++) {
+            place_building_block(world, base_x + dx, floor_base - floor_height, MaterialID::Stone);
+        }
+
+        // Internal stairs on alternating sides
+        if (floor % 2 == 0) {
+            for (int step = 0; step < 3; step++) {
+                place_building_block(world, base_x + 1 + step, floor_base - 1 - step, MaterialID::Stone);
+            }
+        } else {
+            for (int step = 0; step < 3; step++) {
+                place_building_block(world, base_x + 8 - step, floor_base - 1 - step, MaterialID::Stone);
+            }
+        }
+    }
+
+    // Rooftop
+    for (int dx = 0; dx < 10; dx++) {
+        place_building_block(world, base_x + dx, base_y - total_height - 1, MaterialID::Metal);
+    }
+    // Antenna
+    for (int dy = 0; dy < 4; dy++) {
+        place_building_block(world, base_x + 5, base_y - total_height - 2 - dy, MaterialID::Metal);
+    }
+}
+
+// Build a dense climbing wall (4 wide, 12 tall) - platforms everywhere!
+static void build_climbing_wall(World& world, int32_t base_x, int32_t base_y, uint32_t seed) {
+    int height = 10 + (seed & 3);
+
+    // Dense grid of handholds
+    for (int dy = 0; dy <= height; dy++) {
+        for (int dx = 0; dx < 4; dx++) {
+            // Checkerboard pattern for easy climbing
+            if ((dx + dy) % 2 == 0) {
+                place_building_block(world, base_x + dx, base_y - dy, MaterialID::Stone);
+            }
+        }
+    }
+
+    // Platform at top
+    for (int dx = -1; dx <= 4; dx++) {
+        place_building_block(world, base_x + dx, base_y - height - 1, MaterialID::Wood);
+    }
+}
+
+// Build a treehouse (8 wide, 12 tall) - elevated platform with trunk ladder
+static void build_treehouse(World& world, int32_t base_x, int32_t base_y, uint32_t seed) {
+    (void)seed;
+    int platform_height = 8;
+
+    // Tree trunk (people climb on it)
+    for (int dy = 0; dy <= platform_height + 3; dy++) {
+        place_building_block(world, base_x + 3, base_y - dy, MaterialID::Wood);
+        place_building_block(world, base_x + 4, base_y - dy, MaterialID::Wood);
+    }
+
+    // Main platform
+    for (int dx = 0; dx < 8; dx++) {
+        place_building_block(world, base_x + dx, base_y - platform_height, MaterialID::Wood);
+    }
+
+    // Railings
+    for (int dx = 0; dx < 8; dx++) {
+        if (dx != 3 && dx != 4) {  // Opening at trunk
+            place_building_block(world, base_x + dx, base_y - platform_height - 1, MaterialID::Wood);
+        }
+    }
+
+    // Small roof
+    for (int dx = 1; dx < 7; dx++) {
+        place_building_block(world, base_x + dx, base_y - platform_height - 4, MaterialID::Leaf);
+    }
+    for (int dx = 2; dx < 6; dx++) {
+        place_building_block(world, base_x + dx, base_y - platform_height - 5, MaterialID::Leaf);
+    }
+
+    // Leaves around top of trunk
+    for (int dy = 0; dy < 3; dy++) {
+        place_building_block(world, base_x + 2, base_y - platform_height - 2 - dy, MaterialID::Leaf);
+        place_building_block(world, base_x + 5, base_y - platform_height - 2 - dy, MaterialID::Leaf);
+    }
+}
+
+// Build a MEGA tower (8 wide, 35 tall) - extremely tall with many platforms!
+static void build_mega_tower(World& world, int32_t base_x, int32_t base_y, uint32_t seed) {
+    (void)seed;
+    int height = 32;
+
+    // Thick foundation
+    for (int dx = 0; dx < 8; dx++) {
+        place_building_block(world, base_x + dx, base_y, MaterialID::Stone);
+        place_building_block(world, base_x + dx, base_y + 1, MaterialID::Stone);
+    }
+
+    // Main tower shaft
+    for (int dy = 1; dy <= height; dy++) {
+        place_building_block(world, base_x, base_y - dy, MaterialID::Stone);
+        place_building_block(world, base_x + 7, base_y - dy, MaterialID::Stone);
+
+        // Platforms every 3 levels for easy climbing
+        if (dy % 3 == 0) {
+            for (int dx = 1; dx < 7; dx++) {
+                place_building_block(world, base_x + dx, base_y - dy, MaterialID::Wood);
+            }
+        }
+    }
+
+    // Wider observation platforms every 10 levels
+    for (int section = 1; section <= 3; section++) {
+        int level = section * 10;
+        if (level <= height) {
+            for (int dx = -1; dx <= 8; dx++) {
+                place_building_block(world, base_x + dx, base_y - level, MaterialID::Stone);
+            }
+            // Railings
+            place_building_block(world, base_x - 1, base_y - level - 1, MaterialID::Wood);
+            place_building_block(world, base_x + 8, base_y - level - 1, MaterialID::Wood);
+        }
+    }
+
+    // Grand top platform
+    for (int dx = -2; dx <= 9; dx++) {
+        place_building_block(world, base_x + dx, base_y - height - 1, MaterialID::Stone);
+    }
+    // Flag pole
+    for (int dy = 0; dy < 5; dy++) {
+        place_building_block(world, base_x + 4, base_y - height - 2 - dy, MaterialID::Wood);
+    }
+    place_building_block(world, base_x + 5, base_y - height - 5, MaterialID::Copper);
+    place_building_block(world, base_x + 5, base_y - height - 6, MaterialID::Copper);
+}
+
+// Build zigzag stairs (12 wide, 16 tall) - switchback stairs
+static void build_zigzag_stairs(World& world, int32_t base_x, int32_t base_y, uint32_t seed) {
+    (void)seed;
+    int levels = 4;
+    int level_height = 4;
+
+    for (int level = 0; level < levels; level++) {
+        int level_base = base_y - (level * level_height);
+
+        // Landing platform
+        for (int dx = 0; dx < 12; dx++) {
+            place_building_block(world, base_x + dx, level_base, MaterialID::Stone);
+        }
+
+        // Stairs going right on even levels, left on odd
+        if (level < levels - 1) {
+            if (level % 2 == 0) {
+                for (int step = 0; step < 4; step++) {
+                    place_building_block(world, base_x + step * 2, level_base - 1 - step, MaterialID::Stone);
+                    place_building_block(world, base_x + step * 2 + 1, level_base - 1 - step, MaterialID::Stone);
+                }
+            } else {
+                for (int step = 0; step < 4; step++) {
+                    place_building_block(world, base_x + 11 - step * 2, level_base - 1 - step, MaterialID::Stone);
+                    place_building_block(world, base_x + 10 - step * 2, level_base - 1 - step, MaterialID::Stone);
+                }
+            }
+        }
+    }
+
+    // Top platform with railings
+    for (int dx = 0; dx < 12; dx++) {
+        place_building_block(world, base_x + dx, base_y - levels * level_height, MaterialID::Stone);
+    }
+    place_building_block(world, base_x, base_y - levels * level_height - 1, MaterialID::Wood);
+    place_building_block(world, base_x + 11, base_y - levels * level_height - 1, MaterialID::Wood);
+}
+
+// Build an elevator shaft (4 wide, 20 tall) - vertical platforms
+static void build_elevator(World& world, int32_t base_x, int32_t base_y, uint32_t seed) {
+    (void)seed;
+    int height = 18;
+
+    // Shaft walls
+    for (int dy = 0; dy <= height; dy++) {
+        place_building_block(world, base_x, base_y - dy, MaterialID::Metal);
+        place_building_block(world, base_x + 3, base_y - dy, MaterialID::Metal);
+    }
+
+    // "Elevator" platforms at multiple levels (every 4 blocks)
+    for (int level = 0; level <= height; level += 4) {
+        place_building_block(world, base_x + 1, base_y - level, MaterialID::Wood);
+        place_building_block(world, base_x + 2, base_y - level, MaterialID::Wood);
+    }
+
+    // Top exit platform
+    for (int dx = -2; dx <= 5; dx++) {
+        place_building_block(world, base_x + dx, base_y - height - 1, MaterialID::Metal);
+    }
+}
+
+// Build apartment building (12 wide, 18 tall) - multiple units
+static void build_apartment(World& world, int32_t base_x, int32_t base_y, uint32_t seed) {
+    (void)seed;
+    int floors = 4;
+    int floor_height = 4;
+
+    // Foundation
+    for (int dx = 0; dx < 12; dx++) {
+        place_building_block(world, base_x + dx, base_y, MaterialID::Stone);
+    }
+
+    for (int floor = 0; floor < floors; floor++) {
+        int fy = base_y - floor * floor_height;
+
+        // Floor divider
+        for (int dx = 0; dx < 12; dx++) {
+            place_building_block(world, base_x + dx, fy - floor_height, MaterialID::Stone);
+        }
+
+        // Walls
+        for (int dy = 1; dy < floor_height; dy++) {
+            place_building_block(world, base_x, fy - dy, MaterialID::Brick);
+            place_building_block(world, base_x + 11, fy - dy, MaterialID::Brick);
+            // Center divider
+            place_building_block(world, base_x + 5, fy - dy, MaterialID::Brick);
+            place_building_block(world, base_x + 6, fy - dy, MaterialID::Brick);
+        }
+
+        // Windows
+        place_building_block(world, base_x + 2, fy - 2, MaterialID::Glass);
+        place_building_block(world, base_x + 3, fy - 2, MaterialID::Glass);
+        place_building_block(world, base_x + 8, fy - 2, MaterialID::Glass);
+        place_building_block(world, base_x + 9, fy - 2, MaterialID::Glass);
+    }
+
+    // External stairs (climbable!)
+    for (int floor = 0; floor < floors; floor++) {
+        int fy = base_y - floor * floor_height;
+        for (int step = 0; step < 3; step++) {
+            place_building_block(world, base_x + 12 + step, fy - 1 - step, MaterialID::Metal);
+        }
+        // Landing
+        place_building_block(world, base_x + 12, fy - floor_height, MaterialID::Metal);
+        place_building_block(world, base_x + 13, fy - floor_height, MaterialID::Metal);
+    }
+
+    // Roof
+    for (int dx = 0; dx < 14; dx++) {
+        place_building_block(world, base_x + dx, base_y - floors * floor_height - 1, MaterialID::Stone);
+    }
+}
+
+// Build a step pyramid (16 wide, 12 tall) - climbable stepped sides
+static void build_pyramid(World& world, int32_t base_x, int32_t base_y, uint32_t seed) {
+    (void)seed;
+    int levels = 6;
+
+    for (int level = 0; level < levels; level++) {
+        int width = 16 - level * 2;
+        int start_x = base_x + level;
+        int level_y = base_y - level * 2;
+
+        // Each level is 2 blocks tall
+        for (int dy = 0; dy < 2; dy++) {
+            for (int dx = 0; dx < width; dx++) {
+                place_building_block(world, start_x + dx, level_y - dy, MaterialID::Stone);
+            }
+        }
+    }
+
+    // Treasure at top
+    place_building_block(world, base_x + 7, base_y - 12, MaterialID::Gold);
+    place_building_block(world, base_x + 8, base_y - 12, MaterialID::Gold);
+}
+
+// Build a multi-tier pagoda (8 wide, 20 tall)
+static void build_pagoda(World& world, int32_t base_x, int32_t base_y, uint32_t seed) {
+    (void)seed;
+    int tiers = 5;
+
+    for (int tier = 0; tier < tiers; tier++) {
+        int tier_y = base_y - tier * 4;
+        int tier_width = 8 - tier;
+        int tier_start = base_x + tier / 2;
+
+        // Floor
+        for (int dx = 0; dx < tier_width; dx++) {
+            place_building_block(world, tier_start + dx, tier_y, MaterialID::Wood);
+        }
+
+        // Walls
+        for (int dy = 1; dy <= 3; dy++) {
+            place_building_block(world, tier_start, tier_y - dy, MaterialID::Wood);
+            place_building_block(world, tier_start + tier_width - 1, tier_y - dy, MaterialID::Wood);
+        }
+
+        // Roof overhang
+        for (int dx = -1; dx <= tier_width; dx++) {
+            place_building_block(world, tier_start + dx, tier_y - 4, MaterialID::Copper);
+        }
+    }
+
+    // Spire at top
+    for (int dy = 0; dy < 3; dy++) {
+        place_building_block(world, base_x + 4, base_y - tiers * 4 - 1 - dy, MaterialID::Gold);
+    }
+}
+
+// Build a tall aqueduct (20 wide, 15 tall)
+static void build_aqueduct(World& world, int32_t base_x, int32_t base_y, uint32_t seed) {
+    (void)seed;
+    int height = 12;
+    int span = 18;
+
+    // Arched pillars
+    for (int pillar = 0; pillar < 3; pillar++) {
+        int px = base_x + pillar * 8;
+
+        // Main column
+        for (int dy = 0; dy <= height; dy++) {
+            place_building_block(world, px, base_y - dy, MaterialID::Stone);
+            place_building_block(world, px + 1, base_y - dy, MaterialID::Stone);
+        }
+
+        // Arch
+        if (pillar < 2) {
+            for (int arch = 0; arch < 4; arch++) {
+                place_building_block(world, px + 2 + arch, base_y - 7 - arch, MaterialID::Stone);
+                place_building_block(world, px + 6 - arch, base_y - 7 - arch, MaterialID::Stone);
+            }
+        }
+    }
+
+    // Water channel on top
+    for (int dx = 0; dx < span; dx++) {
+        place_building_block(world, base_x + dx, base_y - height - 1, MaterialID::Stone);
+    }
+    // Water in channel
+    for (int dx = 1; dx < span - 1; dx++) {
+        place_building_block(world, base_x + dx, base_y - height - 2, MaterialID::Water);
+    }
+
+    // Walkway alongside
+    for (int dx = 0; dx < span; dx++) {
+        place_building_block(world, base_x + dx, base_y - height, MaterialID::Stone);
+    }
+}
+
+// Build a very tall bell tower (6 wide, 28 tall)
+static void build_bell_tower(World& world, int32_t base_x, int32_t base_y, uint32_t seed) {
+    (void)seed;
+    int height = 25;
+
+    // Thick foundation
+    for (int dx = 0; dx < 6; dx++) {
+        place_building_block(world, base_x + dx, base_y, MaterialID::Stone);
+        place_building_block(world, base_x + dx, base_y + 1, MaterialID::Stone);
+    }
+
+    // Main shaft with interior platforms
+    for (int dy = 1; dy <= height; dy++) {
+        place_building_block(world, base_x, base_y - dy, MaterialID::Brick);
+        place_building_block(world, base_x + 5, base_y - dy, MaterialID::Brick);
+
+        // Platforms every 4 levels
+        if (dy % 4 == 0 && dy < height - 2) {
+            for (int dx = 1; dx < 5; dx++) {
+                place_building_block(world, base_x + dx, base_y - dy, MaterialID::Wood);
+            }
+        }
+
+        // Windows at certain levels
+        if (dy % 6 == 3) {
+            place_building_block(world, base_x + 2, base_y - dy, MaterialID::Glass);
+            place_building_block(world, base_x + 3, base_y - dy, MaterialID::Glass);
+        }
+    }
+
+    // Bell chamber (open sides)
+    for (int dy = 0; dy < 3; dy++) {
+        place_building_block(world, base_x, base_y - height - dy, MaterialID::Stone);
+        place_building_block(world, base_x + 5, base_y - height - dy, MaterialID::Stone);
+    }
+
+    // Bell
+    place_building_block(world, base_x + 2, base_y - height - 1, MaterialID::Gold);
+    place_building_block(world, base_x + 3, base_y - height - 1, MaterialID::Gold);
+    place_building_block(world, base_x + 2, base_y - height - 2, MaterialID::Gold);
+    place_building_block(world, base_x + 3, base_y - height - 2, MaterialID::Gold);
+
+    // Pointed roof
+    for (int dx = -1; dx <= 6; dx++) {
+        place_building_block(world, base_x + dx, base_y - height - 3, MaterialID::Copper);
+    }
+    for (int dx = 0; dx <= 5; dx++) {
+        place_building_block(world, base_x + dx, base_y - height - 4, MaterialID::Copper);
+    }
+    place_building_block(world, base_x + 2, base_y - height - 5, MaterialID::Copper);
+    place_building_block(world, base_x + 3, base_y - height - 5, MaterialID::Copper);
+}
+
+// Build a construction crane (10 wide, 30 tall)
+static void build_crane(World& world, int32_t base_x, int32_t base_y, uint32_t seed) {
+    (void)seed;
+    int height = 28;
+
+    // Base
+    for (int dx = 0; dx < 4; dx++) {
+        place_building_block(world, base_x + dx, base_y, MaterialID::Metal);
+        place_building_block(world, base_x + dx, base_y + 1, MaterialID::Metal);
+    }
+
+    // Main mast (climbable!)
+    for (int dy = 0; dy <= height; dy++) {
+        place_building_block(world, base_x + 1, base_y - dy, MaterialID::Metal);
+        place_building_block(world, base_x + 2, base_y - dy, MaterialID::Metal);
+
+        // Climbing rungs every 3 levels
+        if (dy % 3 == 0 && dy > 0) {
+            place_building_block(world, base_x, base_y - dy, MaterialID::Metal);
+            place_building_block(world, base_x + 3, base_y - dy, MaterialID::Metal);
+        }
+    }
+
+    // Horizontal jib at top
+    for (int dx = -2; dx < 10; dx++) {
+        place_building_block(world, base_x + dx, base_y - height, MaterialID::Metal);
+    }
+
+    // Counterweight
+    place_building_block(world, base_x - 2, base_y - height + 1, MaterialID::Stone);
+    place_building_block(world, base_x - 1, base_y - height + 1, MaterialID::Stone);
+
+    // Hook/cable
+    for (int dy = 0; dy < 5; dy++) {
+        place_building_block(world, base_x + 8, base_y - height + 1 + dy, MaterialID::Metal);
+    }
+
+    // Platform at top of mast
+    for (int dx = -1; dx <= 4; dx++) {
+        place_building_block(world, base_x + dx, base_y - height - 1, MaterialID::Metal);
+    }
+}
+
+// Build floating sky platforms with ladders (15 wide, 20 tall)
+static void build_sky_platform(World& world, int32_t base_x, int32_t base_y, uint32_t seed) {
+    (void)seed;
+
+    // Ground anchor
+    for (int dx = 0; dx < 3; dx++) {
+        place_building_block(world, base_x + dx, base_y, MaterialID::Stone);
+    }
+
+    // Main ladder up to first platform
+    for (int dy = 0; dy < 8; dy++) {
+        place_building_block(world, base_x + 1, base_y - dy, MaterialID::Wood);
+    }
+
+    // First platform (height 8)
+    for (int dx = 0; dx < 6; dx++) {
+        place_building_block(world, base_x + dx, base_y - 8, MaterialID::Wood);
+    }
+
+    // Second ladder
+    for (int dy = 9; dy < 14; dy++) {
+        place_building_block(world, base_x + 5, base_y - dy, MaterialID::Wood);
+    }
+
+    // Second platform (height 14)
+    for (int dx = 3; dx < 10; dx++) {
+        place_building_block(world, base_x + dx, base_y - 14, MaterialID::Wood);
+    }
+
+    // Third ladder
+    for (int dy = 15; dy < 18; dy++) {
+        place_building_block(world, base_x + 9, base_y - dy, MaterialID::Wood);
+    }
+
+    // Top platform (height 18)
+    for (int dx = 6; dx < 14; dx++) {
+        place_building_block(world, base_x + dx, base_y - 18, MaterialID::Wood);
+    }
+
+    // Railings on each platform
+    place_building_block(world, base_x, base_y - 9, MaterialID::Wood);
+    place_building_block(world, base_x + 3, base_y - 15, MaterialID::Wood);
+    place_building_block(world, base_x + 6, base_y - 19, MaterialID::Wood);
+    place_building_block(world, base_x + 13, base_y - 19, MaterialID::Wood);
+}
+
+// Structure dimensions for space checking - EXPANDED
+struct BuildingDimensions {
+    int width;
+    int height;
+};
+
+static const BuildingDimensions BUILDING_SIZES[] = {
+    // Basic (0-9)
+    {8, 8},   // Cottage (6 + margin)
+    {11, 8},  // StoneHouse (9 + margin)
+    {7, 14},  // WatchTower (5 + margin)
+    {14, 10}, // Barn (12 + margin)
+    {7, 8},   // Well (5 + margin)
+    {16, 5},  // Bridge (variable, max 15 + margin)
+    {14, 4},  // Fence (variable, max 13 + margin)
+    {6, 8},   // Shrine (4 + margin)
+    {12, 16}, // Windmill (6 + margin, very tall)
+    {16, 12}, // Inn (14 + margin)
+    // Advanced (10-19)
+    {35, 22}, // Castle (multi-tower, very large)
+    {10, 18}, // Church (tall steeple)
+    {22, 8},  // Market (wide, multiple stalls)
+    {8, 25},  // Lighthouse (very tall)
+    {12, 8},  // Tavern (ground level)
+    {10, 10}, // Stairs (climbable)
+    {3, 12},  // Ladder (narrow, tall)
+    {18, 6},  // SkywalkBridge (elevated bridge)
+    {22, 12}, // GrandHall (large gathering hall)
+    {12, 20}, // Observatory (tall dome)
+    // Decorative/Infrastructure (20-24)
+    {8, 6},   // Fountain
+    {5, 10},  // Statue (tall)
+    {12, 5},  // Garden (wide, low)
+    {15, 5},  // Dock (extends out)
+    {6, 16},  // Tower (climbable with platforms)
+    // VERTICAL STRUCTURES (25-39)
+    {8, 22},  // SpiralTower (6 + margin, very tall)
+    {9, 17},  // Scaffolding (7 + margin, easy climb)
+    {12, 30}, // Skyscraper (10 + margin, many floors)
+    {6, 15},  // ClimbingWall (4 + margin)
+    {10, 15}, // TreeHouse (8 + margin)
+    {12, 40}, // MegaTower (8 + margin, EXTREMELY tall!)
+    {14, 20}, // ZigzagStairs (12 + margin)
+    {8, 22},  // Elevator (4 + margin)
+    {16, 20}, // Apartment (12 + margin + external stairs)
+    {18, 15}, // Pyramid (16 + margin)
+    {12, 24}, // Pagoda (8 + margin)
+    {22, 18}, // Aqueduct (20 + margin)
+    {8, 32},  // BellTower (6 + margin, very tall)
+    {15, 35}, // Crane (10 + margin, very tall)
+    {16, 22}, // SkyPlatform (15 + margin)
+};
+
+// Try to build a structure at the given location
+static bool try_build_structure(World& world, int32_t x, int32_t y, BuildingType type, uint32_t seed) {
+    int type_idx = static_cast<int>(type);
+    const BuildingDimensions& dims = BUILDING_SIZES[type_idx];
+
+    // Check if area is clear for building
+    if (!is_area_clear(world, x, y, dims.width, dims.height)) {
+        return false;
+    }
+
+    // Build the structure
+    switch (type) {
+        case BuildingType::Cottage:
+            build_cottage(world, x, y, seed);
+            break;
+        case BuildingType::StoneHouse:
+            build_stone_house(world, x, y, seed);
+            break;
+        case BuildingType::WatchTower:
+            build_watchtower(world, x, y, seed);
+            break;
+        case BuildingType::Barn:
+            build_barn(world, x, y, seed);
+            break;
+        case BuildingType::Well:
+            build_well(world, x, y, seed);
+            break;
+        case BuildingType::Bridge:
+            build_bridge(world, x, y, seed);
+            break;
+        case BuildingType::Fence:
+            build_fence(world, x, y, seed);
+            break;
+        case BuildingType::Shrine:
+            build_shrine(world, x, y, seed);
+            break;
+        case BuildingType::Windmill:
+            build_windmill(world, x, y, seed);
+            break;
+        case BuildingType::Inn:
+            build_inn(world, x, y, seed);
+            break;
+        // Advanced (10-19)
+        case BuildingType::Castle:
+            build_castle(world, x, y, seed);
+            break;
+        case BuildingType::Church:
+            build_church(world, x, y, seed);
+            break;
+        case BuildingType::Market:
+            build_market(world, x, y, seed);
+            break;
+        case BuildingType::Lighthouse:
+            build_lighthouse(world, x, y, seed);
+            break;
+        case BuildingType::Tavern:
+            build_tavern(world, x, y, seed);
+            break;
+        case BuildingType::Stairs:
+            build_stairs(world, x, y, seed);
+            break;
+        case BuildingType::Ladder:
+            build_ladder(world, x, y, seed);
+            break;
+        case BuildingType::SkywalkBridge:
+            build_skywalk_bridge(world, x, y, seed);
+            break;
+        case BuildingType::GrandHall:
+            build_grand_hall(world, x, y, seed);
+            break;
+        case BuildingType::Observatory:
+            build_observatory(world, x, y, seed);
+            break;
+        // Decorative/Infrastructure (20-24)
+        case BuildingType::Fountain:
+            build_fountain(world, x, y, seed);
+            break;
+        case BuildingType::Statue:
+            build_statue(world, x, y, seed);
+            break;
+        case BuildingType::Garden:
+            build_garden(world, x, y, seed);
+            break;
+        case BuildingType::Dock:
+            build_dock(world, x, y, seed);
+            break;
+        case BuildingType::Tower:
+            build_tower(world, x, y, seed);
+            break;
+        // VERTICAL STRUCTURES (25-39)
+        case BuildingType::SpiralTower:
+            build_spiral_tower(world, x, y, seed);
+            break;
+        case BuildingType::Scaffolding:
+            build_scaffolding(world, x, y, seed);
+            break;
+        case BuildingType::Skyscraper:
+            build_skyscraper(world, x, y, seed);
+            break;
+        case BuildingType::ClimbingWall:
+            build_climbing_wall(world, x, y, seed);
+            break;
+        case BuildingType::TreeHouse:
+            build_treehouse(world, x, y, seed);
+            break;
+        case BuildingType::MegaTower:
+            build_mega_tower(world, x, y, seed);
+            break;
+        case BuildingType::ZigzagStairs:
+            build_zigzag_stairs(world, x, y, seed);
+            break;
+        case BuildingType::Elevator:
+            build_elevator(world, x, y, seed);
+            break;
+        case BuildingType::Apartment:
+            build_apartment(world, x, y, seed);
+            break;
+        case BuildingType::Pyramid:
+            build_pyramid(world, x, y, seed);
+            break;
+        case BuildingType::Pagoda:
+            build_pagoda(world, x, y, seed);
+            break;
+        case BuildingType::Aqueduct:
+            build_aqueduct(world, x, y, seed);
+            break;
+        case BuildingType::BellTower:
+            build_bell_tower(world, x, y, seed);
+            break;
+        case BuildingType::Crane:
+            build_crane(world, x, y, seed);
+            break;
+        case BuildingType::SkyPlatform:
+            build_sky_platform(world, x, y, seed);
+            break;
+        default:
+            return false;
+    }
+    return true;
+}
+
+// Choose a building type based on personality and random seed
+static BuildingType choose_building_type(uint32_t seed, uint8_t personality) {
+    // Combine seed and personality for variety
+    uint32_t choice = (seed ^ (personality * 17)) % 400;
+
+    // Weighted distribution (total 400) - HEAVY emphasis on vertical structures!
+    // === VERTICAL CLIMBABLE (Very Common - 40% of buildings!) ===
+    if (choice < 25) return BuildingType::Scaffolding;     // 6.25% - easy climb
+    if (choice < 48) return BuildingType::Ladder;          // 5.75% - basic vertical
+    if (choice < 70) return BuildingType::Stairs;          // 5.5% - diagonal climb
+    if (choice < 90) return BuildingType::ClimbingWall;    // 5% - dense handholds
+    if (choice < 108) return BuildingType::ZigzagStairs;   // 4.5% - switchback
+    if (choice < 124) return BuildingType::Tower;          // 4% - multi-platform
+    if (choice < 140) return BuildingType::SpiralTower;    // 4% - spiral climb
+    if (choice < 154) return BuildingType::Elevator;       // 3.5% - vertical shaft
+    if (choice < 166) return BuildingType::SkyPlatform;    // 3% - floating platforms
+
+    // === Basic Village (25% of buildings) ===
+    if (choice < 182) return BuildingType::Cottage;        // 4%
+    if (choice < 196) return BuildingType::Fence;          // 3.5%
+    if (choice < 210) return BuildingType::Bridge;         // 3.5%
+    if (choice < 222) return BuildingType::StoneHouse;     // 3%
+    if (choice < 232) return BuildingType::Barn;           // 2.5%
+    if (choice < 240) return BuildingType::Well;           // 2%
+    if (choice < 248) return BuildingType::Garden;         // 2%
+
+    // === Multi-story Buildings (15% - vertical living!) ===
+    if (choice < 260) return BuildingType::TreeHouse;      // 3%
+    if (choice < 272) return BuildingType::Apartment;      // 3%
+    if (choice < 282) return BuildingType::Skyscraper;     // 2.5%
+    if (choice < 292) return BuildingType::Pagoda;         // 2.5%
+    if (choice < 300) return BuildingType::Inn;            // 2%
+    if (choice < 306) return BuildingType::BellTower;      // 1.5%
+
+    // === Infrastructure (10%) ===
+    if (choice < 316) return BuildingType::SkywalkBridge;  // 2.5% - connects buildings!
+    if (choice < 324) return BuildingType::Aqueduct;       // 2%
+    if (choice < 332) return BuildingType::Market;         // 2%
+    if (choice < 338) return BuildingType::Shrine;         // 1.5%
+    if (choice < 344) return BuildingType::Fountain;       // 1.5%
+    if (choice < 348) return BuildingType::Dock;           // 1%
+
+    // === Impressive Structures (8%) ===
+    if (choice < 358) return BuildingType::WatchTower;     // 2.5%
+    if (choice < 368) return BuildingType::Windmill;       // 2.5%
+    if (choice < 374) return BuildingType::GrandHall;      // 1.5%
+    if (choice < 380) return BuildingType::Pyramid;        // 1.5%
+
+    // === Rare/Epic (2%) ===
+    if (choice < 386) return BuildingType::MegaTower;      // 1.5% - extremely tall!
+    if (choice < 390) return BuildingType::Crane;          // 1% - construction crane
+    if (choice < 394) return BuildingType::Church;         // 1%
+    if (choice < 396) return BuildingType::Lighthouse;     // 0.5%
+    if (choice < 398) return BuildingType::Observatory;    // 0.5%
+    if (choice < 399) return BuildingType::Castle;         // 0.25%
+    return BuildingType::Statue;                           // 0.25%
+}
+
+// Main person update function - with village building behavior
 void update_person(World& world, int32_t x, int32_t y) {
     Cell& cell = world.get_cell(x, y);
 
@@ -2050,13 +3785,13 @@ void update_person(World& world, int32_t x, int32_t y) {
 
     // Get stable personality from health
     uint8_t personality = cell.get_health();
-    bool is_jumpy = (personality & 0x02) != 0;
+    (void)personality;  // Used for building seeds
 
     // Get facing direction
     bool facing_right = cell.get_person_facing_right();
 
     // ========================================
-    // GRAVITY - Always check if we should fall
+    // SIMPLIFIED GRAVITY & CLIMBING - Build when stuck!
     // ========================================
     bool grounded = false;
     if (world.in_bounds(x, y + 1)) {
@@ -2064,12 +3799,62 @@ void update_person(World& world, int32_t x, int32_t y) {
         grounded = is_person_ground(below);
     }
 
-    if (!grounded) {
-        // Try to fall
+    // Check for walls on either side
+    bool wall_left = world.in_bounds(x - 1, y) && is_person_ground(world.get_material(x - 1, y));
+    bool wall_right = world.in_bounds(x + 1, y) && is_person_ground(world.get_material(x + 1, y));
+    bool touching_wall = wall_left || wall_right;
+
+    // SIMPLE CLIMBING: If not grounded and touching a wall, climb up or build
+    if (!grounded && touching_wall) {
+        int wall_dir = wall_left ? -1 : 1;
+
+        // Can we move up?
+        bool can_move_up = world.in_bounds(x, y - 1) && is_passable(world.get_material(x, y - 1));
+
+        if (can_move_up) {
+            // Check if wall continues above - if so, climb
+            bool wall_above = world.in_bounds(x + wall_dir, y - 1) &&
+                              is_person_ground(world.get_material(x + wall_dir, y - 1));
+
+            if (wall_above) {
+                // Climb up
+                world.try_move_cell(x, y, x, y - 1);
+                return;
+            }
+
+            // Wall ended - step onto top
+            if (world.in_bounds(x + wall_dir, y - 1) && is_passable(world.get_material(x + wall_dir, y - 1))) {
+                world.try_move_cell(x, y, x + wall_dir, y - 1);
+                return;
+            }
+        }
+
+        // STUCK! Can't climb - build a structure here and drop down
+        uint32_t stuck_seed = static_cast<uint32_t>(x * 31337 + y * 7919 + personality + frame);
+        if ((frame & 7) == 0) {
+            BuildingType building;
+            uint32_t choice = stuck_seed % 6;
+            if (choice < 2) building = BuildingType::Ladder;
+            else if (choice < 3) building = BuildingType::Tower;
+            else if (choice < 4) building = BuildingType::Scaffolding;
+            else building = BuildingType::ZigzagStairs;
+
+            try_build_structure(world, x, y, building, stuck_seed);
+        }
+
+        // Fall down slowly
+        if ((frame & 3) == 0 && world.in_bounds(x, y + 1) && is_passable(world.get_material(x, y + 1))) {
+            world.try_move_cell(x, y, x, y + 1);
+        }
+        return;
+    }
+
+    // Normal gravity if not touching walls
+    if (!grounded && !touching_wall) {
         if (world.try_move_cell(x, y, x, y + 1)) {
             return;
         }
-        // Can't fall - we're stuck somehow, try moving sideways
+        // Try diagonal fall
         int side = facing_right ? 1 : -1;
         if (world.in_bounds(x + side, y + 1) && is_passable(world.get_material(x + side, y + 1))) {
             world.try_move_cell(x, y, x + side, y + 1);
@@ -2078,7 +3863,92 @@ void update_person(World& world, int32_t x, int32_t y) {
     }
 
     // ========================================
-    // GROUNDED MOVEMENT - Only move every 4 frames
+    // BUILDING BEHAVIOR - Everyone builds constantly!
+    // ========================================
+    // Build every 16 frames - very frequent building!
+    if ((frame & 15) == 0) {
+        uint32_t build_seed = static_cast<uint32_t>(x * 31337 + y * 7919 + personality + frame);
+
+        // 25% chance to build each check (1 in 4)
+        if ((build_seed & 3) == 0) {
+            int search_dir = facing_right ? 1 : -1;
+            int build_x = x + search_dir * (2 + (build_seed & 7));  // 2-9 blocks away
+
+            int build_y = find_ground_level(world, build_x, y - 30);
+
+            if (build_y > 0 && build_y < WORLD_HEIGHT - 30) {
+                BuildingType building = choose_building_type(build_seed >> 3, personality);
+
+                if (try_build_structure(world, build_x, build_y, building, build_seed)) {
+                    cell.set_person_facing_right(!facing_right);
+                    return;
+                }
+            }
+        }
+    }
+
+    // ========================================
+    // BRIDGE DETECTION - Check if there's a bridge above us we should climb to
+    // ========================================
+    // Every 8 frames, check if we're stuck under a bridge/platform
+    if ((frame & 7) == 0 && grounded) {
+        // Scan upward for a bridge/platform above us
+        int bridge_height = -1;
+        for (int scan_y = y - 2; scan_y >= y - 12; scan_y--) {
+            if (!world.in_bounds(x, scan_y)) break;
+
+            MaterialID above = world.get_material(x, scan_y);
+
+            // Found a platform above! (brick, stone, wood, etc.)
+            if (is_person_ground(above)) {
+                // Check if there's empty space to stand on top of it
+                if (world.in_bounds(x, scan_y - 1) && is_passable(world.get_material(x, scan_y - 1))) {
+                    bridge_height = scan_y;
+                }
+                break;
+            }
+        }
+
+        // If we found a bridge above us, build a pillar up to it!
+        if (bridge_height > 0 && bridge_height < y - 2) {
+            // Check that the space between us and the bridge is mostly empty
+            bool can_build_pillar = true;
+            for (int check_y = y - 1; check_y > bridge_height; check_y--) {
+                if (!world.in_bounds(x, check_y)) {
+                    can_build_pillar = false;
+                    break;
+                }
+                MaterialID mat = world.get_material(x, check_y);
+                if (mat != MaterialID::Empty && mat != MaterialID::Steam && mat != MaterialID::Smoke) {
+                    can_build_pillar = false;
+                    break;
+                }
+            }
+
+            if (can_build_pillar) {
+                // Build pillar from our position up to the bridge
+                // Build one block at a time (more natural looking)
+                for (int build_y = y - 1; build_y > bridge_height; build_y--) {
+                    if (world.in_bounds(x, build_y) && world.get_material(x, build_y) == MaterialID::Empty) {
+                        world.set_material(x, build_y, MaterialID::Wood);
+                        // Move up onto the pillar
+                        world.try_move_cell(x, y, x, build_y);
+                        return;
+                    }
+                }
+
+                // Pillar complete - move up to bridge level
+                int stand_y = bridge_height - 1;
+                if (world.in_bounds(x, stand_y) && is_passable(world.get_material(x, stand_y))) {
+                    world.try_move_cell(x, y, x, stand_y);
+                    return;
+                }
+            }
+        }
+    }
+
+    // ========================================
+    // MOVEMENT - Only move every 4 frames (works when grounded OR clinging)
     // ========================================
     if ((frame & 3) != 0) {
         return;  // Skip this frame - stand still
@@ -2095,9 +3965,50 @@ void update_person(World& world, int32_t x, int32_t y) {
 
     MaterialID ahead = world.get_material(next_x, y);
 
-    // ===== CASE 1: Path is clear - walk forward =====
+    // ===== CASE 1: Path is clear - check for edges first! =====
     if (is_passable(ahead)) {
-        world.try_move_cell(x, y, next_x, y);
+        // Check if there's ground below where we'd step
+        bool has_ground_ahead = false;
+        for (int drop = 1; drop <= 3; drop++) {
+            if (world.in_bounds(next_x, y + drop)) {
+                MaterialID below_ahead = world.get_material(next_x, y + drop);
+                if (is_person_ground(below_ahead)) {
+                    has_ground_ahead = true;
+                    break;
+                }
+                if (!is_passable(below_ahead)) {
+                    break;  // Hit something non-passable that's not ground
+                }
+            }
+        }
+
+        if (has_ground_ahead) {
+            // Safe to walk forward
+            world.try_move_cell(x, y, next_x, y);
+            return;
+        }
+
+        // ===== ON AN EDGE! =====
+        // ALWAYS try to build a structure here! No complex logic.
+        uint32_t edge_seed = static_cast<uint32_t>(x * 31337 + y * 7919 + personality + frame);
+
+        // Try to build a structure at the edge
+        BuildingType building;
+        uint32_t choice = edge_seed % 10;
+        if (choice < 2) building = BuildingType::Tower;
+        else if (choice < 3) building = BuildingType::Ladder;
+        else if (choice < 4) building = BuildingType::Scaffolding;
+        else if (choice < 5) building = BuildingType::ZigzagStairs;
+        else if (choice < 6) building = BuildingType::SpiralTower;
+        else if (choice < 7) building = BuildingType::ClimbingWall;
+        else if (choice < 8) building = BuildingType::Apartment;
+        else if (choice < 9) building = BuildingType::WatchTower;
+        else building = BuildingType::BellTower;
+
+        try_build_structure(world, x, y, building, edge_seed);
+
+        // Always turn around at edge - don't try to bridge
+        cell.set_person_facing_right(!facing_right);
         return;
     }
 
@@ -2110,60 +4021,40 @@ void update_person(World& world, int32_t x, int32_t y) {
         return;
     }
 
-    // ===== CASE 3: Blocked by solid - try to climb or jump =====
+    // ===== CASE 3: Blocked by solid - Step up or build! =====
 
-    // Try climbing 1-3 pixels
-    for (int h = 1; h <= 3; h++) {
-        int climb_y = y - h;
+    // Try to step up 1-2 blocks onto the wall
+    for (int step_up = 1; step_up <= 2; step_up++) {
+        int target_y = y - step_up;
+        if (!world.in_bounds(next_x, target_y)) break;
+        if (!world.in_bounds(x, target_y)) break;
 
-        // Check space above us is clear
-        bool can_go_up = true;
-        for (int check_y = y - 1; check_y >= climb_y; check_y--) {
-            if (!world.in_bounds(x, check_y) || !is_passable(world.get_material(x, check_y))) {
-                can_go_up = false;
-                break;
-            }
-        }
-        if (!can_go_up) break;  // Can't go higher
-
-        // Check destination is clear
-        if (world.in_bounds(next_x, climb_y) && is_passable(world.get_material(next_x, climb_y))) {
-            if (world.try_move_cell(x, y, next_x, climb_y)) {
-                return;  // Climbed successfully
+        // Check if we can stand at this height on the wall
+        if (is_passable(world.get_material(next_x, target_y)) &&
+            is_passable(world.get_material(x, target_y)) &&
+            world.in_bounds(next_x, target_y + 1) &&
+            is_person_ground(world.get_material(next_x, target_y + 1))) {
+            if (world.try_move_cell(x, y, next_x, target_y)) {
+                return;  // Stepped up!
             }
         }
     }
 
-    // Try jumping (only on certain frames)
-    if ((frame & 15) == 0) {
-        int jump_height = is_jumpy ? 4 : 2;
+    // Can't step up - build a structure and turn around!
+    uint32_t wall_seed = static_cast<uint32_t>(x * 31337 + y * 7919 + personality + frame);
+    BuildingType building;
+    uint32_t choice = wall_seed % 8;
+    if (choice < 2) building = BuildingType::Tower;
+    else if (choice < 3) building = BuildingType::Ladder;
+    else if (choice < 4) building = BuildingType::Scaffolding;
+    else if (choice < 5) building = BuildingType::ZigzagStairs;
+    else if (choice < 6) building = BuildingType::SpiralTower;
+    else if (choice < 7) building = BuildingType::Apartment;
+    else building = BuildingType::ClimbingWall;
 
-        // Find how high we can jump
-        int actual_height = 0;
-        for (int h = 1; h <= jump_height; h++) {
-            if (world.in_bounds(x, y - h) && is_passable(world.get_material(x, y - h))) {
-                actual_height = h;
-            } else {
-                break;
-            }
-        }
+    try_build_structure(world, x, y, building, wall_seed);
 
-        if (actual_height >= 2) {
-            // Try diagonal jump
-            if (world.in_bounds(next_x, y - actual_height) &&
-                is_passable(world.get_material(next_x, y - actual_height))) {
-                if (world.try_move_cell(x, y, next_x, y - actual_height)) {
-                    return;
-                }
-            }
-            // Try straight up jump
-            if (world.try_move_cell(x, y, x, y - actual_height)) {
-                return;
-            }
-        }
-    }
-
-    // Can't move forward - turn around
+    // Turn around
     cell.set_person_facing_right(!facing_right);
 }
 
@@ -3810,6 +5701,21 @@ static bool is_safe_spawn_location(World& world, int32_t x, int32_t y) {
         return false;
     }
 
+    // Check for nearby people - don't spawn if too crowded!
+    // This prevents overlapping and gives people space
+    for (int dy = -4; dy <= 4; dy++) {
+        for (int dx = -4; dx <= 4; dx++) {
+            if (dx == 0 && dy == 0) continue;
+            int nx = x + dx, ny = y + dy;
+            if (world.in_bounds(nx, ny)) {
+                MaterialID m = world.get_material(nx, ny);
+                if (m == MaterialID::Person) {
+                    return false;  // Too close to another person!
+                }
+            }
+        }
+    }
+
     // Check for nearby dangers (fire, lava, acid)
     for (int dy = -2; dy <= 2; dy++) {
         for (int dx = -2; dx <= 2; dx++) {
@@ -3844,33 +5750,48 @@ static bool is_safe_spawn_location(World& world, int32_t x, int32_t y) {
 void update_life(World& world, int32_t x, int32_t y) {
     Cell& cell = world.get_cell(x, y);
 
-    // Lifetime countdown (sparkle effect uses this)
+    // Lifetime countdown - used both for sparkle effect and spawn delay
     uint8_t life = cell.get_lifetime();
+
+    // Life particle needs to "settle" before spawning (wait ~30 frames minimum)
+    // When first placed, lifetime is 0, so we initialize it
     if (life == 0) {
-        cell.set_lifetime(63);  // Reset sparkle timer
+        cell.set_lifetime(50 + (world.random_int() & 31));  // 50-81 frame delay before can spawn
+        return;  // Don't try to spawn on first frame
     }
     cell.decrement_lifetime();
 
-    // Check if we can spawn a person here (safe landing)
-    if (is_safe_spawn_location(world, x, y)) {
-        // Transform into a Person!
-        world.set_material(x, y, MaterialID::Person);
-        Cell& person = world.get_cell(x, y);
-        // Random health between 80-127 gives unique personality per person
-        // (health is used as personality seed, so each spawn is different)
-        person.set_health(80 + (world.random_int() & 47));
-        person.set_person_facing_right((world.random_int() & 1) != 0);
-        person.set_lifetime(0);  // Reset frame counter
+    // Only try to spawn once lifetime gets low (particle has settled)
+    // And only with a random chance to spread out spawns
+    if (life < 20 && (world.random_int() & 3) == 0) {
+        // Check if we can spawn a person here (safe landing)
+        if (is_safe_spawn_location(world, x, y)) {
+            // Transform into a Person!
+            world.set_material(x, y, MaterialID::Person);
+            Cell& person = world.get_cell(x, y);
+            // Random health between 80-127 gives unique personality per person
+            // (health is used as personality seed, so each spawn is different)
+            person.set_health(80 + (world.random_int() & 47));
+            person.set_person_facing_right((world.random_int() & 1) != 0);
+            person.set_lifetime(0);  // Reset frame counter
 
-        // Create a small sparkle effect around spawn point
-        for (int i = 0; i < 3; i++) {
-            int sx = x + ((world.random_int() & 3) - 1);
-            int sy = y - 1 - (world.random_int() & 1);
-            if (world.in_bounds(sx, sy) && world.get_material(sx, sy) == MaterialID::Empty) {
-                world.set_material(sx, sy, MaterialID::Spark);
-                world.get_cell(sx, sy).set_lifetime(5 + (world.random_int() & 7));
+            // Create a small sparkle effect around spawn point
+            for (int i = 0; i < 3; i++) {
+                int sx = x + ((world.random_int() & 3) - 1);
+                int sy = y - 1 - (world.random_int() & 1);
+                if (world.in_bounds(sx, sy) && world.get_material(sx, sy) == MaterialID::Empty) {
+                    world.set_material(sx, sy, MaterialID::Spark);
+                    world.get_cell(sx, sy).set_lifetime(5 + (world.random_int() & 7));
+                }
             }
+            return;
         }
+    }
+
+    // If lifetime runs out and we couldn't spawn, disappear with a puff
+    if (life == 1) {
+        world.set_material(x, y, MaterialID::Smoke);
+        world.get_cell(x, y).set_lifetime(8);
         return;
     }
 
