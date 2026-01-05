@@ -102,8 +102,42 @@ enum class MaterialID : uint8_t {
     Stardust = 78,
     Void_Dust = 79,
 
-    // === SPAWNERS (80+) ===
+    // === SPAWNERS (80) ===
     Life = 80,       // Falling particle that spawns Person on safe ground
+
+    // === NEW POWDERS (81-85) ===
+    Thermite_Powder = 81, // Burns extremely hot when ignited
+    Sugar = 82,           // Sweet powder, dissolves in water, flammable
+    Iron_Filings = 83,    // Metal shavings, rusts with water
+    Chalk = 84,           // White chalk powder
+    Calcium = 85,         // Calcium powder, reactive with water
+
+    // === NEW LIQUIDS (86-90) ===
+    Tar = 86,        // Very slow black sticky liquid
+    Juice = 87,      // Orange liquid, evaporates
+    Sap = 88,        // Tree sap, amber colored
+    Bleach = 89,     // Corrosive to organics
+    Ink = 90,        // Dark liquid for staining
+
+    // === NEW GASES (91-93) ===
+    Chlorine = 91,   // Toxic green gas, sinks
+    Liquid_Nitrogen = 92, // Freezing gas effect
+    Oxygen = 93,     // Makes fires burn brighter
+
+    // === NEW SOLIDS (94-97) ===
+    Concrete = 94,   // Strong building material
+    Titanium = 95,   // Strong silvery metal
+    Clay = 96,       // Moldable, fires into brick
+    Charcoal = 97,   // Burnt wood, slow fuel
+
+    // === NEW ORGANIC (98-100) ===
+    Bamboo = 98,     // Fast-growing plant
+    Honeycomb = 99,  // Solid wax structure
+    Bone = 100,      // Skeletal remains
+
+    // === NEW SPECIAL (101-102) ===
+    Napalm = 101,    // Sticky spreading fire
+    Thermite = 102,  // Extremely hot burning
 
     COUNT
 };

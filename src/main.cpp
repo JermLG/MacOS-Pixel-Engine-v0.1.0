@@ -49,6 +49,11 @@ static const MaterialEntry POWDER_MATERIALS[] = {
     {MaterialID::Rust, "Rust"},
     {MaterialID::Sawdust, "Sawdust"},
     {MaterialID::Glass_Powder, "Glass Pwdr"},
+    {MaterialID::Thermite_Powder, "Thermite P"},
+    {MaterialID::Sugar, "Sugar"},
+    {MaterialID::Iron_Filings, "Iron Files"},
+    {MaterialID::Chalk, "Chalk"},
+    {MaterialID::Calcium, "Calcium"},
 };
 
 // Category: Liquids
@@ -63,6 +68,11 @@ static const MaterialEntry LIQUID_MATERIALS[] = {
     {MaterialID::Mercury, "Mercury"},
     {MaterialID::Petrol, "Petrol"},
     {MaterialID::Glue, "Glue"},
+    {MaterialID::Tar, "Tar"},
+    {MaterialID::Juice, "Juice"},
+    {MaterialID::Sap, "Sap"},
+    {MaterialID::Bleach, "Bleach"},
+    {MaterialID::Ink, "Ink"},
 };
 
 // Category: Gases
@@ -77,6 +87,9 @@ static const MaterialEntry GAS_MATERIALS[] = {
     {MaterialID::Dust, "Dust"},
     {MaterialID::Spore, "Spore"},
     {MaterialID::Confetti, "Confetti"},
+    {MaterialID::Chlorine, "Chlorine"},
+    {MaterialID::Liquid_Nitrogen, "Liq Nitro"},
+    {MaterialID::Oxygen, "Oxygen"},
 };
 
 // Category: Solids
@@ -90,6 +103,10 @@ static const MaterialEntry SOLID_MATERIALS[] = {
     {MaterialID::Diamond, "Diamond"},
     {MaterialID::Copper, "Copper"},
     {MaterialID::Rubber, "Rubber"},
+    {MaterialID::Concrete, "Concrete"},
+    {MaterialID::Titanium, "Titanium"},
+    {MaterialID::Clay, "Clay"},
+    {MaterialID::Charcoal, "Charcoal"},
 };
 
 // Category: Organic
@@ -104,6 +121,9 @@ static const MaterialEntry ORGANIC_MATERIALS[] = {
     {MaterialID::Coral, "Coral"},
     {MaterialID::Wax, "Wax"},
     {MaterialID::Flesh, "Flesh"},
+    {MaterialID::Bamboo, "Bamboo"},
+    {MaterialID::Honeycomb, "Honeycomb"},
+    {MaterialID::Bone, "Bone"},
 };
 
 // Category: Special
@@ -118,6 +138,8 @@ static const MaterialEntry SPECIAL_MATERIALS[] = {
     {MaterialID::Lightning, "Lightning"},
     {MaterialID::Portal_In, "Portal In"},
     {MaterialID::Portal_Out, "Portal Out"},
+    {MaterialID::Napalm, "Napalm"},
+    {MaterialID::Thermite, "Thermite"},
 };
 
 // Category: Fantasy

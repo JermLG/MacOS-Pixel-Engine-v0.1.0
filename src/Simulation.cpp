@@ -437,6 +437,84 @@ void Simulation::update_cell(int32_t x, int32_t y, MaterialID material) {
             Materials::update_life(world_, x, y);
             break;
 
+        // ====== NEW POWDERS (81-85) ======
+        case MaterialID::Thermite_Powder:
+            Materials::update_thermite_powder(world_, x, y);
+            break;
+        case MaterialID::Sugar:
+            Materials::update_sugar(world_, x, y);
+            break;
+        case MaterialID::Iron_Filings:
+            Materials::update_iron_filings(world_, x, y);
+            break;
+        case MaterialID::Chalk:
+            Materials::update_chalk(world_, x, y);
+            break;
+        case MaterialID::Calcium:
+            Materials::update_calcium(world_, x, y);
+            break;
+
+        // ====== NEW LIQUIDS (86-90) ======
+        case MaterialID::Tar:
+            Materials::update_tar(world_, x, y);
+            break;
+        case MaterialID::Juice:
+            Materials::update_juice(world_, x, y);
+            break;
+        case MaterialID::Sap:
+            Materials::update_sap(world_, x, y);
+            break;
+        case MaterialID::Bleach:
+            Materials::update_bleach(world_, x, y);
+            break;
+        case MaterialID::Ink:
+            Materials::update_ink(world_, x, y);
+            break;
+
+        // ====== NEW GASES (91-93) ======
+        case MaterialID::Chlorine:
+            Materials::update_chlorine(world_, x, y);
+            break;
+        case MaterialID::Liquid_Nitrogen:
+            Materials::update_liquid_nitrogen(world_, x, y);
+            break;
+        case MaterialID::Oxygen:
+            Materials::update_oxygen(world_, x, y);
+            break;
+
+        // ====== NEW SOLIDS (94-97) ======
+        case MaterialID::Concrete:
+            Materials::update_concrete(world_, x, y);
+            break;
+        case MaterialID::Titanium:
+            Materials::update_titanium(world_, x, y);
+            break;
+        case MaterialID::Clay:
+            Materials::update_clay(world_, x, y);
+            break;
+        case MaterialID::Charcoal:
+            Materials::update_charcoal(world_, x, y);
+            break;
+
+        // ====== NEW ORGANIC (98-100) ======
+        case MaterialID::Bamboo:
+            Materials::update_bamboo(world_, x, y);
+            break;
+        case MaterialID::Honeycomb:
+            Materials::update_honeycomb(world_, x, y);
+            break;
+        case MaterialID::Bone:
+            Materials::update_bone(world_, x, y);
+            break;
+
+        // ====== NEW SPECIAL (101-102) ======
+        case MaterialID::Napalm:
+            Materials::update_napalm(world_, x, y);
+            break;
+        case MaterialID::Thermite:
+            Materials::update_thermite(world_, x, y);
+            break;
+
         default:
             break;
     }

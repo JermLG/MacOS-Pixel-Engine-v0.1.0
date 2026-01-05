@@ -202,6 +202,44 @@ void update_rust(World& world, int32_t x, int32_t y);
 // Life (spawner particle) - falls and creates Person on safe ground
 void update_life(World& world, int32_t x, int32_t y);
 
+// ============================================================================
+// NEW MATERIALS (81-102)
+// ============================================================================
+
+// New Powders (81-85)
+void update_thermite_powder(World& world, int32_t x, int32_t y);
+void update_sugar(World& world, int32_t x, int32_t y);
+void update_iron_filings(World& world, int32_t x, int32_t y);
+void update_chalk(World& world, int32_t x, int32_t y);
+void update_calcium(World& world, int32_t x, int32_t y);
+
+// New Liquids (86-90)
+void update_tar(World& world, int32_t x, int32_t y);
+void update_juice(World& world, int32_t x, int32_t y);
+void update_sap(World& world, int32_t x, int32_t y);
+void update_bleach(World& world, int32_t x, int32_t y);
+void update_ink(World& world, int32_t x, int32_t y);
+
+// New Gases (91-93)
+void update_chlorine(World& world, int32_t x, int32_t y);
+void update_liquid_nitrogen(World& world, int32_t x, int32_t y);
+void update_oxygen(World& world, int32_t x, int32_t y);
+
+// New Solids (94-97)
+void update_concrete(World& world, int32_t x, int32_t y);
+void update_titanium(World& world, int32_t x, int32_t y);
+void update_clay(World& world, int32_t x, int32_t y);
+void update_charcoal(World& world, int32_t x, int32_t y);
+
+// New Organic (98-100)
+void update_bamboo(World& world, int32_t x, int32_t y);
+void update_honeycomb(World& world, int32_t x, int32_t y);
+void update_bone(World& world, int32_t x, int32_t y);
+
+// New Special (101-102)
+void update_napalm(World& world, int32_t x, int32_t y);
+void update_thermite(World& world, int32_t x, int32_t y);
+
 } // namespace Materials
 
 } // namespace PixelEngine

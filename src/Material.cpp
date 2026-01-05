@@ -789,6 +789,228 @@ void MaterialSystem::initialize_materials() {
         Color(255, 200, 255),  // Bright pink/magenta glow
         30  // High variation for sparkle effect
     );
+
+    // ========================================================================
+    // NEW POWDERS (81-85)
+    // ========================================================================
+
+    // Thermite Powder - burns extremely hot when ignited
+    materials_[static_cast<size_t>(MaterialID::Thermite_Powder)] = MaterialDef(
+        MaterialID::Thermite_Powder,
+        MaterialState::Powder,
+        4.5f,  // Heavy iron oxide powder
+        Color(139, 69, 19),  // Rusty brown
+        15
+    );
+
+    // Sugar - sweet powder, dissolves in water, highly flammable
+    materials_[static_cast<size_t>(MaterialID::Sugar)] = MaterialDef(
+        MaterialID::Sugar,
+        MaterialState::Powder,
+        1.55f,
+        Color(255, 250, 240),  // Off-white
+        5
+    );
+
+    // Iron Filings - metal shavings, rusts with water
+    materials_[static_cast<size_t>(MaterialID::Iron_Filings)] = MaterialDef(
+        MaterialID::Iron_Filings,
+        MaterialState::Powder,
+        7.8f,  // Dense iron
+        Color(70, 70, 75),  // Dark metallic gray
+        10
+    );
+
+    // Chalk - white powder for marking
+    materials_[static_cast<size_t>(MaterialID::Chalk)] = MaterialDef(
+        MaterialID::Chalk,
+        MaterialState::Powder,
+        2.7f,
+        Color(245, 245, 245),  // White
+        8
+    );
+
+    // Calcium - calcium powder, reactive with water (fizzes)
+    materials_[static_cast<size_t>(MaterialID::Calcium)] = MaterialDef(
+        MaterialID::Calcium,
+        MaterialState::Powder,
+        1.55f,
+        Color(230, 230, 210),  // Pale cream
+        10
+    );
+
+    // ========================================================================
+    // NEW LIQUIDS (86-90)
+    // ========================================================================
+
+    // Tar - very slow black sticky liquid, flammable
+    materials_[static_cast<size_t>(MaterialID::Tar)] = MaterialDef(
+        MaterialID::Tar,
+        MaterialState::Liquid,
+        1.2f,
+        Color(20, 15, 10),  // Almost black
+        5
+    );
+
+    // Juice - orange liquid, evaporates slowly
+    materials_[static_cast<size_t>(MaterialID::Juice)] = MaterialDef(
+        MaterialID::Juice,
+        MaterialState::Liquid,
+        1.05f,
+        Color(255, 165, 0),  // Orange
+        20
+    );
+
+    // Sap - tree sap, amber colored, can solidify
+    materials_[static_cast<size_t>(MaterialID::Sap)] = MaterialDef(
+        MaterialID::Sap,
+        MaterialState::Liquid,
+        1.3f,
+        Color(218, 165, 32),  // Amber/goldenrod
+        15
+    );
+
+    // Bleach - corrosive cleaning liquid, destroys organics
+    materials_[static_cast<size_t>(MaterialID::Bleach)] = MaterialDef(
+        MaterialID::Bleach,
+        MaterialState::Liquid,
+        1.1f,
+        Color(240, 255, 240),  // Very pale green-white
+        8
+    );
+
+    // Ink - dark liquid for staining
+    materials_[static_cast<size_t>(MaterialID::Ink)] = MaterialDef(
+        MaterialID::Ink,
+        MaterialState::Liquid,
+        1.0f,
+        Color(10, 10, 30),  // Very dark blue-black
+        5
+    );
+
+    // ========================================================================
+    // NEW GASES (91-93)
+    // ========================================================================
+
+    // Chlorine - toxic green gas, heavier than air (sinks!)
+    materials_[static_cast<size_t>(MaterialID::Chlorine)] = MaterialDef(
+        MaterialID::Chlorine,
+        MaterialState::Gas,
+        2.5f,  // Heavier than air - this gas sinks!
+        Color(144, 238, 144, 180),  // Light green, semi-transparent
+        20
+    );
+
+    // Liquid Nitrogen - freezing effect, rises as gas
+    materials_[static_cast<size_t>(MaterialID::Liquid_Nitrogen)] = MaterialDef(
+        MaterialID::Liquid_Nitrogen,
+        MaterialState::Gas,
+        0.08f,  // Very light
+        Color(200, 220, 255, 160),  // Pale blue, semi-transparent
+        15
+    );
+
+    // Oxygen - makes fires burn brighter, rises
+    materials_[static_cast<size_t>(MaterialID::Oxygen)] = MaterialDef(
+        MaterialID::Oxygen,
+        MaterialState::Gas,
+        0.09f,
+        Color(180, 200, 255, 120),  // Very pale blue, mostly transparent
+        10
+    );
+
+    // ========================================================================
+    // NEW SOLIDS (94-97)
+    // ========================================================================
+
+    // Concrete - strong building material
+    materials_[static_cast<size_t>(MaterialID::Concrete)] = MaterialDef(
+        MaterialID::Concrete,
+        MaterialState::Solid,
+        2.4f,
+        Color(128, 128, 128),  // Gray
+        12
+    );
+
+    // Titanium - strong silvery metal
+    materials_[static_cast<size_t>(MaterialID::Titanium)] = MaterialDef(
+        MaterialID::Titanium,
+        MaterialState::Solid,
+        4.5f,
+        Color(180, 185, 190),  // Silvery
+        8
+    );
+
+    // Clay - moldable material (solid until heated)
+    materials_[static_cast<size_t>(MaterialID::Clay)] = MaterialDef(
+        MaterialID::Clay,
+        MaterialState::Solid,
+        1.8f,
+        Color(165, 113, 78),  // Terracotta brown
+        15
+    );
+
+    // Charcoal - burnt wood, slow burning fuel
+    materials_[static_cast<size_t>(MaterialID::Charcoal)] = MaterialDef(
+        MaterialID::Charcoal,
+        MaterialState::Solid,
+        0.5f,  // Light like wood
+        Color(40, 35, 30),  // Very dark gray
+        10
+    );
+
+    // ========================================================================
+    // NEW ORGANIC (98-100)
+    // ========================================================================
+
+    // Bamboo - fast-growing plant material
+    materials_[static_cast<size_t>(MaterialID::Bamboo)] = MaterialDef(
+        MaterialID::Bamboo,
+        MaterialState::Solid,
+        0.7f,
+        Color(144, 190, 109),  // Light green
+        20
+    );
+
+    // Honeycomb - solid wax structure
+    materials_[static_cast<size_t>(MaterialID::Honeycomb)] = MaterialDef(
+        MaterialID::Honeycomb,
+        MaterialState::Solid,
+        0.9f,
+        Color(255, 200, 60),  // Golden yellow
+        15
+    );
+
+    // Bone - skeletal remains
+    materials_[static_cast<size_t>(MaterialID::Bone)] = MaterialDef(
+        MaterialID::Bone,
+        MaterialState::Solid,
+        1.9f,
+        Color(230, 220, 200),  // Off-white/ivory
+        12
+    );
+
+    // ========================================================================
+    // NEW SPECIAL (101-102)
+    // ========================================================================
+
+    // Napalm - sticky spreading fire
+    materials_[static_cast<size_t>(MaterialID::Napalm)] = MaterialDef(
+        MaterialID::Napalm,
+        MaterialState::Liquid,
+        0.9f,
+        Color(255, 100, 0),  // Bright orange
+        30
+    );
+
+    // Thermite - extremely hot burning compound (ignited form)
+    materials_[static_cast<size_t>(MaterialID::Thermite)] = MaterialDef(
+        MaterialID::Thermite,
+        MaterialState::Liquid,  // Molten when burning
+        7.0f,  // Heavy molten iron
+        Color(255, 255, 200),  // Blindingly bright white-yellow
+        40
+    );
 }
 
 Color MaterialSystem::get_material_color(MaterialID id) {
@@ -918,6 +1140,64 @@ static const MaterialCombination COMBINATIONS[] = {
     // Clone + any material handled separately in update_clone
     // Antimatter combinations handled in update_antimatter
     // Plasma destroys most things - handled in update_plasma
+
+    // === NEW MATERIAL COMBINATIONS ===
+    // Sugar + Water = dissolves (handled in update, but also here)
+    {MaterialID::Sugar, MaterialID::Water, MaterialID::Empty, MaterialID::Water, 8},
+    // Sugar + Fire = quick bright fire
+    {MaterialID::Sugar, MaterialID::Fire, MaterialID::Fire, MaterialID::Fire, 2},
+    // Iron_Filings + Water = Rust
+    {MaterialID::Iron_Filings, MaterialID::Water, MaterialID::Rust, MaterialID::Water, 32},
+    // Chalk + Water = dissolves slowly
+    {MaterialID::Chalk, MaterialID::Water, MaterialID::Empty, MaterialID::Water, 64},
+    // Chalk + Acid = fizzy reaction
+    {MaterialID::Chalk, MaterialID::Acid, MaterialID::Empty, MaterialID::Steam, 8},
+    // Calcium + Water = Hydrogen (reactive!)
+    {MaterialID::Calcium, MaterialID::Water, MaterialID::Hydrogen, MaterialID::Steam, 4},
+    // Tar + Fire = long burning fire
+    {MaterialID::Tar, MaterialID::Fire, MaterialID::Fire, MaterialID::Fire, 4},
+    // Tar + Petrol = more flammable
+    {MaterialID::Tar, MaterialID::Petrol, MaterialID::Petrol, MaterialID::Petrol, 16},
+    // Juice + Sugar = Honey (sweet concentration)
+    {MaterialID::Juice, MaterialID::Sugar, MaterialID::Honey, MaterialID::Empty, 32},
+    // Sap + Fire = Fire + Smoke
+    {MaterialID::Sap, MaterialID::Fire, MaterialID::Fire, MaterialID::Smoke, 4},
+    // Bleach + Acid = Toxic_Gas (dangerous mix!)
+    {MaterialID::Bleach, MaterialID::Acid, MaterialID::Toxic_Gas, MaterialID::Toxic_Gas, 2},
+    // Ink + Water = diluted (becomes water)
+    {MaterialID::Ink, MaterialID::Water, MaterialID::Water, MaterialID::Empty, 32},
+    // Chlorine + Water = slight poison
+    {MaterialID::Chlorine, MaterialID::Water, MaterialID::Poison, MaterialID::Empty, 16},
+    // Chlorine + Hydrogen = explosive (handled as fire)
+    {MaterialID::Chlorine, MaterialID::Hydrogen, MaterialID::Fire, MaterialID::Fire, 4},
+    // Liquid_Nitrogen + Water = Ice
+    {MaterialID::Liquid_Nitrogen, MaterialID::Water, MaterialID::Ice, MaterialID::Empty, 2},
+    // Liquid_Nitrogen + Lava = Obsidian + Steam
+    {MaterialID::Liquid_Nitrogen, MaterialID::Lava, MaterialID::Obsidian, MaterialID::Steam, 1},
+    // Oxygen + Fire = more fire
+    {MaterialID::Oxygen, MaterialID::Fire, MaterialID::Fire, MaterialID::Fire, 2},
+    // Oxygen + Ember = Fire
+    {MaterialID::Oxygen, MaterialID::Ember, MaterialID::Fire, MaterialID::Empty, 2},
+    // Clay + Fire = Brick (firing clay)
+    {MaterialID::Clay, MaterialID::Fire, MaterialID::Brick, MaterialID::Smoke, 16},
+    // Clay + Lava = Brick
+    {MaterialID::Clay, MaterialID::Lava, MaterialID::Brick, MaterialID::Stone, 8},
+    // Charcoal + Fire = more fire + ember
+    {MaterialID::Charcoal, MaterialID::Fire, MaterialID::Fire, MaterialID::Ember, 8},
+    // Bamboo + Fire = Fire + Ash
+    {MaterialID::Bamboo, MaterialID::Fire, MaterialID::Fire, MaterialID::Ash, 4},
+    // Honeycomb + Fire = Honey (melts)
+    {MaterialID::Honeycomb, MaterialID::Fire, MaterialID::Honey, MaterialID::Smoke, 8},
+    // Bone + Acid = dissolves
+    {MaterialID::Bone, MaterialID::Acid, MaterialID::Empty, MaterialID::Toxic_Gas, 16},
+    // Napalm spreads to oil
+    {MaterialID::Napalm, MaterialID::Oil, MaterialID::Napalm, MaterialID::Napalm, 4},
+    // Thermite + Metal = Lava (melts through!)
+    {MaterialID::Thermite, MaterialID::Metal, MaterialID::Thermite, MaterialID::Lava, 4},
+    // Thermite_Powder + Spark = Thermite
+    {MaterialID::Thermite_Powder, MaterialID::Spark, MaterialID::Thermite, MaterialID::Empty, 1},
+    // Thermite_Powder + Fire = Thermite
+    {MaterialID::Thermite_Powder, MaterialID::Fire, MaterialID::Thermite, MaterialID::Fire, 2},
 };
 
 static const int NUM_COMBINATIONS = sizeof(COMBINATIONS) / sizeof(COMBINATIONS[0]);
@@ -5862,6 +6142,759 @@ void update_life(World& world, int32_t x, int32_t y) {
                 world.try_move_cell(x, y, x + dir, y);
             }
         }
+    }
+}
+
+// ============================================================================
+// NEW MATERIALS (81-102) UPDATE FUNCTIONS
+// ============================================================================
+
+// ============================================================================
+// NEW POWDERS (81-85)
+// ============================================================================
+
+// Thermite Powder - burns extremely hot when ignited by fire/spark/lava
+void update_thermite_powder(World& world, int32_t x, int32_t y) {
+    // Check for ignition sources nearby
+    for (int dy = -1; dy <= 1; dy++) {
+        for (int dx = -1; dx <= 1; dx++) {
+            if (dx == 0 && dy == 0) continue;
+            if (!world.in_bounds(x + dx, y + dy)) continue;
+
+            MaterialID neighbor = world.get_material(x + dx, y + dy);
+            if (neighbor == MaterialID::Fire || neighbor == MaterialID::Spark ||
+                neighbor == MaterialID::Lava || neighbor == MaterialID::Dragon_Fire ||
+                neighbor == MaterialID::Thermite || neighbor == MaterialID::Plasma) {
+                // IGNITE! Become burning thermite
+                world.set_material(x, y, MaterialID::Thermite);
+                Cell& cell = world.get_cell(x, y);
+                cell.set_lifetime(40);  // Burns for a while
+                return;
+            }
+        }
+    }
+
+    // Otherwise fall like normal powder
+    generic_powder_update(world, x, y, 3, 16);  // Heavy powder
+}
+
+// Sugar - dissolves in water, highly flammable
+void update_sugar(World& world, int32_t x, int32_t y) {
+    // Check for water (dissolves) or fire (burns bright)
+    for (int dy = -1; dy <= 1; dy++) {
+        for (int dx = -1; dx <= 1; dx++) {
+            if (dx == 0 && dy == 0) continue;
+            if (!world.in_bounds(x + dx, y + dy)) continue;
+
+            MaterialID neighbor = world.get_material(x + dx, y + dy);
+
+            // Dissolves in water
+            if (neighbor == MaterialID::Water || neighbor == MaterialID::Juice) {
+                if ((world.random_int() & 7) == 0) {
+                    world.set_material(x, y, MaterialID::Empty);
+                    return;
+                }
+            }
+
+            // Burns easily
+            if (neighbor == MaterialID::Fire || neighbor == MaterialID::Spark ||
+                neighbor == MaterialID::Lava || neighbor == MaterialID::Ember) {
+                world.set_material(x, y, MaterialID::Fire);
+                Cell& cell = world.get_cell(x, y);
+                cell.set_lifetime(15);  // Short bright burn
+                return;
+            }
+        }
+    }
+
+    generic_powder_update(world, x, y, 2, 12);
+}
+
+// Iron Filings - rusts when wet, attracted to magnets (visual effect)
+void update_iron_filings(World& world, int32_t x, int32_t y) {
+    // Check for water - rust over time
+    for (int dy = -1; dy <= 1; dy++) {
+        for (int dx = -1; dx <= 1; dx++) {
+            if (dx == 0 && dy == 0) continue;
+            if (!world.in_bounds(x + dx, y + dy)) continue;
+
+            MaterialID neighbor = world.get_material(x + dx, y + dy);
+            if (neighbor == MaterialID::Water || neighbor == MaterialID::Blood ||
+                neighbor == MaterialID::Acid) {
+                if ((world.random_int() & 31) == 0) {  // Slow rusting
+                    world.set_material(x, y, MaterialID::Rust);
+                    return;
+                }
+            }
+        }
+    }
+
+    generic_powder_update(world, x, y, 4, 20);  // Heavy iron falls fast
+}
+
+// Chalk - simple powder, dissolves slowly in water
+void update_chalk(World& world, int32_t x, int32_t y) {
+    // Dissolves slowly in water
+    for (int dy = -1; dy <= 1; dy++) {
+        for (int dx = -1; dx <= 1; dx++) {
+            if (dx == 0 && dy == 0) continue;
+            if (!world.in_bounds(x + dx, y + dy)) continue;
+
+            MaterialID neighbor = world.get_material(x + dx, y + dy);
+            if (neighbor == MaterialID::Water || neighbor == MaterialID::Acid) {
+                if ((world.random_int() & 63) == 0) {
+                    world.set_material(x, y, MaterialID::Empty);
+                    return;
+                }
+            }
+        }
+    }
+
+    generic_powder_update(world, x, y, 2, 12);
+}
+
+// Calcium - reacts violently with water (fizzes, produces hydrogen)
+void update_calcium(World& world, int32_t x, int32_t y) {
+    // React with water - fizz and produce hydrogen!
+    for (int dy = -1; dy <= 1; dy++) {
+        for (int dx = -1; dx <= 1; dx++) {
+            if (dx == 0 && dy == 0) continue;
+            if (!world.in_bounds(x + dx, y + dy)) continue;
+
+            MaterialID neighbor = world.get_material(x + dx, y + dy);
+            if (neighbor == MaterialID::Water) {
+                if ((world.random_int() & 3) == 0) {
+                    // Calcium + Water = Hydrogen gas + heat
+                    world.set_material(x, y, MaterialID::Hydrogen);
+                    // Sometimes also spawn a bit of steam from the heat
+                    if ((world.random_int() & 1) == 0) {
+                        world.set_material(x + dx, y + dy, MaterialID::Steam);
+                    }
+                    return;
+                }
+            }
+        }
+    }
+
+    generic_powder_update(world, x, y, 2, 12);
+}
+
+// ============================================================================
+// NEW LIQUIDS (86-90)
+// ============================================================================
+
+// Tar - extremely slow, sticky, flammable
+void update_tar(World& world, int32_t x, int32_t y) {
+    // Check for fire - tar burns slowly
+    for (int dy = -1; dy <= 1; dy++) {
+        for (int dx = -1; dx <= 1; dx++) {
+            if (dx == 0 && dy == 0) continue;
+            if (!world.in_bounds(x + dx, y + dy)) continue;
+
+            MaterialID neighbor = world.get_material(x + dx, y + dy);
+            if (neighbor == MaterialID::Fire || neighbor == MaterialID::Lava ||
+                neighbor == MaterialID::Spark || neighbor == MaterialID::Thermite) {
+                world.set_material(x, y, MaterialID::Fire);
+                Cell& cell = world.get_cell(x, y);
+                cell.set_lifetime(35);  // Long slow burn
+                // Spread fire to nearby tar
+                for (int sy = -1; sy <= 1; sy++) {
+                    for (int sx = -1; sx <= 1; sx++) {
+                        if (world.in_bounds(x + sx, y + sy) &&
+                            world.get_material(x + sx, y + sy) == MaterialID::Tar &&
+                            (world.random_int() & 7) == 0) {
+                            world.set_material(x + sx, y + sy, MaterialID::Fire);
+                            world.get_cell(x + sx, y + sy).set_lifetime(30);
+                        }
+                    }
+                }
+                return;
+            }
+        }
+    }
+
+    generic_slow_liquid_update(world, x, y, 7);  // Extremely slow like glue
+}
+
+// Juice - evaporates slowly, attracts organic life
+void update_juice(World& world, int32_t x, int32_t y) {
+    // Slow evaporation
+    if ((world.random_int() & 511) == 0) {
+        world.set_material(x, y, MaterialID::Steam);
+        return;
+    }
+
+    // Standard liquid flow
+    if (try_material_combination(world, x, y)) return;
+    generic_slow_liquid_update(world, x, y, 1);
+}
+
+// Sap - amber liquid, can solidify over time
+void update_sap(World& world, int32_t x, int32_t y) {
+    // Very slowly solidifies into amber/wax
+    if ((world.random_int() & 2047) == 0) {
+        world.set_material(x, y, MaterialID::Wax);
+        return;
+    }
+
+    // Burns when ignited
+    for (int dy = -1; dy <= 1; dy++) {
+        for (int dx = -1; dx <= 1; dx++) {
+            if (dx == 0 && dy == 0) continue;
+            if (!world.in_bounds(x + dx, y + dy)) continue;
+
+            MaterialID neighbor = world.get_material(x + dx, y + dy);
+            if (neighbor == MaterialID::Fire || neighbor == MaterialID::Lava) {
+                world.set_material(x, y, MaterialID::Fire);
+                world.get_cell(x, y).set_lifetime(20);
+                return;
+            }
+        }
+    }
+
+    generic_slow_liquid_update(world, x, y, 3);  // Thick and slow
+}
+
+// Bleach - destroys organic materials, toxic
+void update_bleach(World& world, int32_t x, int32_t y) {
+    // Destroy organic materials on contact
+    for (int dy = -1; dy <= 1; dy++) {
+        for (int dx = -1; dx <= 1; dx++) {
+            if (dx == 0 && dy == 0) continue;
+            if (!world.in_bounds(x + dx, y + dy)) continue;
+
+            MaterialID neighbor = world.get_material(x + dx, y + dy);
+
+            // Destroys organics
+            if (neighbor == MaterialID::Leaf || neighbor == MaterialID::Moss ||
+                neighbor == MaterialID::Vine || neighbor == MaterialID::Fungus ||
+                neighbor == MaterialID::Flower || neighbor == MaterialID::Algae ||
+                neighbor == MaterialID::Flesh || neighbor == MaterialID::Bamboo ||
+                neighbor == MaterialID::Wood || neighbor == MaterialID::Seed) {
+                if ((world.random_int() & 7) == 0) {
+                    world.set_material(x + dx, y + dy, MaterialID::Empty);
+                    // Bleach gets consumed too
+                    if ((world.random_int() & 3) == 0) {
+                        world.set_material(x, y, MaterialID::Toxic_Gas);
+                        return;
+                    }
+                }
+            }
+
+            // Mixing with acid creates toxic gas
+            if (neighbor == MaterialID::Acid) {
+                world.set_material(x, y, MaterialID::Toxic_Gas);
+                world.set_material(x + dx, y + dy, MaterialID::Toxic_Gas);
+                return;
+            }
+        }
+    }
+
+    generic_slow_liquid_update(world, x, y, 1);
+}
+
+// Ink - stains surfaces, flows like water
+void update_ink(World& world, int32_t x, int32_t y) {
+    // Just flows, nothing special
+    if (try_material_combination(world, x, y)) return;
+    generic_slow_liquid_update(world, x, y, 0);  // Flows smoothly
+}
+
+// ============================================================================
+// NEW GASES (91-93)
+// ============================================================================
+
+// Chlorine - toxic green gas that SINKS (heavier than air)
+void update_chlorine(World& world, int32_t x, int32_t y) {
+    Cell& cell = world.get_cell(x, y);
+
+    // Has lifetime - slowly dissipates
+    if (cell.get_lifetime() > 0) {
+        cell.decrement_lifetime();
+        if (cell.get_lifetime() == 0) {
+            world.set_material(x, y, MaterialID::Empty);
+            return;
+        }
+    } else {
+        // Initialize lifetime
+        cell.set_lifetime(50 + (world.random_int() & 31));
+    }
+
+    // Damages organic things it touches
+    for (int dy = -1; dy <= 1; dy++) {
+        for (int dx = -1; dx <= 1; dx++) {
+            if (dx == 0 && dy == 0) continue;
+            if (!world.in_bounds(x + dx, y + dy)) continue;
+
+            MaterialID neighbor = world.get_material(x + dx, y + dy);
+            if (neighbor == MaterialID::Person || neighbor == MaterialID::Flesh ||
+                neighbor == MaterialID::Leaf || neighbor == MaterialID::Flower) {
+                if ((world.random_int() & 15) == 0) {
+                    world.set_material(x + dx, y + dy, MaterialID::Empty);
+                }
+            }
+        }
+    }
+
+    // SINKS instead of rises (heavy gas)
+    if (world.in_bounds(x, y + 1)) {
+        MaterialID below = world.get_material(x, y + 1);
+        if (below == MaterialID::Empty) {
+            world.try_move_cell(x, y, x, y + 1);
+            return;
+        }
+    }
+
+    // Spread sideways
+    int dir = (world.random_int() & 1) ? 1 : -1;
+    if (world.in_bounds(x + dir, y) && world.get_material(x + dir, y) == MaterialID::Empty) {
+        world.try_move_cell(x, y, x + dir, y);
+    }
+}
+
+// Liquid Nitrogen - freezes things on contact
+void update_liquid_nitrogen(World& world, int32_t x, int32_t y) {
+    Cell& cell = world.get_cell(x, y);
+
+    // Short lifetime
+    if (cell.get_lifetime() > 0) {
+        cell.decrement_lifetime();
+        if (cell.get_lifetime() == 0) {
+            world.set_material(x, y, MaterialID::Empty);
+            return;
+        }
+    } else {
+        cell.set_lifetime(20 + (world.random_int() & 15));
+    }
+
+    // Freeze things on contact!
+    for (int dy = -1; dy <= 1; dy++) {
+        for (int dx = -1; dx <= 1; dx++) {
+            if (dx == 0 && dy == 0) continue;
+            if (!world.in_bounds(x + dx, y + dy)) continue;
+
+            MaterialID neighbor = world.get_material(x + dx, y + dy);
+
+            // Water -> Ice
+            if (neighbor == MaterialID::Water) {
+                world.set_material(x + dx, y + dy, MaterialID::Ice);
+                continue;
+            }
+
+            // Lava -> Obsidian
+            if (neighbor == MaterialID::Lava) {
+                world.set_material(x + dx, y + dy, MaterialID::Obsidian);
+                continue;
+            }
+
+            // Fire -> Empty (extinguishes)
+            if (neighbor == MaterialID::Fire || neighbor == MaterialID::Ember) {
+                world.set_material(x + dx, y + dy, MaterialID::Empty);
+                continue;
+            }
+
+            // Organic -> Frost
+            if (neighbor == MaterialID::Leaf || neighbor == MaterialID::Flower ||
+                neighbor == MaterialID::Flesh) {
+                if ((world.random_int() & 3) == 0) {
+                    world.set_material(x + dx, y + dy, MaterialID::Frost);
+                }
+            }
+        }
+    }
+
+    // Rises quickly (very cold gas)
+    generic_gas_update(world, x, y, -3, -20, false);
+}
+
+// Oxygen - makes fires burn brighter and hotter
+void update_oxygen(World& world, int32_t x, int32_t y) {
+    Cell& cell = world.get_cell(x, y);
+
+    // Lifetime
+    if (cell.get_lifetime() > 0) {
+        cell.decrement_lifetime();
+        if (cell.get_lifetime() == 0) {
+            world.set_material(x, y, MaterialID::Empty);
+            return;
+        }
+    } else {
+        cell.set_lifetime(40 + (world.random_int() & 31));
+    }
+
+    // Intensify nearby fires
+    for (int dy = -1; dy <= 1; dy++) {
+        for (int dx = -1; dx <= 1; dx++) {
+            if (dx == 0 && dy == 0) continue;
+            if (!world.in_bounds(x + dx, y + dy)) continue;
+
+            MaterialID neighbor = world.get_material(x + dx, y + dy);
+
+            // Makes fire last longer and spread
+            if (neighbor == MaterialID::Fire) {
+                Cell& fire_cell = world.get_cell(x + dx, y + dy);
+                fire_cell.set_lifetime(std::min(63, (int)fire_cell.get_lifetime() + 10));
+
+                // Spread fire more aggressively
+                if ((world.random_int() & 3) == 0) {
+                    int spread_dir = (world.random_int() & 3);
+                    int sx = (spread_dir == 0) ? 1 : (spread_dir == 1) ? -1 : 0;
+                    int sy = (spread_dir == 2) ? 1 : (spread_dir == 3) ? -1 : 0;
+                    if (world.in_bounds(x + dx + sx, y + dy + sy) &&
+                        world.get_material(x + dx + sx, y + dy + sy) == MaterialID::Empty) {
+                        world.set_material(x + dx + sx, y + dy + sy, MaterialID::Fire);
+                        world.get_cell(x + dx + sx, y + dy + sy).set_lifetime(15);
+                    }
+                }
+
+                // Oxygen consumed
+                world.set_material(x, y, MaterialID::Empty);
+                return;
+            }
+
+            // Ember becomes fire
+            if (neighbor == MaterialID::Ember) {
+                world.set_material(x + dx, y + dy, MaterialID::Fire);
+                world.get_cell(x + dx, y + dy).set_lifetime(25);
+                world.set_material(x, y, MaterialID::Empty);
+                return;
+            }
+        }
+    }
+
+    generic_gas_update(world, x, y, -1, -10, false);
+}
+
+// ============================================================================
+// NEW SOLIDS (94-97)
+// ============================================================================
+
+// Concrete - indestructible building material
+void update_concrete(World& world, int32_t x, int32_t y) {
+    // Static solid - does nothing
+    (void)world;
+    (void)x;
+    (void)y;
+}
+
+// Titanium - very strong metal, resists acid
+void update_titanium(World& world, int32_t x, int32_t y) {
+    // Static solid - nearly indestructible
+    (void)world;
+    (void)x;
+    (void)y;
+}
+
+// Clay - can be fired into brick by heat
+void update_clay(World& world, int32_t x, int32_t y) {
+    // Check for heat sources - become brick
+    for (int dy = -1; dy <= 1; dy++) {
+        for (int dx = -1; dx <= 1; dx++) {
+            if (dx == 0 && dy == 0) continue;
+            if (!world.in_bounds(x + dx, y + dy)) continue;
+
+            MaterialID neighbor = world.get_material(x + dx, y + dy);
+            if (neighbor == MaterialID::Fire || neighbor == MaterialID::Lava ||
+                neighbor == MaterialID::Thermite || neighbor == MaterialID::Dragon_Fire) {
+                if ((world.random_int() & 15) == 0) {
+                    world.set_material(x, y, MaterialID::Brick);
+                    return;
+                }
+            }
+        }
+    }
+}
+
+// Charcoal - slow burning fuel
+void update_charcoal(World& world, int32_t x, int32_t y) {
+    Cell& cell = world.get_cell(x, y);
+
+    // If burning (lifetime > 0), continue burning
+    if (cell.get_lifetime() > 0) {
+        cell.decrement_lifetime();
+
+        // Emit ember particles occasionally
+        if ((world.random_int() & 15) == 0) {
+            for (int dy = -1; dy <= 0; dy++) {
+                for (int dx = -1; dx <= 1; dx++) {
+                    if (world.in_bounds(x + dx, y + dy) &&
+                        world.get_material(x + dx, y + dy) == MaterialID::Empty) {
+                        world.set_material(x + dx, y + dy, MaterialID::Ember);
+                        world.get_cell(x + dx, y + dy).set_lifetime(10);
+                        break;
+                    }
+                }
+            }
+        }
+
+        // Spread fire to neighbors
+        for (int dy = -1; dy <= 1; dy++) {
+            for (int dx = -1; dx <= 1; dx++) {
+                if (dx == 0 && dy == 0) continue;
+                if (!world.in_bounds(x + dx, y + dy)) continue;
+
+                MaterialID neighbor = world.get_material(x + dx, y + dy);
+                if ((neighbor == MaterialID::Charcoal || neighbor == MaterialID::Wood ||
+                     neighbor == MaterialID::Coal) && (world.random_int() & 31) == 0) {
+                    Cell& n_cell = world.get_cell(x + dx, y + dy);
+                    if (n_cell.get_lifetime() == 0) {
+                        n_cell.set_lifetime(50);  // Start burning
+                    }
+                }
+            }
+        }
+
+        if (cell.get_lifetime() == 0) {
+            world.set_material(x, y, MaterialID::Ash);
+            return;
+        }
+    } else {
+        // Check for ignition
+        for (int dy = -1; dy <= 1; dy++) {
+            for (int dx = -1; dx <= 1; dx++) {
+                if (dx == 0 && dy == 0) continue;
+                if (!world.in_bounds(x + dx, y + dy)) continue;
+
+                MaterialID neighbor = world.get_material(x + dx, y + dy);
+                if (neighbor == MaterialID::Fire || neighbor == MaterialID::Lava ||
+                    neighbor == MaterialID::Spark || neighbor == MaterialID::Ember) {
+                    cell.set_lifetime(60);  // Long burn time
+                    return;
+                }
+            }
+        }
+    }
+}
+
+// ============================================================================
+// NEW ORGANIC (98-100)
+// ============================================================================
+
+// Bamboo - can grow upward when near water
+void update_bamboo(World& world, int32_t x, int32_t y) {
+    // Check for fire - burns
+    for (int dy = -1; dy <= 1; dy++) {
+        for (int dx = -1; dx <= 1; dx++) {
+            if (dx == 0 && dy == 0) continue;
+            if (!world.in_bounds(x + dx, y + dy)) continue;
+
+            MaterialID neighbor = world.get_material(x + dx, y + dy);
+            if (neighbor == MaterialID::Fire || neighbor == MaterialID::Lava) {
+                world.set_material(x, y, MaterialID::Fire);
+                world.get_cell(x, y).set_lifetime(12);
+                return;
+            }
+        }
+    }
+
+    // Grow upward if near water
+    if ((world.random_int() & 255) == 0) {
+        bool has_water = false;
+        for (int dy = -2; dy <= 2; dy++) {
+            for (int dx = -2; dx <= 2; dx++) {
+                if (world.in_bounds(x + dx, y + dy) &&
+                    world.get_material(x + dx, y + dy) == MaterialID::Water) {
+                    has_water = true;
+                    break;
+                }
+            }
+            if (has_water) break;
+        }
+
+        if (has_water && world.in_bounds(x, y - 1) &&
+            world.get_material(x, y - 1) == MaterialID::Empty) {
+            world.set_material(x, y - 1, MaterialID::Bamboo);
+        }
+    }
+}
+
+// Honeycomb - melts into honey when heated
+void update_honeycomb(World& world, int32_t x, int32_t y) {
+    // Check for heat - melts into honey
+    for (int dy = -1; dy <= 1; dy++) {
+        for (int dx = -1; dx <= 1; dx++) {
+            if (dx == 0 && dy == 0) continue;
+            if (!world.in_bounds(x + dx, y + dy)) continue;
+
+            MaterialID neighbor = world.get_material(x + dx, y + dy);
+            if (neighbor == MaterialID::Fire || neighbor == MaterialID::Lava ||
+                neighbor == MaterialID::Thermite) {
+                if ((world.random_int() & 7) == 0) {
+                    world.set_material(x, y, MaterialID::Honey);
+                    return;
+                }
+            }
+        }
+    }
+}
+
+// Bone - static, can be dissolved by acid
+void update_bone(World& world, int32_t x, int32_t y) {
+    // Dissolves in acid
+    for (int dy = -1; dy <= 1; dy++) {
+        for (int dx = -1; dx <= 1; dx++) {
+            if (dx == 0 && dy == 0) continue;
+            if (!world.in_bounds(x + dx, y + dy)) continue;
+
+            MaterialID neighbor = world.get_material(x + dx, y + dy);
+            if (neighbor == MaterialID::Acid) {
+                if ((world.random_int() & 15) == 0) {
+                    world.set_material(x, y, MaterialID::Empty);
+                    // Acid consumed
+                    world.set_material(x + dx, y + dy, MaterialID::Toxic_Gas);
+                    return;
+                }
+            }
+        }
+    }
+}
+
+// ============================================================================
+// NEW SPECIAL (101-102)
+// ============================================================================
+
+// Napalm - sticky fire that spreads and clings to surfaces
+void update_napalm(World& world, int32_t x, int32_t y) {
+    Cell& cell = world.get_cell(x, y);
+
+    // Initialize or continue burning
+    if (cell.get_lifetime() == 0) {
+        cell.set_lifetime(50 + (world.random_int() & 31));
+    }
+
+    cell.decrement_lifetime();
+
+    // Emit fire/smoke
+    if ((world.random_int() & 3) == 0) {
+        // Try to emit fire upward
+        if (world.in_bounds(x, y - 1) && world.get_material(x, y - 1) == MaterialID::Empty) {
+            world.set_material(x, y - 1, MaterialID::Fire);
+            world.get_cell(x, y - 1).set_lifetime(10);
+        }
+    }
+
+    // Spread to flammable neighbors aggressively
+    for (int dy = -1; dy <= 1; dy++) {
+        for (int dx = -1; dx <= 1; dx++) {
+            if (dx == 0 && dy == 0) continue;
+            if (!world.in_bounds(x + dx, y + dy)) continue;
+
+            MaterialID neighbor = world.get_material(x + dx, y + dy);
+
+            // Spread napalm to flammable materials
+            if ((neighbor == MaterialID::Wood || neighbor == MaterialID::Oil ||
+                 neighbor == MaterialID::Petrol || neighbor == MaterialID::Tar ||
+                 neighbor == MaterialID::Leaf || neighbor == MaterialID::Grass) &&
+                (world.random_int() & 7) == 0) {
+                world.set_material(x + dx, y + dy, MaterialID::Napalm);
+            }
+
+            // Set other flammables on fire
+            if ((neighbor == MaterialID::Coal || neighbor == MaterialID::Charcoal ||
+                 neighbor == MaterialID::Sawdust || neighbor == MaterialID::Sugar) &&
+                (world.random_int() & 3) == 0) {
+                world.set_material(x + dx, y + dy, MaterialID::Fire);
+                world.get_cell(x + dx, y + dy).set_lifetime(20);
+            }
+        }
+    }
+
+    // Die and become ash/smoke
+    if (cell.get_lifetime() == 0) {
+        if ((world.random_int() & 1) == 0) {
+            world.set_material(x, y, MaterialID::Smoke);
+        } else {
+            world.set_material(x, y, MaterialID::Ash);
+        }
+        return;
+    }
+
+    // Flow slowly downward like burning liquid
+    if ((world.random_int() & 3) == 0) {
+        if (world.try_move_cell(x, y, x, y + 1)) return;
+
+        int dir = (world.random_int() & 1) ? 1 : -1;
+        if (world.try_move_cell(x, y, x + dir, y + 1)) return;
+        if (world.try_move_cell(x, y, x - dir, y + 1)) return;
+    }
+}
+
+// Thermite - extremely hot burning compound, melts through metal
+void update_thermite(World& world, int32_t x, int32_t y) {
+    Cell& cell = world.get_cell(x, y);
+
+    // Initialize lifetime if needed
+    if (cell.get_lifetime() == 0) {
+        cell.set_lifetime(40);
+    }
+
+    cell.decrement_lifetime();
+
+    // EXTREMELY hot - melts through almost anything
+    for (int dy = -1; dy <= 1; dy++) {
+        for (int dx = -1; dx <= 1; dx++) {
+            if (dx == 0 && dy == 0) continue;
+            if (!world.in_bounds(x + dx, y + dy)) continue;
+
+            MaterialID neighbor = world.get_material(x + dx, y + dy);
+
+            // Melt metals!
+            if (neighbor == MaterialID::Metal || neighbor == MaterialID::Iron_Filings ||
+                neighbor == MaterialID::Copper) {
+                if ((world.random_int() & 3) == 0) {
+                    world.set_material(x + dx, y + dy, MaterialID::Lava);
+                }
+            }
+
+            // Even melts stone and brick
+            if (neighbor == MaterialID::Stone || neighbor == MaterialID::Brick ||
+                neighbor == MaterialID::Concrete) {
+                if ((world.random_int() & 7) == 0) {
+                    world.set_material(x + dx, y + dy, MaterialID::Lava);
+                }
+            }
+
+            // Ignite thermite powder
+            if (neighbor == MaterialID::Thermite_Powder) {
+                world.set_material(x + dx, y + dy, MaterialID::Thermite);
+                world.get_cell(x + dx, y + dy).set_lifetime(40);
+            }
+
+            // Instantly ignite flammables
+            if (neighbor == MaterialID::Wood || neighbor == MaterialID::Oil ||
+                neighbor == MaterialID::Coal || neighbor == MaterialID::Gunpowder) {
+                world.set_material(x + dx, y + dy, MaterialID::Fire);
+                world.get_cell(x + dx, y + dy).set_lifetime(25);
+            }
+
+            // Water creates steam explosion
+            if (neighbor == MaterialID::Water) {
+                world.set_material(x + dx, y + dy, MaterialID::Steam);
+                // Violent steam
+                for (int ey = -2; ey <= 2; ey++) {
+                    for (int ex = -2; ex <= 2; ex++) {
+                        if (world.in_bounds(x + ex, y + ey) &&
+                            world.get_material(x + ex, y + ey) == MaterialID::Empty) {
+                            world.set_material(x + ex, y + ey, MaterialID::Steam);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    // Die - become molten iron (lava-like)
+    if (cell.get_lifetime() == 0) {
+        world.set_material(x, y, MaterialID::Lava);
+        return;
+    }
+
+    // Fall slowly (molten)
+    if ((world.random_int() & 1) == 0) {
+        if (world.try_move_cell(x, y, x, y + 1)) return;
+
+        int dir = (world.random_int() & 1) ? 1 : -1;
+        world.try_move_cell(x, y, x + dir, y + 1);
     }
 }
 
