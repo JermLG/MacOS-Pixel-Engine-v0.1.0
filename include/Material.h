@@ -240,6 +240,85 @@ void update_bone(World& world, int32_t x, int32_t y);
 void update_napalm(World& world, int32_t x, int32_t y);
 void update_thermite(World& world, int32_t x, int32_t y);
 
+// ============================================================================
+// EXPANSION MATERIALS (103-161)
+// ============================================================================
+
+// Expansion: Basic (103-112)
+void update_bedrock(World& world, int32_t x, int32_t y);
+void update_ceramic(World& world, int32_t x, int32_t y);
+void update_granite(World& world, int32_t x, int32_t y);
+void update_marble(World& world, int32_t x, int32_t y);
+void update_sandstone(World& world, int32_t x, int32_t y);
+void update_limestone(World& world, int32_t x, int32_t y);
+void update_slate(World& world, int32_t x, int32_t y);
+void update_basalt(World& world, int32_t x, int32_t y);
+void update_quartz_block(World& world, int32_t x, int32_t y);
+void update_soil(World& world, int32_t x, int32_t y);
+
+// Expansion: Powders (113-117)
+void update_flour(World& world, int32_t x, int32_t y);
+void update_sulfur(World& world, int32_t x, int32_t y);
+void update_cement(World& world, int32_t x, int32_t y);
+void update_fertilizer(World& world, int32_t x, int32_t y);
+void update_volcanic_ash(World& world, int32_t x, int32_t y);
+
+// Expansion: Liquids (118-122)
+void update_brine(World& world, int32_t x, int32_t y);
+void update_coffee(World& world, int32_t x, int32_t y);
+void update_soap(World& world, int32_t x, int32_t y);
+void update_paint(World& world, int32_t x, int32_t y);
+void update_sewage(World& world, int32_t x, int32_t y);
+
+// Expansion: Gases (123-129)
+void update_ammonia(World& world, int32_t x, int32_t y);
+void update_carbon_dioxide(World& world, int32_t x, int32_t y);
+void update_nitrous(World& world, int32_t x, int32_t y);
+void update_steam_hot(World& world, int32_t x, int32_t y);
+void update_miasma(World& world, int32_t x, int32_t y);
+void update_pheromone(World& world, int32_t x, int32_t y);
+void update_nerve_gas(World& world, int32_t x, int32_t y);
+
+// Expansion: Solids (130-136)
+void update_silver(World& world, int32_t x, int32_t y);
+void update_platinum(World& world, int32_t x, int32_t y);
+void update_lead(World& world, int32_t x, int32_t y);
+void update_tin(World& world, int32_t x, int32_t y);
+void update_zinc(World& world, int32_t x, int32_t y);
+void update_bronze(World& world, int32_t x, int32_t y);
+void update_steel(World& world, int32_t x, int32_t y);
+
+// Expansion: Organic (137-143)
+void update_pollen(World& world, int32_t x, int32_t y);
+void update_root(World& world, int32_t x, int32_t y);
+void update_bark(World& world, int32_t x, int32_t y);
+void update_fruit(World& world, int32_t x, int32_t y);
+void update_egg(World& world, int32_t x, int32_t y);
+void update_web(World& world, int32_t x, int32_t y);
+void update_mucus(World& world, int32_t x, int32_t y);
+
+// Expansion: Special (144-151)
+void update_bomb(World& world, int32_t x, int32_t y);
+void update_nuke(World& world, int32_t x, int32_t y);
+void update_laser(World& world, int32_t x, int32_t y);
+void update_black_hole(World& world, int32_t x, int32_t y);
+void update_white_hole(World& world, int32_t x, int32_t y);
+void update_acid_gas(World& world, int32_t x, int32_t y);
+void update_ice_bomb(World& world, int32_t x, int32_t y);
+void update_fire_bomb(World& world, int32_t x, int32_t y);
+
+// Expansion: Fantasy (152-161)
+void update_mana(World& world, int32_t x, int32_t y);
+void update_mirage(World& world, int32_t x, int32_t y);
+void update_holy_water(World& world, int32_t x, int32_t y);
+void update_cursed(World& world, int32_t x, int32_t y);
+void update_blessed(World& world, int32_t x, int32_t y);
+void update_soul(World& world, int32_t x, int32_t y);
+void update_spirit(World& world, int32_t x, int32_t y);
+void update_aether(World& world, int32_t x, int32_t y);
+void update_nether(World& world, int32_t x, int32_t y);
+void update_phoenix_ash(World& world, int32_t x, int32_t y);
+
 } // namespace Materials
 
 } // namespace PixelEngine

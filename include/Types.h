@@ -139,6 +139,81 @@ enum class MaterialID : uint8_t {
     Napalm = 101,    // Sticky spreading fire
     Thermite = 102,  // Extremely hot burning
 
+    // === EXPANSION: BASIC (103-112) ===
+    Bedrock = 103,   // Indestructible foundation
+    Ceramic = 104,   // Fired clay pottery
+    Granite = 105,   // Speckled igneous rock
+    Marble = 106,    // Polished metamorphic rock
+    Sandstone = 107, // Compressed sand
+    Limestone = 108, // calcium rock
+    Slate = 109,     // Layered rock
+    Basalt = 110,    // Dark volcanic rock
+    Quartz_Block = 111, // Crystalline silica
+    Soil = 112,      // Rich earth, plants grow
+
+    // === EXPANSION: POWDERS (113-117) ===
+    Flour = 113,     // Explosive when dispersed
+    Sulfur = 114,    // Yellow powder, burns
+    Cement = 115,    // Hardens with water
+    Fertilizer = 116,// Helps plants grow
+    Volcanic_Ash = 117, // Volcanic powder
+
+    // === EXPANSION: LIQUIDS (118-122) ===
+    Brine = 118,     // Salt water
+    Coffee = 119,    // Brown stimulant
+    Soap = 120,      // Bubbly cleaner
+    Paint = 121,     // Colorful liquid
+    Sewage = 122,    // Gross waste liquid
+
+    // === EXPANSION: GASES (123-129) ===
+    Ammonia = 123,   // Pungent cleaning gas
+    Carbon_Dioxide = 124, // Heavy gas, sinks
+    Nitrous = 125,   // Laughing gas, light
+    Steam_Hot = 126, // Scalding steam
+    Miasma = 127,    // Disease gas
+    Pheromone = 128, // Attracts creatures
+    Nerve_Gas = 129, // Deadly to life
+
+    // === EXPANSION: SOLIDS (130-136) ===
+    Silver = 130,    // Precious metal
+    Platinum = 131,  // Rare metal
+    Lead = 132,      // Heavy soft metal
+    Tin = 133,       // Light metal
+    Zinc = 134,      // Reactive metal
+    Bronze = 135,    // Copper-tin alloy
+    Steel = 136,     // Iron-carbon alloy
+
+    // === EXPANSION: ORGANIC (137-143) ===
+    Pollen = 137,    // Plant reproduction
+    Root = 138,      // Underground plant
+    Bark = 139,      // Tree skin
+    Fruit = 140,     // Edible plant part
+    Egg = 141,       // Hatches creatures
+    Web = 142,       // Sticky spider silk
+    Mucus = 143,     // Biological slime
+
+    // === EXPANSION: SPECIAL (144-151) ===
+    Bomb = 144,      // Explodes on impact
+    Nuke = 145,      // Massive explosion
+    Laser = 146,     // Light beam
+    Black_Hole = 147,// Attracts matter
+    White_Hole = 148,// Repels matter
+    Acid_Gas = 149,  // Corrosive vapor
+    Ice_Bomb = 150,  // Freezing explosion
+    Fire_Bomb = 151, // Incendiary explosion
+
+    // === EXPANSION: FANTASY (152-161) ===
+    Mana = 152,      // Magic energy liquid
+    Mirage = 153,    // Illusory shimmer
+    Holy_Water = 154,// Blessed liquid
+    Cursed = 155,    // Dark corruption
+    Blessed = 156,   // Light purification
+    Soul = 157,      // Spirit essence
+    Spirit = 158,    // Ghost matter
+    Aether = 159,    // Heavenly gas
+    Nether = 160,    // Hellish gas
+    Phoenix_Ash = 161,// Rebirth powder
+
     COUNT
 };
 

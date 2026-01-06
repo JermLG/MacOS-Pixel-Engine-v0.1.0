@@ -196,16 +196,31 @@ void World::clear_world() {
 }
 
 void World::generate_color_buffer(uint32_t* buffer) const {
-    for (int32_t y = 0; y < height_; ++y) {
-        for (int32_t x = 0; x < width_; ++x) {
-            MaterialID material = get_material(x, y);
-            const auto& mat_def = material_system_.get_material(material);
+    // Optimized: process chunk by chunk for better cache locality
+    for (int32_t chunk_y = 0; chunk_y < chunks_high_; ++chunk_y) {
+        for (int32_t chunk_x = 0; chunk_x < chunks_wide_; ++chunk_x) {
+            const Chunk& chunk = chunks_[chunk_y * chunks_wide_ + chunk_x];
 
-            // Use base color (no variance for rendering - set during placement)
-            Color color = mat_def.base_color;
+            int32_t base_x = chunk_x * CHUNK_SIZE;
+            int32_t base_y = chunk_y * CHUNK_SIZE;
 
-            // Write to buffer (row-major order)
-            buffer[y * width_ + x] = color.to_rgba32();
+            // Process cells within chunk
+            for (int32_t local_y = 0; local_y < CHUNK_SIZE; ++local_y) {
+                int32_t world_y = base_y + local_y;
+                if (world_y >= height_) break;
+
+                // Calculate row start in buffer
+                uint32_t* row = buffer + world_y * width_ + base_x;
+
+                for (int32_t local_x = 0; local_x < CHUNK_SIZE; ++local_x) {
+                    int32_t world_x = base_x + local_x;
+                    if (world_x >= width_) break;
+
+                    const Cell& cell = chunk.cells[local_y * CHUNK_SIZE + local_x];
+                    const auto& mat_def = material_system_.get_material(cell.material_id);
+                    row[local_x] = mat_def.base_color.to_rgba32();
+                }
+            }
         }
     }
 }

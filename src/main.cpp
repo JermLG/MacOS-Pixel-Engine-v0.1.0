@@ -35,6 +35,16 @@ static const MaterialEntry BASIC_MATERIALS[] = {
     {MaterialID::Acid, "Acid"},
     {MaterialID::Lava, "Lava"},
     {MaterialID::Grass, "Grass"},
+    {MaterialID::Bedrock, "Bedrock"},
+    {MaterialID::Ceramic, "Ceramic"},
+    {MaterialID::Granite, "Granite"},
+    {MaterialID::Marble, "Marble"},
+    {MaterialID::Sandstone, "Sandstone"},
+    {MaterialID::Limestone, "Limestone"},
+    {MaterialID::Slate, "Slate"},
+    {MaterialID::Basalt, "Basalt"},
+    {MaterialID::Quartz_Block, "Quartz"},
+    {MaterialID::Soil, "Soil"},
 };
 
 // Category: Powders
@@ -54,6 +64,11 @@ static const MaterialEntry POWDER_MATERIALS[] = {
     {MaterialID::Iron_Filings, "Iron Files"},
     {MaterialID::Chalk, "Chalk"},
     {MaterialID::Calcium, "Calcium"},
+    {MaterialID::Flour, "Flour"},
+    {MaterialID::Sulfur, "Sulfur"},
+    {MaterialID::Cement, "Cement"},
+    {MaterialID::Fertilizer, "Fertilizer"},
+    {MaterialID::Volcanic_Ash, "Volc Ash"},
 };
 
 // Category: Liquids
@@ -73,6 +88,11 @@ static const MaterialEntry LIQUID_MATERIALS[] = {
     {MaterialID::Sap, "Sap"},
     {MaterialID::Bleach, "Bleach"},
     {MaterialID::Ink, "Ink"},
+    {MaterialID::Brine, "Brine"},
+    {MaterialID::Coffee, "Coffee"},
+    {MaterialID::Soap, "Soap"},
+    {MaterialID::Paint, "Paint"},
+    {MaterialID::Sewage, "Sewage"},
 };
 
 // Category: Gases
@@ -90,6 +110,13 @@ static const MaterialEntry GAS_MATERIALS[] = {
     {MaterialID::Chlorine, "Chlorine"},
     {MaterialID::Liquid_Nitrogen, "Liq Nitro"},
     {MaterialID::Oxygen, "Oxygen"},
+    {MaterialID::Ammonia, "Ammonia"},
+    {MaterialID::Carbon_Dioxide, "CO2"},
+    {MaterialID::Nitrous, "Nitrous"},
+    {MaterialID::Steam_Hot, "Hot Steam"},
+    {MaterialID::Miasma, "Miasma"},
+    {MaterialID::Pheromone, "Pheromone"},
+    {MaterialID::Nerve_Gas, "Nerve Gas"},
 };
 
 // Category: Solids
@@ -107,6 +134,13 @@ static const MaterialEntry SOLID_MATERIALS[] = {
     {MaterialID::Titanium, "Titanium"},
     {MaterialID::Clay, "Clay"},
     {MaterialID::Charcoal, "Charcoal"},
+    {MaterialID::Silver, "Silver"},
+    {MaterialID::Platinum, "Platinum"},
+    {MaterialID::Lead, "Lead"},
+    {MaterialID::Tin, "Tin"},
+    {MaterialID::Zinc, "Zinc"},
+    {MaterialID::Bronze, "Bronze"},
+    {MaterialID::Steel, "Steel"},
 };
 
 // Category: Organic
@@ -124,6 +158,13 @@ static const MaterialEntry ORGANIC_MATERIALS[] = {
     {MaterialID::Bamboo, "Bamboo"},
     {MaterialID::Honeycomb, "Honeycomb"},
     {MaterialID::Bone, "Bone"},
+    {MaterialID::Pollen, "Pollen"},
+    {MaterialID::Root, "Root"},
+    {MaterialID::Bark, "Bark"},
+    {MaterialID::Fruit, "Fruit"},
+    {MaterialID::Egg, "Egg"},
+    {MaterialID::Web, "Web"},
+    {MaterialID::Mucus, "Mucus"},
 };
 
 // Category: Special
@@ -140,6 +181,14 @@ static const MaterialEntry SPECIAL_MATERIALS[] = {
     {MaterialID::Portal_Out, "Portal Out"},
     {MaterialID::Napalm, "Napalm"},
     {MaterialID::Thermite, "Thermite"},
+    {MaterialID::Bomb, "Bomb"},
+    {MaterialID::Nuke, "Nuke"},
+    {MaterialID::Laser, "Laser"},
+    {MaterialID::Black_Hole, "Black Hole"},
+    {MaterialID::White_Hole, "White Hole"},
+    {MaterialID::Acid_Gas, "Acid Gas"},
+    {MaterialID::Ice_Bomb, "Ice Bomb"},
+    {MaterialID::Fire_Bomb, "Fire Bomb"},
 };
 
 // Category: Fantasy
@@ -154,6 +203,16 @@ static const MaterialEntry FANTASY_MATERIALS[] = {
     {MaterialID::Ember, "Ember"},
     {MaterialID::Stardust, "Stardust"},
     {MaterialID::Void_Dust, "Void Dust"},
+    {MaterialID::Mana, "Mana"},
+    {MaterialID::Mirage, "Mirage"},
+    {MaterialID::Holy_Water, "Holy Water"},
+    {MaterialID::Cursed, "Cursed"},
+    {MaterialID::Blessed, "Blessed"},
+    {MaterialID::Soul, "Soul"},
+    {MaterialID::Spirit, "Spirit"},
+    {MaterialID::Aether, "Aether"},
+    {MaterialID::Nether, "Nether"},
+    {MaterialID::Phoenix_Ash, "PhoenixAsh"},
 };
 
 #define ARRAY_COUNT(arr) (sizeof(arr) / sizeof(arr[0]))
@@ -295,15 +354,17 @@ private:
         // Fixed timestep simulation
         accumulator_ += delta_time;
 
-        // Cap accumulator to prevent spiral of death
-        if (accumulator_ > FIXED_TIMESTEP * 5.0f) {
-            accumulator_ = FIXED_TIMESTEP * 5.0f;
+        // Cap accumulator to prevent spiral of death - max 2 updates per frame
+        if (accumulator_ > FIXED_TIMESTEP * 2.0f) {
+            accumulator_ = FIXED_TIMESTEP * 2.0f;
         }
 
-        // Update simulation with fixed timestep
-        while (accumulator_ >= FIXED_TIMESTEP) {
+        // Update simulation with fixed timestep (max 2 per frame)
+        int updates = 0;
+        while (accumulator_ >= FIXED_TIMESTEP && updates < 2) {
             simulation_.update();
             accumulator_ -= FIXED_TIMESTEP;
+            ++updates;
         }
 
         // FPS counter

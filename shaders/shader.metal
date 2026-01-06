@@ -66,21 +66,25 @@ fragment float4 fragment_bloom_extract(VertexOut in [[stage_in]],
     // Calculate luminance
     float luminance = dot(color.rgb, float3(0.299, 0.587, 0.114));
 
-    // Very aggressive threshold - catch more bright pixels
-    float threshold = params.bloom_threshold * 0.5;  // Lower effective threshold
+    // Use threshold directly - don't halve it
+    float threshold = params.bloom_threshold;
     float brightness = max(0.0, luminance - threshold);
 
-    // FIRE/LAVA BOOST: Strongly boost warm colors (red/orange/yellow)
+    // Soft knee for smoother transition
+    float softness = 0.3;
+    brightness = brightness / (brightness + softness);
+
+    // FIRE/LAVA BOOST: Boost warm colors (red/orange/yellow)
     // Fire is typically high R, medium G, low B
-    float warmth = color.r * 2.0 - color.g - color.b;  // Positive for warm colors
+    float warmth = color.r - max(color.g, color.b);  // More conservative warmth calc
     warmth = max(0.0, warmth);
 
-    // Lava/fire glow multiplier - make warm colors REALLY glow
-    float glowMultiplier = 1.0 + warmth * 3.0;
+    // Gentler glow multiplier for warm colors
+    float glowMultiplier = 1.0 + warmth * 1.5;
 
     // Combine luminance-based and warmth-based extraction
-    float bloomStrength = max(brightness * glowMultiplier, warmth * color.r * 2.0);
-    bloomStrength = clamp(bloomStrength, 0.0, 3.0);  // Allow HDR values
+    float bloomStrength = brightness * glowMultiplier;
+    bloomStrength = clamp(bloomStrength, 0.0, 1.0);  // Clamp to 1.0 to prevent runaway
 
     return float4(color.rgb * bloomStrength, 1.0);
 }
@@ -97,13 +101,14 @@ fragment float4 fragment_blur_horizontal(VertexOut in [[stage_in]],
 
     float2 texelSize = 1.0 / float2(bloomTexture.get_width(), bloomTexture.get_height());
 
-    // Wider blur - 13 tap with larger spread
-    const float weights[7] = { 0.20, 0.18, 0.14, 0.10, 0.06, 0.03, 0.01 };
-    const float spread = 3.0;  // Spread multiplier for wider blur
+    // Normalized Gaussian weights that sum to 1.0
+    // Center weight + 2*(sum of other weights) = 1.0
+    const float weights[5] = { 0.227027, 0.1945946, 0.1216216, 0.054054, 0.016216 };
+    const float spread = 2.0;  // Spread multiplier for wider blur
 
     float3 result = bloomTexture.sample(textureSampler, in.texCoord).rgb * weights[0];
 
-    for (int i = 1; i < 7; i++) {
+    for (int i = 1; i < 5; i++) {
         float2 offset = float2(texelSize.x * float(i) * spread, 0.0);
         result += bloomTexture.sample(textureSampler, in.texCoord + offset).rgb * weights[i];
         result += bloomTexture.sample(textureSampler, in.texCoord - offset).rgb * weights[i];
@@ -124,13 +129,14 @@ fragment float4 fragment_blur_vertical(VertexOut in [[stage_in]],
 
     float2 texelSize = 1.0 / float2(bloomTexture.get_width(), bloomTexture.get_height());
 
-    // Wider blur - 13 tap with larger spread
-    const float weights[7] = { 0.20, 0.18, 0.14, 0.10, 0.06, 0.03, 0.01 };
-    const float spread = 3.0;  // Spread multiplier for wider blur
+    // Normalized Gaussian weights that sum to 1.0
+    // Center weight + 2*(sum of other weights) = 1.0
+    const float weights[5] = { 0.227027, 0.1945946, 0.1216216, 0.054054, 0.016216 };
+    const float spread = 2.0;  // Spread multiplier for wider blur
 
     float3 result = bloomTexture.sample(textureSampler, in.texCoord).rgb * weights[0];
 
-    for (int i = 1; i < 7; i++) {
+    for (int i = 1; i < 5; i++) {
         float2 offset = float2(0.0, texelSize.y * float(i) * spread);
         result += bloomTexture.sample(textureSampler, in.texCoord + offset).rgb * weights[i];
         result += bloomTexture.sample(textureSampler, in.texCoord - offset).rgb * weights[i];

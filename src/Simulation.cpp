@@ -1,4 +1,5 @@
 #include "Simulation.h"
+#include <algorithm>
 
 namespace PixelEngine {
 
@@ -53,91 +54,44 @@ void Simulation::update_chunk(Chunk* chunk, int32_t chunk_x, int32_t chunk_y) {
     int32_t base_x = chunk_x * CHUNK_SIZE;
     int32_t base_y = chunk_y * CHUNK_SIZE;
 
-    // Update cells in priority order: Gases → Liquids → Powders → Solids
-    // Each pass processes bottom-to-top within the chunk
-    MaterialState priority_order[] = {
-        MaterialState::Gas,
-        MaterialState::Liquid,
-        MaterialState::Powder,
-        MaterialState::Solid
-    };
+    // Pre-calculate bounds
+    int32_t max_local_x = std::min(CHUNK_SIZE, world_.get_width() - base_x);
+    int32_t max_local_y = std::min(CHUNK_SIZE, world_.get_height() - base_y);
 
-    for (MaterialState target_state : priority_order) {
-        // Update cells bottom-to-top within chunk for this material type
-        for (int32_t local_y = CHUNK_SIZE - 1; local_y >= 0; --local_y) {
-            // Alternate scan direction for better dispersion
-            if (scan_direction_) {
-                // Left to right
-                for (int32_t local_x = 0; local_x < CHUNK_SIZE; ++local_x) {
-                    int32_t world_x = base_x + local_x;
-                    int32_t world_y = base_y + local_y;
+    // Process cells bottom-to-top within chunk
+    for (int32_t local_y = max_local_y - 1; local_y >= 0; --local_y) {
+        int32_t world_y = base_y + local_y;
 
-                    // Skip if out of world bounds
-                    if (!world_.in_bounds(world_x, world_y)) {
-                        continue;
-                    }
+        if (scan_direction_) {
+            for (int32_t local_x = 0; local_x < max_local_x; ++local_x) {
+                Cell& cell = chunk->cells[local_y * CHUNK_SIZE + local_x];
+                MaterialID material = cell.material_id;
 
-                    Cell& cell = chunk->get_cell(local_x, local_y);
-                    MaterialID material = cell.material_id;
+                // Skip empty and already-updated cells
+                if (material == MaterialID::Empty || cell.was_updated()) continue;
 
-                    // Skip empty cells and already-updated cells
-                    if (material == MaterialID::Empty || cell.was_updated()) {
-                        continue;
-                    }
+                int32_t world_x = base_x + local_x;
+                update_cell(world_x, world_y, material);
 
-                    // Get material state
-                    const auto& mat_def = material_system_.get_material(material);
-
-                    // Only update materials of the current priority type
-                    if (mat_def.state == target_state) {
-                        // Store pre-update state
-                        MaterialID old_material = world_.get_material(world_x, world_y);
-
-                        // Update cell based on material type
-                        update_cell(world_x, world_y, material);
-
-                        // Check if cell changed (moved or transformed)
-                        MaterialID new_material = world_.get_material(world_x, world_y);
-                        if (new_material != old_material) {
-                            chunk_had_movement = true;
-                            ++updated_cell_count_;
-                        }
-                    }
+                // Check if cell changed
+                if (chunk->cells[local_y * CHUNK_SIZE + local_x].material_id != material) {
+                    chunk_had_movement = true;
+                    ++updated_cell_count_;
                 }
-            } else {
-                // Right to left
-                for (int32_t local_x = CHUNK_SIZE - 1; local_x >= 0; --local_x) {
-                    int32_t world_x = base_x + local_x;
-                    int32_t world_y = base_y + local_y;
+            }
+        } else {
+            for (int32_t local_x = max_local_x - 1; local_x >= 0; --local_x) {
+                Cell& cell = chunk->cells[local_y * CHUNK_SIZE + local_x];
+                MaterialID material = cell.material_id;
 
-                    if (!world_.in_bounds(world_x, world_y)) {
-                        continue;
-                    }
+                if (material == MaterialID::Empty || cell.was_updated()) continue;
 
-                    Cell& cell = chunk->get_cell(local_x, local_y);
-                    MaterialID material = cell.material_id;
+                int32_t world_x = base_x + local_x;
+                update_cell(world_x, world_y, material);
 
-                    if (material == MaterialID::Empty || cell.was_updated()) {
-                        continue;
-                    }
-
-                    const auto& mat_def = material_system_.get_material(material);
-
-                    // Only update materials of the current priority type
-                    if (mat_def.state == target_state) {
-                        // Store pre-update state
-                        MaterialID old_material = world_.get_material(world_x, world_y);
-
-                        // Update cell based on material type
-                        update_cell(world_x, world_y, material);
-
-                        // Check if cell changed (moved or transformed)
-                        MaterialID new_material = world_.get_material(world_x, world_y);
-                        if (new_material != old_material) {
-                            chunk_had_movement = true;
-                            ++updated_cell_count_;
-                        }
-                    }
+                if (chunk->cells[local_y * CHUNK_SIZE + local_x].material_id != material) {
+                    chunk_had_movement = true;
+                    ++updated_cell_count_;
                 }
             }
         }
@@ -147,16 +101,12 @@ void Simulation::update_chunk(Chunk* chunk, int32_t chunk_x, int32_t chunk_y) {
     if (chunk_had_movement) {
         chunk->sleep_counter = 0;
         chunk->is_active = true;
-
-        // Activate neighboring chunks (movement may affect them)
         world_.activate_chunk(chunk_x - 1, chunk_y);
         world_.activate_chunk(chunk_x + 1, chunk_y);
         world_.activate_chunk(chunk_x, chunk_y - 1);
         world_.activate_chunk(chunk_x, chunk_y + 1);
     } else {
         ++chunk->sleep_counter;
-
-        // Put chunk to sleep if no movement for a while
         if (chunk->sleep_counter >= CHUNK_SLEEP_THRESHOLD) {
             chunk->is_active = false;
         }
@@ -513,6 +463,199 @@ void Simulation::update_cell(int32_t x, int32_t y, MaterialID material) {
             break;
         case MaterialID::Thermite:
             Materials::update_thermite(world_, x, y);
+            break;
+
+        // ====== EXPANSION: BASIC (103-112) ======
+        case MaterialID::Bedrock:
+            Materials::update_bedrock(world_, x, y);
+            break;
+        case MaterialID::Ceramic:
+            Materials::update_ceramic(world_, x, y);
+            break;
+        case MaterialID::Granite:
+            Materials::update_granite(world_, x, y);
+            break;
+        case MaterialID::Marble:
+            Materials::update_marble(world_, x, y);
+            break;
+        case MaterialID::Sandstone:
+            Materials::update_sandstone(world_, x, y);
+            break;
+        case MaterialID::Limestone:
+            Materials::update_limestone(world_, x, y);
+            break;
+        case MaterialID::Slate:
+            Materials::update_slate(world_, x, y);
+            break;
+        case MaterialID::Basalt:
+            Materials::update_basalt(world_, x, y);
+            break;
+        case MaterialID::Quartz_Block:
+            Materials::update_quartz_block(world_, x, y);
+            break;
+        case MaterialID::Soil:
+            Materials::update_soil(world_, x, y);
+            break;
+
+        // ====== EXPANSION: POWDERS (113-117) ======
+        case MaterialID::Flour:
+            Materials::update_flour(world_, x, y);
+            break;
+        case MaterialID::Sulfur:
+            Materials::update_sulfur(world_, x, y);
+            break;
+        case MaterialID::Cement:
+            Materials::update_cement(world_, x, y);
+            break;
+        case MaterialID::Fertilizer:
+            Materials::update_fertilizer(world_, x, y);
+            break;
+        case MaterialID::Volcanic_Ash:
+            Materials::update_volcanic_ash(world_, x, y);
+            break;
+
+        // ====== EXPANSION: LIQUIDS (118-122) ======
+        case MaterialID::Brine:
+            Materials::update_brine(world_, x, y);
+            break;
+        case MaterialID::Coffee:
+            Materials::update_coffee(world_, x, y);
+            break;
+        case MaterialID::Soap:
+            Materials::update_soap(world_, x, y);
+            break;
+        case MaterialID::Paint:
+            Materials::update_paint(world_, x, y);
+            break;
+        case MaterialID::Sewage:
+            Materials::update_sewage(world_, x, y);
+            break;
+
+        // ====== EXPANSION: GASES (123-129) ======
+        case MaterialID::Ammonia:
+            Materials::update_ammonia(world_, x, y);
+            break;
+        case MaterialID::Carbon_Dioxide:
+            Materials::update_carbon_dioxide(world_, x, y);
+            break;
+        case MaterialID::Nitrous:
+            Materials::update_nitrous(world_, x, y);
+            break;
+        case MaterialID::Steam_Hot:
+            Materials::update_steam_hot(world_, x, y);
+            break;
+        case MaterialID::Miasma:
+            Materials::update_miasma(world_, x, y);
+            break;
+        case MaterialID::Pheromone:
+            Materials::update_pheromone(world_, x, y);
+            break;
+        case MaterialID::Nerve_Gas:
+            Materials::update_nerve_gas(world_, x, y);
+            break;
+
+        // ====== EXPANSION: SOLIDS (130-136) ======
+        case MaterialID::Silver:
+            Materials::update_silver(world_, x, y);
+            break;
+        case MaterialID::Platinum:
+            Materials::update_platinum(world_, x, y);
+            break;
+        case MaterialID::Lead:
+            Materials::update_lead(world_, x, y);
+            break;
+        case MaterialID::Tin:
+            Materials::update_tin(world_, x, y);
+            break;
+        case MaterialID::Zinc:
+            Materials::update_zinc(world_, x, y);
+            break;
+        case MaterialID::Bronze:
+            Materials::update_bronze(world_, x, y);
+            break;
+        case MaterialID::Steel:
+            Materials::update_steel(world_, x, y);
+            break;
+
+        // ====== EXPANSION: ORGANIC (137-143) ======
+        case MaterialID::Pollen:
+            Materials::update_pollen(world_, x, y);
+            break;
+        case MaterialID::Root:
+            Materials::update_root(world_, x, y);
+            break;
+        case MaterialID::Bark:
+            Materials::update_bark(world_, x, y);
+            break;
+        case MaterialID::Fruit:
+            Materials::update_fruit(world_, x, y);
+            break;
+        case MaterialID::Egg:
+            Materials::update_egg(world_, x, y);
+            break;
+        case MaterialID::Web:
+            Materials::update_web(world_, x, y);
+            break;
+        case MaterialID::Mucus:
+            Materials::update_mucus(world_, x, y);
+            break;
+
+        // ====== EXPANSION: SPECIAL (144-151) ======
+        case MaterialID::Bomb:
+            Materials::update_bomb(world_, x, y);
+            break;
+        case MaterialID::Nuke:
+            Materials::update_nuke(world_, x, y);
+            break;
+        case MaterialID::Laser:
+            Materials::update_laser(world_, x, y);
+            break;
+        case MaterialID::Black_Hole:
+            Materials::update_black_hole(world_, x, y);
+            break;
+        case MaterialID::White_Hole:
+            Materials::update_white_hole(world_, x, y);
+            break;
+        case MaterialID::Acid_Gas:
+            Materials::update_acid_gas(world_, x, y);
+            break;
+        case MaterialID::Ice_Bomb:
+            Materials::update_ice_bomb(world_, x, y);
+            break;
+        case MaterialID::Fire_Bomb:
+            Materials::update_fire_bomb(world_, x, y);
+            break;
+
+        // ====== EXPANSION: FANTASY (152-161) ======
+        case MaterialID::Mana:
+            Materials::update_mana(world_, x, y);
+            break;
+        case MaterialID::Mirage:
+            Materials::update_mirage(world_, x, y);
+            break;
+        case MaterialID::Holy_Water:
+            Materials::update_holy_water(world_, x, y);
+            break;
+        case MaterialID::Cursed:
+            Materials::update_cursed(world_, x, y);
+            break;
+        case MaterialID::Blessed:
+            Materials::update_blessed(world_, x, y);
+            break;
+        case MaterialID::Soul:
+            Materials::update_soul(world_, x, y);
+            break;
+        case MaterialID::Spirit:
+            Materials::update_spirit(world_, x, y);
+            break;
+        case MaterialID::Aether:
+            Materials::update_aether(world_, x, y);
+            break;
+        case MaterialID::Nether:
+            Materials::update_nether(world_, x, y);
+            break;
+        case MaterialID::Phoenix_Ash:
+            Materials::update_phoenix_ash(world_, x, y);
             break;
 
         default:

@@ -483,38 +483,7 @@ void MetalRenderer::render_with_post_processing() {
     }
 
     // =====================================
-    // PASS 4: SECOND BLUR PASS (wider bloom)
-    // =====================================
-    {
-        // Horizontal (bloomA → bloomB)
-        MTLRenderPassDescriptor* passDescH = [[MTLRenderPassDescriptor alloc] init];
-        passDescH.colorAttachments[0].texture = bloomB;
-        passDescH.colorAttachments[0].loadAction = MTLLoadActionDontCare;
-        passDescH.colorAttachments[0].storeAction = MTLStoreActionStore;
-
-        id<MTLRenderCommandEncoder> encoderH = [commandBuffer renderCommandEncoderWithDescriptor:passDescH];
-        [encoderH setRenderPipelineState:blurH];
-        [encoderH setVertexBuffer:vertexBuffer offset:0 atIndex:0];
-        [encoderH setFragmentTexture:bloomA atIndex:0];
-        [encoderH drawPrimitives:MTLPrimitiveTypeTriangle vertexStart:0 vertexCount:6];
-        [encoderH endEncoding];
-
-        // Vertical (bloomB → bloomA)
-        MTLRenderPassDescriptor* passDescV = [[MTLRenderPassDescriptor alloc] init];
-        passDescV.colorAttachments[0].texture = bloomA;
-        passDescV.colorAttachments[0].loadAction = MTLLoadActionDontCare;
-        passDescV.colorAttachments[0].storeAction = MTLStoreActionStore;
-
-        id<MTLRenderCommandEncoder> encoderV = [commandBuffer renderCommandEncoderWithDescriptor:passDescV];
-        [encoderV setRenderPipelineState:blurV];
-        [encoderV setVertexBuffer:vertexBuffer offset:0 atIndex:0];
-        [encoderV setFragmentTexture:bloomB atIndex:0];
-        [encoderV drawPrimitives:MTLPrimitiveTypeTriangle vertexStart:0 vertexCount:6];
-        [encoderV endEncoding];
-    }
-
-    // =====================================
-    // PASS 5: FINAL COMPOSITE (scene + bloom → screen)
+    // PASS 4: FINAL COMPOSITE (scene + bloom → screen)
     // =====================================
     {
         MTLRenderPassDescriptor* renderPassDescriptor = view.currentRenderPassDescriptor;

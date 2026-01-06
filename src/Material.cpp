@@ -1011,6 +1011,333 @@ void MaterialSystem::initialize_materials() {
         Color(255, 255, 200),  // Blindingly bright white-yellow
         40
     );
+
+    // ========================================================================
+    // EXPANSION: BASIC (103-112)
+    // ========================================================================
+
+    materials_[static_cast<size_t>(MaterialID::Bedrock)] = MaterialDef(
+        MaterialID::Bedrock, MaterialState::Solid, 1000.0f,
+        Color(30, 30, 35), 5
+    );
+
+    materials_[static_cast<size_t>(MaterialID::Ceramic)] = MaterialDef(
+        MaterialID::Ceramic, MaterialState::Solid, 2.5f,
+        Color(210, 180, 140), 15
+    );
+
+    materials_[static_cast<size_t>(MaterialID::Granite)] = MaterialDef(
+        MaterialID::Granite, MaterialState::Solid, 2.7f,
+        Color(130, 120, 110), 25
+    );
+
+    materials_[static_cast<size_t>(MaterialID::Marble)] = MaterialDef(
+        MaterialID::Marble, MaterialState::Solid, 2.7f,
+        Color(240, 240, 245), 10
+    );
+
+    materials_[static_cast<size_t>(MaterialID::Sandstone)] = MaterialDef(
+        MaterialID::Sandstone, MaterialState::Solid, 2.3f,
+        Color(210, 180, 140), 20
+    );
+
+    materials_[static_cast<size_t>(MaterialID::Limestone)] = MaterialDef(
+        MaterialID::Limestone, MaterialState::Solid, 2.5f,
+        Color(220, 215, 200), 15
+    );
+
+    materials_[static_cast<size_t>(MaterialID::Slate)] = MaterialDef(
+        MaterialID::Slate, MaterialState::Solid, 2.8f,
+        Color(80, 85, 90), 10
+    );
+
+    materials_[static_cast<size_t>(MaterialID::Basalt)] = MaterialDef(
+        MaterialID::Basalt, MaterialState::Solid, 3.0f,
+        Color(50, 50, 55), 8
+    );
+
+    materials_[static_cast<size_t>(MaterialID::Quartz_Block)] = MaterialDef(
+        MaterialID::Quartz_Block, MaterialState::Solid, 2.6f,
+        Color(250, 245, 250), 5
+    );
+
+    materials_[static_cast<size_t>(MaterialID::Soil)] = MaterialDef(
+        MaterialID::Soil, MaterialState::Solid, 1.5f,
+        Color(90, 60, 40), 20
+    );
+
+    // ========================================================================
+    // EXPANSION: POWDERS (113-117)
+    // ========================================================================
+
+    materials_[static_cast<size_t>(MaterialID::Flour)] = MaterialDef(
+        MaterialID::Flour, MaterialState::Powder, 0.6f,
+        Color(250, 245, 230), 5
+    );
+
+    materials_[static_cast<size_t>(MaterialID::Sulfur)] = MaterialDef(
+        MaterialID::Sulfur, MaterialState::Powder, 2.0f,
+        Color(230, 220, 50), 15
+    );
+
+    materials_[static_cast<size_t>(MaterialID::Cement)] = MaterialDef(
+        MaterialID::Cement, MaterialState::Powder, 1.5f,
+        Color(160, 160, 155), 10
+    );
+
+    materials_[static_cast<size_t>(MaterialID::Fertilizer)] = MaterialDef(
+        MaterialID::Fertilizer, MaterialState::Powder, 1.2f,
+        Color(80, 50, 30), 15
+    );
+
+    materials_[static_cast<size_t>(MaterialID::Volcanic_Ash)] = MaterialDef(
+        MaterialID::Volcanic_Ash, MaterialState::Powder, 1.4f,
+        Color(70, 65, 60), 12
+    );
+
+    // ========================================================================
+    // EXPANSION: LIQUIDS (118-122)
+    // ========================================================================
+
+    materials_[static_cast<size_t>(MaterialID::Brine)] = MaterialDef(
+        MaterialID::Brine, MaterialState::Liquid, 1.03f,
+        Color(100, 150, 180), 10
+    );
+
+    materials_[static_cast<size_t>(MaterialID::Coffee)] = MaterialDef(
+        MaterialID::Coffee, MaterialState::Liquid, 1.0f,
+        Color(70, 45, 25), 10
+    );
+
+    materials_[static_cast<size_t>(MaterialID::Soap)] = MaterialDef(
+        MaterialID::Soap, MaterialState::Liquid, 0.95f,
+        Color(200, 220, 255), 15
+    );
+
+    materials_[static_cast<size_t>(MaterialID::Paint)] = MaterialDef(
+        MaterialID::Paint, MaterialState::Liquid, 1.3f,
+        Color(200, 50, 50), 40  // High variance for multi-color
+    );
+
+    materials_[static_cast<size_t>(MaterialID::Sewage)] = MaterialDef(
+        MaterialID::Sewage, MaterialState::Liquid, 1.05f,
+        Color(80, 70, 50), 15
+    );
+
+    // ========================================================================
+    // EXPANSION: GASES (123-129)
+    // ========================================================================
+
+    materials_[static_cast<size_t>(MaterialID::Ammonia)] = MaterialDef(
+        MaterialID::Ammonia, MaterialState::Gas, 0.6f,
+        Color(200, 255, 200, 140), 15
+    );
+
+    materials_[static_cast<size_t>(MaterialID::Carbon_Dioxide)] = MaterialDef(
+        MaterialID::Carbon_Dioxide, MaterialState::Gas, 1.5f,  // Heavier than air
+        Color(180, 180, 180, 100), 10
+    );
+
+    materials_[static_cast<size_t>(MaterialID::Nitrous)] = MaterialDef(
+        MaterialID::Nitrous, MaterialState::Gas, 0.5f,
+        Color(200, 200, 255, 120), 10
+    );
+
+    materials_[static_cast<size_t>(MaterialID::Steam_Hot)] = MaterialDef(
+        MaterialID::Steam_Hot, MaterialState::Gas, 0.05f,
+        Color(255, 255, 255, 160), 10
+    );
+
+    materials_[static_cast<size_t>(MaterialID::Miasma)] = MaterialDef(
+        MaterialID::Miasma, MaterialState::Gas, 0.8f,
+        Color(100, 80, 60, 150), 20
+    );
+
+    materials_[static_cast<size_t>(MaterialID::Pheromone)] = MaterialDef(
+        MaterialID::Pheromone, MaterialState::Gas, 0.3f,
+        Color(255, 200, 220, 100), 15
+    );
+
+    materials_[static_cast<size_t>(MaterialID::Nerve_Gas)] = MaterialDef(
+        MaterialID::Nerve_Gas, MaterialState::Gas, 1.2f,
+        Color(180, 255, 180, 130), 15
+    );
+
+    // ========================================================================
+    // EXPANSION: SOLIDS (130-136)
+    // ========================================================================
+
+    materials_[static_cast<size_t>(MaterialID::Silver)] = MaterialDef(
+        MaterialID::Silver, MaterialState::Solid, 10.5f,
+        Color(192, 192, 200), 8
+    );
+
+    materials_[static_cast<size_t>(MaterialID::Platinum)] = MaterialDef(
+        MaterialID::Platinum, MaterialState::Solid, 21.5f,
+        Color(220, 220, 230), 5
+    );
+
+    materials_[static_cast<size_t>(MaterialID::Lead)] = MaterialDef(
+        MaterialID::Lead, MaterialState::Solid, 11.3f,
+        Color(90, 90, 100), 8
+    );
+
+    materials_[static_cast<size_t>(MaterialID::Tin)] = MaterialDef(
+        MaterialID::Tin, MaterialState::Solid, 7.3f,
+        Color(180, 180, 175), 8
+    );
+
+    materials_[static_cast<size_t>(MaterialID::Zinc)] = MaterialDef(
+        MaterialID::Zinc, MaterialState::Solid, 7.1f,
+        Color(160, 170, 180), 10
+    );
+
+    materials_[static_cast<size_t>(MaterialID::Bronze)] = MaterialDef(
+        MaterialID::Bronze, MaterialState::Solid, 8.7f,
+        Color(180, 130, 70), 12
+    );
+
+    materials_[static_cast<size_t>(MaterialID::Steel)] = MaterialDef(
+        MaterialID::Steel, MaterialState::Solid, 7.8f,
+        Color(140, 145, 150), 8
+    );
+
+    // ========================================================================
+    // EXPANSION: ORGANIC (137-143)
+    // ========================================================================
+
+    materials_[static_cast<size_t>(MaterialID::Pollen)] = MaterialDef(
+        MaterialID::Pollen, MaterialState::Powder, 0.3f,
+        Color(255, 220, 80), 20
+    );
+
+    materials_[static_cast<size_t>(MaterialID::Root)] = MaterialDef(
+        MaterialID::Root, MaterialState::Solid, 0.9f,
+        Color(120, 80, 50), 15
+    );
+
+    materials_[static_cast<size_t>(MaterialID::Bark)] = MaterialDef(
+        MaterialID::Bark, MaterialState::Solid, 0.7f,
+        Color(100, 70, 45), 20
+    );
+
+    materials_[static_cast<size_t>(MaterialID::Fruit)] = MaterialDef(
+        MaterialID::Fruit, MaterialState::Solid, 0.9f,
+        Color(255, 80, 80), 30
+    );
+
+    materials_[static_cast<size_t>(MaterialID::Egg)] = MaterialDef(
+        MaterialID::Egg, MaterialState::Solid, 1.0f,
+        Color(250, 245, 230), 10
+    );
+
+    materials_[static_cast<size_t>(MaterialID::Web)] = MaterialDef(
+        MaterialID::Web, MaterialState::Solid, 0.1f,
+        Color(240, 240, 245, 200), 5
+    );
+
+    materials_[static_cast<size_t>(MaterialID::Mucus)] = MaterialDef(
+        MaterialID::Mucus, MaterialState::Liquid, 1.1f,
+        Color(180, 220, 150, 200), 15
+    );
+
+    // ========================================================================
+    // EXPANSION: SPECIAL (144-151)
+    // ========================================================================
+
+    materials_[static_cast<size_t>(MaterialID::Bomb)] = MaterialDef(
+        MaterialID::Bomb, MaterialState::Solid, 3.0f,
+        Color(50, 50, 50), 5
+    );
+
+    materials_[static_cast<size_t>(MaterialID::Nuke)] = MaterialDef(
+        MaterialID::Nuke, MaterialState::Solid, 15.0f,
+        Color(40, 60, 40), 5
+    );
+
+    materials_[static_cast<size_t>(MaterialID::Laser)] = MaterialDef(
+        MaterialID::Laser, MaterialState::Gas, 0.0f,
+        Color(255, 0, 0), 20
+    );
+
+    materials_[static_cast<size_t>(MaterialID::Black_Hole)] = MaterialDef(
+        MaterialID::Black_Hole, MaterialState::Solid, 1000.0f,
+        Color(10, 0, 20), 5
+    );
+
+    materials_[static_cast<size_t>(MaterialID::White_Hole)] = MaterialDef(
+        MaterialID::White_Hole, MaterialState::Solid, 0.0f,
+        Color(255, 255, 255), 5
+    );
+
+    materials_[static_cast<size_t>(MaterialID::Acid_Gas)] = MaterialDef(
+        MaterialID::Acid_Gas, MaterialState::Gas, 1.1f,
+        Color(150, 255, 100, 150), 15
+    );
+
+    materials_[static_cast<size_t>(MaterialID::Ice_Bomb)] = MaterialDef(
+        MaterialID::Ice_Bomb, MaterialState::Solid, 2.0f,
+        Color(150, 200, 255), 10
+    );
+
+    materials_[static_cast<size_t>(MaterialID::Fire_Bomb)] = MaterialDef(
+        MaterialID::Fire_Bomb, MaterialState::Solid, 2.0f,
+        Color(255, 100, 50), 15
+    );
+
+    // ========================================================================
+    // EXPANSION: FANTASY (152-161)
+    // ========================================================================
+
+    materials_[static_cast<size_t>(MaterialID::Mana)] = MaterialDef(
+        MaterialID::Mana, MaterialState::Liquid, 0.5f,
+        Color(100, 150, 255), 20
+    );
+
+    materials_[static_cast<size_t>(MaterialID::Mirage)] = MaterialDef(
+        MaterialID::Mirage, MaterialState::Gas, 0.01f,
+        Color(255, 220, 180, 80), 30
+    );
+
+    materials_[static_cast<size_t>(MaterialID::Holy_Water)] = MaterialDef(
+        MaterialID::Holy_Water, MaterialState::Liquid, 1.0f,
+        Color(220, 240, 255), 10
+    );
+
+    materials_[static_cast<size_t>(MaterialID::Cursed)] = MaterialDef(
+        MaterialID::Cursed, MaterialState::Solid, 2.0f,
+        Color(50, 20, 60), 15
+    );
+
+    materials_[static_cast<size_t>(MaterialID::Blessed)] = MaterialDef(
+        MaterialID::Blessed, MaterialState::Solid, 1.0f,
+        Color(255, 250, 200), 10
+    );
+
+    materials_[static_cast<size_t>(MaterialID::Soul)] = MaterialDef(
+        MaterialID::Soul, MaterialState::Gas, 0.1f,
+        Color(200, 220, 255, 120), 20
+    );
+
+    materials_[static_cast<size_t>(MaterialID::Spirit)] = MaterialDef(
+        MaterialID::Spirit, MaterialState::Gas, 0.05f,
+        Color(180, 200, 255, 100), 25
+    );
+
+    materials_[static_cast<size_t>(MaterialID::Aether)] = MaterialDef(
+        MaterialID::Aether, MaterialState::Gas, 0.01f,
+        Color(255, 255, 200, 80), 15
+    );
+
+    materials_[static_cast<size_t>(MaterialID::Nether)] = MaterialDef(
+        MaterialID::Nether, MaterialState::Gas, 2.0f,  // Sinks
+        Color(80, 20, 100, 150), 20
+    );
+
+    materials_[static_cast<size_t>(MaterialID::Phoenix_Ash)] = MaterialDef(
+        MaterialID::Phoenix_Ash, MaterialState::Powder, 0.5f,
+        Color(255, 150, 50), 25
+    );
 }
 
 Color MaterialSystem::get_material_color(MaterialID id) {
@@ -1202,11 +1529,67 @@ static const MaterialCombination COMBINATIONS[] = {
 
 static const int NUM_COMBINATIONS = sizeof(COMBINATIONS) / sizeof(COMBINATIONS[0]);
 
+// ============================================================================
+// OPTIMIZED COMBINATION LOOKUP SYSTEM
+// ============================================================================
+// Uses O(1) hash lookup instead of O(n) iteration through all recipes.
+// This is critical for performance when handling 100k+ particles.
+
+// Max material ID for lookup table sizing
+static constexpr int MAX_MATERIAL_ID = 256;
+
+// Lookup table: combo_lookup[mat_a][mat_b] = recipe index + 1 (0 = no recipe)
+// Using int16_t to save memory (65KB table instead of 256KB)
+static int16_t combo_lookup[MAX_MATERIAL_ID][MAX_MATERIAL_ID] = {};
+
+// Bitset of materials that participate in any combination
+static bool has_combinations[MAX_MATERIAL_ID] = {};
+
+// Initialize lookup tables once at startup
+static bool init_combination_lookup() {
+    // Build lookup table for O(1) recipe lookup
+    for (int i = 0; i < NUM_COMBINATIONS; i++) {
+        const MaterialCombination& combo = COMBINATIONS[i];
+        int a = static_cast<int>(combo.mat_a);
+        int b = static_cast<int>(combo.mat_b);
+
+        // Store recipe index + 1 (0 means no recipe)
+        // Note: if multiple recipes exist for same pair, last one wins
+        combo_lookup[a][b] = i + 1;
+        combo_lookup[b][a] = i + 1;  // Also store reverse for quick lookup
+
+        // Mark materials as having combinations
+        has_combinations[a] = true;
+        has_combinations[b] = true;
+    }
+    return true;
+}
+
+// Static initialization - runs once at program start
+static bool combo_lookup_initialized = init_combination_lookup();
+
+// Helper to apply combination results and initialize special materials
+static inline void apply_combination_result(World& world, int32_t x, int32_t y, MaterialID result) {
+    world.set_material(x, y, result);
+    if (result == MaterialID::Fire || result == MaterialID::Steam ||
+        result == MaterialID::Smoke || result == MaterialID::Toxic_Gas) {
+        world.get_cell(x, y).set_lifetime(30);
+    } else if (result == MaterialID::Magic) {
+        world.get_cell(x, y).set_lifetime(40);
+    }
+}
+
 // Check if a material at position (x, y) can combine with any neighbors
 // Returns true if a combination occurred
+// OPTIMIZED: Uses O(1) lookup instead of O(n) iteration
 static bool try_material_combination(World& world, int32_t x, int32_t y) {
     MaterialID my_mat = world.get_material(x, y);
     if (my_mat == MaterialID::Empty) return false;
+
+    int my_mat_idx = static_cast<int>(my_mat);
+
+    // Fast early exit: if this material has no recipes, skip entirely
+    if (!has_combinations[my_mat_idx]) return false;
 
     // Check all 8 neighbors
     for (int dy = -1; dy <= 1; dy++) {
@@ -1219,60 +1602,28 @@ static bool try_material_combination(World& world, int32_t x, int32_t y) {
             MaterialID neighbor_mat = world.get_material(nx, ny);
             if (neighbor_mat == MaterialID::Empty) continue;
 
-            // Check all combination recipes
-            for (int i = 0; i < NUM_COMBINATIONS; i++) {
-                const MaterialCombination& combo = COMBINATIONS[i];
+            int neighbor_idx = static_cast<int>(neighbor_mat);
 
-                bool match_forward = (my_mat == combo.mat_a && neighbor_mat == combo.mat_b);
-                bool match_reverse = (my_mat == combo.mat_b && neighbor_mat == combo.mat_a);
+            // O(1) lookup for recipe
+            int recipe_idx = combo_lookup[my_mat_idx][neighbor_idx];
+            if (recipe_idx == 0) continue;  // No recipe for this pair
 
-                if (match_forward || match_reverse) {
-                    // Random chance check
-                    if ((world.random_int() % combo.chance) == 0) {
-                        if (match_forward) {
-                            // Apply combination
-                            world.set_material(x, y, combo.result_a);
-                            world.set_material(nx, ny, combo.result_b);
+            const MaterialCombination& combo = COMBINATIONS[recipe_idx - 1];
 
-                            // Initialize new materials if needed
-                            if (combo.result_a == MaterialID::Fire || combo.result_a == MaterialID::Steam ||
-                                combo.result_a == MaterialID::Smoke || combo.result_a == MaterialID::Toxic_Gas) {
-                                world.get_cell(x, y).set_lifetime(30);
-                            }
-                            if (combo.result_b == MaterialID::Fire || combo.result_b == MaterialID::Steam ||
-                                combo.result_b == MaterialID::Smoke || combo.result_b == MaterialID::Toxic_Gas) {
-                                world.get_cell(nx, ny).set_lifetime(30);
-                            }
-                            if (combo.result_a == MaterialID::Magic) {
-                                world.get_cell(x, y).set_lifetime(40);
-                            }
-                            if (combo.result_b == MaterialID::Magic) {
-                                world.get_cell(nx, ny).set_lifetime(40);
-                            }
-                        } else {
-                            // Reverse match - swap results
-                            world.set_material(x, y, combo.result_b);
-                            world.set_material(nx, ny, combo.result_a);
+            // Random chance check
+            if ((world.random_int() % combo.chance) != 0) continue;
 
-                            if (combo.result_b == MaterialID::Fire || combo.result_b == MaterialID::Steam ||
-                                combo.result_b == MaterialID::Smoke || combo.result_b == MaterialID::Toxic_Gas) {
-                                world.get_cell(x, y).set_lifetime(30);
-                            }
-                            if (combo.result_a == MaterialID::Fire || combo.result_a == MaterialID::Steam ||
-                                combo.result_a == MaterialID::Smoke || combo.result_a == MaterialID::Toxic_Gas) {
-                                world.get_cell(nx, ny).set_lifetime(30);
-                            }
-                            if (combo.result_b == MaterialID::Magic) {
-                                world.get_cell(x, y).set_lifetime(40);
-                            }
-                            if (combo.result_a == MaterialID::Magic) {
-                                world.get_cell(nx, ny).set_lifetime(40);
-                            }
-                        }
-                        return true;
-                    }
-                }
+            // Determine if we matched forward (my_mat == mat_a) or reverse
+            bool forward = (my_mat == combo.mat_a);
+
+            if (forward) {
+                apply_combination_result(world, x, y, combo.result_a);
+                apply_combination_result(world, nx, ny, combo.result_b);
+            } else {
+                apply_combination_result(world, x, y, combo.result_b);
+                apply_combination_result(world, nx, ny, combo.result_a);
             }
+            return true;
         }
     }
     return false;
@@ -5625,52 +5976,70 @@ void update_lightning(World& world, int32_t x, int32_t y) {
 
 void update_portal_in(World& world, int32_t x, int32_t y) {
     // Portal_In teleports materials touching it to Portal_Out
-    // First, find a portal out
+    // PERFORMANCE FIX: Use static cache with periodic refresh
     static int portal_out_x = -1, portal_out_y = -1;
+    static uint32_t last_scan_frame = 0;
+    static uint32_t scan_frame_counter = 0;
 
-    // Scan for portal out (cached for performance)
-    if (portal_out_x < 0 || world.get_material(portal_out_x, portal_out_y) != MaterialID::Portal_Out) {
+    scan_frame_counter++;
+
+    // Check if cached portal is still valid
+    bool cache_valid = (portal_out_x >= 0 && portal_out_y >= 0 &&
+                        world.in_bounds(portal_out_x, portal_out_y) &&
+                        world.get_material(portal_out_x, portal_out_y) == MaterialID::Portal_Out);
+
+    // Re-scan if cache invalid and enough time has passed (every 30 frames = 0.5 sec)
+    if (!cache_valid && (scan_frame_counter - last_scan_frame > 30)) {
         portal_out_x = -1;
         portal_out_y = -1;
-        for (int sy = 0; sy < WORLD_HEIGHT && portal_out_x < 0; sy++) {
+        last_scan_frame = scan_frame_counter;
+
+        // Scan every cell but exit immediately when found
+        for (int sy = 0; sy < WORLD_HEIGHT; sy++) {
             for (int sx = 0; sx < WORLD_WIDTH; sx++) {
                 if (world.get_material(sx, sy) == MaterialID::Portal_Out) {
                     portal_out_x = sx;
                     portal_out_y = sy;
-                    break;
+                    cache_valid = true;
+                    goto found_portal;  // Exit nested loops
                 }
             }
         }
+        found_portal:;
     }
 
-    if (portal_out_x < 0) return;  // No portal out
+    // No valid portal out - nothing to do
+    if (portal_out_x < 0 || !cache_valid) return;
 
-    // Teleport materials
+    // Only teleport every few frames to reduce load when many portals exist
+    if ((world.random_int() & 1) != 0) return;  // 50% chance
+
+    // Teleport materials touching this portal
     for (int dy = -1; dy <= 1; dy++) {
         for (int dx = -1; dx <= 1; dx++) {
             if (dx == 0 && dy == 0) continue;
             int nx = x + dx, ny = y + dy;
-            if (world.in_bounds(nx, ny)) {
-                MaterialID m = world.get_material(nx, ny);
-                if (m != MaterialID::Empty && m != MaterialID::Portal_In &&
-                    m != MaterialID::Portal_Out && m != MaterialID::Stone) {
-                    // Find empty spot near portal out
-                    for (int oy = -2; oy <= 2; oy++) {
-                        for (int ox = -2; ox <= 2; ox++) {
-                            int px = portal_out_x + ox, py = portal_out_y + oy;
-                            if (world.in_bounds(px, py) &&
-                                world.get_material(px, py) == MaterialID::Empty) {
-                                // Teleport!
-                                Cell& src_cell = world.get_cell(nx, ny);
-                                world.set_material(px, py, m);
-                                Cell& dst_cell = world.get_cell(px, py);
-                                dst_cell.flags = src_cell.flags;
-                                dst_cell.velocity_y = src_cell.velocity_y;
-                                world.set_material(nx, ny, MaterialID::Empty);
-                                return;
-                            }
-                        }
-                    }
+            if (!world.in_bounds(nx, ny)) continue;
+
+            MaterialID m = world.get_material(nx, ny);
+            if (m == MaterialID::Empty || m == MaterialID::Portal_In ||
+                m == MaterialID::Portal_Out || m == MaterialID::Stone) continue;
+
+            // Find empty spot near portal out
+            for (int oy = -2; oy <= 2; oy++) {
+                for (int ox = -2; ox <= 2; ox++) {
+                    int px = portal_out_x + ox, py = portal_out_y + oy;
+                    if (!world.in_bounds(px, py)) continue;
+                    if (world.get_material(px, py) != MaterialID::Empty) continue;
+
+                    // Teleport!
+                    Cell& src_cell = world.get_cell(nx, ny);
+                    world.set_material(px, py, m);
+                    Cell& dst_cell = world.get_cell(px, py);
+                    dst_cell.flags = src_cell.flags;
+                    dst_cell.velocity_y = src_cell.velocity_y;
+                    world.set_material(nx, ny, MaterialID::Empty);
+                    return;
                 }
             }
         }
@@ -6896,6 +7265,1484 @@ void update_thermite(World& world, int32_t x, int32_t y) {
         int dir = (world.random_int() & 1) ? 1 : -1;
         world.try_move_cell(x, y, x + dir, y + 1);
     }
+}
+
+// ============================================================================
+// EXPANSION MATERIALS (103-161)
+// ============================================================================
+
+// === EXPANSION: BASIC (103-112) ===
+
+void update_bedrock(World& world, int32_t x, int32_t y) {
+    // Indestructible - does nothing, cannot be damaged
+    (void)world; (void)x; (void)y;
+}
+
+void update_ceramic(World& world, int32_t x, int32_t y) {
+    // Fired clay - static solid, shatters with enough force
+    (void)world; (void)x; (void)y;
+}
+
+void update_granite(World& world, int32_t x, int32_t y) {
+    // Hard igneous rock - static
+    (void)world; (void)x; (void)y;
+}
+
+void update_marble(World& world, int32_t x, int32_t y) {
+    // Polished stone - dissolves slowly in acid
+    if ((world.random_int() % 200) == 0) {
+        for (int dy = -1; dy <= 1; dy++) {
+            for (int dx = -1; dx <= 1; dx++) {
+                if (world.in_bounds(x + dx, y + dy) &&
+                    world.get_material(x + dx, y + dy) == MaterialID::Acid) {
+                    world.set_material(x, y, MaterialID::Empty);
+                    return;
+                }
+            }
+        }
+    }
+}
+
+void update_sandstone(World& world, int32_t x, int32_t y) {
+    // Compressed sand - erodes with water contact
+    if ((world.random_int() % 500) == 0) {
+        for (int dy = -1; dy <= 1; dy++) {
+            for (int dx = -1; dx <= 1; dx++) {
+                if (world.in_bounds(x + dx, y + dy) &&
+                    world.get_material(x + dx, y + dy) == MaterialID::Water) {
+                    world.set_material(x, y, MaterialID::Sand);
+                    return;
+                }
+            }
+        }
+    }
+}
+
+void update_limestone(World& world, int32_t x, int32_t y) {
+    // Calcium rock - dissolves in acid
+    if ((world.random_int() % 100) == 0) {
+        for (int dy = -1; dy <= 1; dy++) {
+            for (int dx = -1; dx <= 1; dx++) {
+                if (world.in_bounds(x + dx, y + dy) &&
+                    world.get_material(x + dx, y + dy) == MaterialID::Acid) {
+                    world.set_material(x, y, MaterialID::Empty);
+                    world.set_material(x + dx, y + dy, MaterialID::Empty);
+                    return;
+                }
+            }
+        }
+    }
+}
+
+void update_slate(World& world, int32_t x, int32_t y) {
+    // Layered rock - static
+    (void)world; (void)x; (void)y;
+}
+
+void update_basalt(World& world, int32_t x, int32_t y) {
+    // Dark volcanic rock - static
+    (void)world; (void)x; (void)y;
+}
+
+void update_quartz_block(World& world, int32_t x, int32_t y) {
+    // Crystalline silica - static, glows near magic
+    (void)world; (void)x; (void)y;
+}
+
+void update_soil(World& world, int32_t x, int32_t y) {
+    // Rich earth - can grow plants, falls like powder
+    // Check for support
+    if (!world.in_bounds(x, y + 1) ||
+        world.get_material(x, y + 1) == MaterialID::Empty ||
+        world.get_material(x, y + 1) == MaterialID::Water) {
+        generic_powder_update(world, x, y, 1, 8);
+        return;
+    }
+
+    // Grow grass on top if exposed to air
+    if ((world.random_int() % 1000) == 0 &&
+        world.in_bounds(x, y - 1) &&
+        world.get_material(x, y - 1) == MaterialID::Empty) {
+        // Check if there's water nearby to grow
+        bool has_water = false;
+        for (int dy = -2; dy <= 2; dy++) {
+            for (int dx = -2; dx <= 2; dx++) {
+                if (world.in_bounds(x + dx, y + dy) &&
+                    world.get_material(x + dx, y + dy) == MaterialID::Water) {
+                    has_water = true;
+                    break;
+                }
+            }
+            if (has_water) break;
+        }
+        if (has_water) {
+            world.set_material(x, y, MaterialID::Grass);
+        }
+    }
+}
+
+// === EXPANSION: POWDERS (113-117) ===
+
+void update_flour(World& world, int32_t x, int32_t y) {
+    // Explosive when dispersed near fire
+    for (int dy = -1; dy <= 1; dy++) {
+        for (int dx = -1; dx <= 1; dx++) {
+            if (world.in_bounds(x + dx, y + dy)) {
+                MaterialID neighbor = world.get_material(x + dx, y + dy);
+                if (neighbor == MaterialID::Fire || neighbor == MaterialID::Lava ||
+                    neighbor == MaterialID::Spark || neighbor == MaterialID::Ember) {
+                    // Explode!
+                    world.set_material(x, y, MaterialID::Fire);
+                    Cell& cell = world.get_cell(x, y);
+                    cell.set_lifetime(15);
+                    // Small explosion
+                    for (int ey = -2; ey <= 2; ey++) {
+                        for (int ex = -2; ex <= 2; ex++) {
+                            if (world.in_bounds(x + ex, y + ey)) {
+                                MaterialID m = world.get_material(x + ex, y + ey);
+                                if (m == MaterialID::Flour) {
+                                    world.set_material(x + ex, y + ey, MaterialID::Fire);
+                                    world.get_cell(x + ex, y + ey).set_lifetime(12);
+                                } else if (m == MaterialID::Empty) {
+                                    world.set_material(x + ex, y + ey, MaterialID::Smoke);
+                                    world.get_cell(x + ex, y + ey).set_lifetime(20);
+                                }
+                            }
+                        }
+                    }
+                    return;
+                }
+            }
+        }
+    }
+    generic_powder_update(world, x, y, 1, 8);
+}
+
+void update_sulfur(World& world, int32_t x, int32_t y) {
+    // Yellow powder - burns slowly with blue flame
+    for (int dy = -1; dy <= 1; dy++) {
+        for (int dx = -1; dx <= 1; dx++) {
+            if (world.in_bounds(x + dx, y + dy)) {
+                MaterialID neighbor = world.get_material(x + dx, y + dy);
+                if (neighbor == MaterialID::Fire || neighbor == MaterialID::Lava) {
+                    world.set_material(x, y, MaterialID::Fire);
+                    world.get_cell(x, y).set_lifetime(40);
+                    // Release toxic gas
+                    if (world.in_bounds(x, y - 1) && world.get_material(x, y - 1) == MaterialID::Empty) {
+                        world.set_material(x, y - 1, MaterialID::Toxic_Gas);
+                        world.get_cell(x, y - 1).set_lifetime(60);
+                    }
+                    return;
+                }
+            }
+        }
+    }
+    generic_powder_update(world, x, y, 2, 12);
+}
+
+void update_cement(World& world, int32_t x, int32_t y) {
+    // Hardens when wet
+    for (int dy = -1; dy <= 1; dy++) {
+        for (int dx = -1; dx <= 1; dx++) {
+            if (world.in_bounds(x + dx, y + dy) &&
+                world.get_material(x + dx, y + dy) == MaterialID::Water) {
+                // Absorb water and harden
+                world.set_material(x + dx, y + dy, MaterialID::Empty);
+                world.set_material(x, y, MaterialID::Concrete);
+                return;
+            }
+        }
+    }
+    generic_powder_update(world, x, y, 2, 14);
+}
+
+void update_fertilizer(World& world, int32_t x, int32_t y) {
+    // Helps plants grow - accelerates nearby organic growth
+    if ((world.random_int() % 30) == 0) {
+        for (int dy = -2; dy <= 2; dy++) {
+            for (int dx = -2; dx <= 2; dx++) {
+                if (world.in_bounds(x + dx, y + dy)) {
+                    MaterialID neighbor = world.get_material(x + dx, y + dy);
+                    // Boost plant growth
+                    if (neighbor == MaterialID::Seed) {
+                        world.set_material(x + dx, y + dy, MaterialID::Vine);
+                        world.set_material(x, y, MaterialID::Empty);
+                        return;
+                    }
+                    if (neighbor == MaterialID::Grass && (world.random_int() % 20) == 0) {
+                        if (world.in_bounds(x + dx, y + dy - 1) &&
+                            world.get_material(x + dx, y + dy - 1) == MaterialID::Empty) {
+                            world.set_material(x + dx, y + dy - 1, MaterialID::Flower);
+                        }
+                    }
+                }
+            }
+        }
+    }
+    generic_powder_update(world, x, y, 2, 10);
+}
+
+void update_volcanic_ash(World& world, int32_t x, int32_t y) {
+    // Hot ash - can ignite and floats briefly
+    Cell& cell = world.get_cell(x, y);
+
+    // Slowly cool down
+    if (cell.get_lifetime() > 0) {
+        cell.decrement_lifetime();
+        // Hot ash can ignite things
+        if (cell.get_lifetime() > 10) {
+            for (int dy = -1; dy <= 1; dy++) {
+                for (int dx = -1; dx <= 1; dx++) {
+                    if (world.in_bounds(x + dx, y + dy)) {
+                        MaterialID neighbor = world.get_material(x + dx, y + dy);
+                        if (neighbor == MaterialID::Wood || neighbor == MaterialID::Leaf) {
+                            world.set_material(x + dx, y + dy, MaterialID::Fire);
+                            world.get_cell(x + dx, y + dy).set_lifetime(20);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    generic_powder_update(world, x, y, 1, 6);
+}
+
+// === EXPANSION: LIQUIDS (118-122) ===
+
+void update_brine(World& world, int32_t x, int32_t y) {
+    // Salt water - evaporates to leave salt
+    if ((world.random_int() % 2000) == 0) {
+        world.set_material(x, y, MaterialID::Salt);
+        return;
+    }
+    // Flow like water
+    if (world.try_move_cell(x, y, x, y + 1)) return;
+
+    int dir = world.get_cell(x, y).get_flow_direction() ? 1 : -1;
+    if (!world.try_move_cell(x, y, x + dir, y + 1)) {
+        if (!world.try_move_cell(x, y, x - dir, y + 1)) {
+            // Spread horizontally
+            int spread = 3 + (world.random_int() % 3);
+            bool moved = false;
+            for (int i = 1; i <= spread && !moved; i++) {
+                if (world.try_move_cell(x, y, x + dir * i, y)) {
+                    moved = true;
+                }
+            }
+            if (!moved) {
+                world.get_cell(x, y).set_flow_direction(!world.get_cell(x, y).get_flow_direction());
+            }
+        }
+    }
+}
+
+void update_coffee(World& world, int32_t x, int32_t y) {
+    // Brown liquid - stains things, evaporates slowly
+    if ((world.random_int() % 3000) == 0) {
+        world.set_material(x, y, MaterialID::Steam);
+        return;
+    }
+
+    // Flow like water
+    if (world.try_move_cell(x, y, x, y + 1)) return;
+
+    int dir = world.get_cell(x, y).get_flow_direction() ? 1 : -1;
+    if (!world.try_move_cell(x, y, x + dir, y + 1)) {
+        if (!world.try_move_cell(x, y, x - dir, y + 1)) {
+            int spread = 4;
+            bool moved = false;
+            for (int i = 1; i <= spread && !moved; i++) {
+                if (world.try_move_cell(x, y, x + dir * i, y)) {
+                    moved = true;
+                }
+            }
+            if (!moved) {
+                world.get_cell(x, y).set_flow_direction(!world.get_cell(x, y).get_flow_direction());
+            }
+        }
+    }
+}
+
+void update_soap(World& world, int32_t x, int32_t y) {
+    // Bubbly cleaner - creates bubbles, floats on water
+    // Chance to create bubble
+    if ((world.random_int() % 100) == 0 &&
+        world.in_bounds(x, y - 1) && world.get_material(x, y - 1) == MaterialID::Empty) {
+        world.set_material(x, y - 1, MaterialID::Steam);  // Bubble effect
+        world.get_cell(x, y - 1).set_lifetime(30);
+    }
+
+    // Float on water
+    if (world.in_bounds(x, y + 1) && world.get_material(x, y + 1) == MaterialID::Water) {
+        world.swap_cells(x, y, x, y + 1);
+        return;
+    }
+
+    generic_slow_liquid_update(world, x, y, 1);
+}
+
+void update_paint(World& world, int32_t x, int32_t y) {
+    // Colorful liquid - sticks to surfaces
+    generic_slow_liquid_update(world, x, y, 2);
+}
+
+void update_sewage(World& world, int32_t x, int32_t y) {
+    // Gross waste - spawns miasma, kills plants
+    if ((world.random_int() % 200) == 0 &&
+        world.in_bounds(x, y - 1) && world.get_material(x, y - 1) == MaterialID::Empty) {
+        world.set_material(x, y - 1, MaterialID::Miasma);
+        world.get_cell(x, y - 1).set_lifetime(40);
+    }
+
+    // Kill nearby plants
+    if ((world.random_int() % 50) == 0) {
+        for (int dy = -1; dy <= 1; dy++) {
+            for (int dx = -1; dx <= 1; dx++) {
+                if (world.in_bounds(x + dx, y + dy)) {
+                    MaterialID neighbor = world.get_material(x + dx, y + dy);
+                    if (neighbor == MaterialID::Grass || neighbor == MaterialID::Flower ||
+                        neighbor == MaterialID::Leaf || neighbor == MaterialID::Vine) {
+                        world.set_material(x + dx, y + dy, MaterialID::Empty);
+                    }
+                }
+            }
+        }
+    }
+
+    generic_slow_liquid_update(world, x, y, 1);
+}
+
+// === EXPANSION: GASES (123-129) ===
+
+void update_ammonia(World& world, int32_t x, int32_t y) {
+    // Pungent gas - rises, reacts with acid
+    Cell& cell = world.get_cell(x, y);
+
+    // React with acid to neutralize
+    for (int dy = -1; dy <= 1; dy++) {
+        for (int dx = -1; dx <= 1; dx++) {
+            if (world.in_bounds(x + dx, y + dy) &&
+                world.get_material(x + dx, y + dy) == MaterialID::Acid) {
+                world.set_material(x, y, MaterialID::Empty);
+                world.set_material(x + dx, y + dy, MaterialID::Salt);  // Neutralization
+                return;
+            }
+        }
+    }
+
+    generic_gas_update(world, x, y, -2, -15, true);
+}
+
+void update_carbon_dioxide(World& world, int32_t x, int32_t y) {
+    // Heavy gas - sinks and suffocates fire
+    Cell& cell = world.get_cell(x, y);
+
+    // Extinguish nearby fire
+    for (int dy = -1; dy <= 1; dy++) {
+        for (int dx = -1; dx <= 1; dx++) {
+            if (world.in_bounds(x + dx, y + dy)) {
+                MaterialID neighbor = world.get_material(x + dx, y + dy);
+                if (neighbor == MaterialID::Fire || neighbor == MaterialID::Ember) {
+                    world.set_material(x + dx, y + dy, MaterialID::Smoke);
+                    world.get_cell(x + dx, y + dy).set_lifetime(15);
+                }
+            }
+        }
+    }
+
+    // Sink slowly (positive rise = sinking)
+    if ((world.random_int() & 1) == 0) {
+        if (world.try_move_cell(x, y, x, y + 1)) return;
+    }
+
+    // Spread horizontally
+    int dir = (world.random_int() & 1) ? 1 : -1;
+    if (!world.try_move_cell(x, y, x + dir, y)) {
+        world.try_move_cell(x, y, x - dir, y);
+    }
+
+    // Dissipate
+    if (cell.get_lifetime() > 0) {
+        cell.decrement_lifetime();
+        if (cell.get_lifetime() == 0) {
+            world.set_material(x, y, MaterialID::Empty);
+        }
+    } else if ((world.random_int() % 500) == 0) {
+        world.set_material(x, y, MaterialID::Empty);
+    }
+}
+
+void update_nitrous(World& world, int32_t x, int32_t y) {
+    // Laughing gas - rises fast, harmless
+    generic_gas_update(world, x, y, -3, -20, true);
+}
+
+void update_steam_hot(World& world, int32_t x, int32_t y) {
+    // Scalding steam - damages organic matter
+    Cell& cell = world.get_cell(x, y);
+
+    // Damage organic things
+    for (int dy = -1; dy <= 1; dy++) {
+        for (int dx = -1; dx <= 1; dx++) {
+            if (world.in_bounds(x + dx, y + dy)) {
+                MaterialID neighbor = world.get_material(x + dx, y + dy);
+                if (neighbor == MaterialID::Person || neighbor == MaterialID::Flesh) {
+                    // Damage
+                    Cell& target = world.get_cell(x + dx, y + dy);
+                    target.damage_health(5);
+                }
+                // Cook food
+                if (neighbor == MaterialID::Egg && (world.random_int() % 30) == 0) {
+                    world.set_material(x + dx, y + dy, MaterialID::Flesh);  // Cooked egg
+                }
+            }
+        }
+    }
+
+    // Cool down to regular steam
+    if (cell.get_lifetime() > 0) {
+        cell.decrement_lifetime();
+        if (cell.get_lifetime() == 0) {
+            world.set_material(x, y, MaterialID::Steam);
+            return;
+        }
+    }
+
+    generic_gas_update(world, x, y, -2, -15, false);
+}
+
+void update_miasma(World& world, int32_t x, int32_t y) {
+    // Disease gas - kills living things
+    Cell& cell = world.get_cell(x, y);
+
+    // Damage living things
+    for (int dy = -1; dy <= 1; dy++) {
+        for (int dx = -1; dx <= 1; dx++) {
+            if (world.in_bounds(x + dx, y + dy)) {
+                MaterialID neighbor = world.get_material(x + dx, y + dy);
+                if (neighbor == MaterialID::Person) {
+                    Cell& target = world.get_cell(x + dx, y + dy);
+                    target.damage_health(2);
+                }
+                // Wilt plants
+                if ((neighbor == MaterialID::Flower || neighbor == MaterialID::Leaf) &&
+                    (world.random_int() % 20) == 0) {
+                    world.set_material(x + dx, y + dy, MaterialID::Empty);
+                }
+            }
+        }
+    }
+
+    generic_gas_update(world, x, y, -1, -8, true);
+}
+
+void update_pheromone(World& world, int32_t x, int32_t y) {
+    // Attracts creatures - people move toward it
+    Cell& cell = world.get_cell(x, y);
+
+    // Dissipate over time
+    if (cell.get_lifetime() > 0) {
+        cell.decrement_lifetime();
+        if (cell.get_lifetime() == 0) {
+            world.set_material(x, y, MaterialID::Empty);
+            return;
+        }
+    } else if ((world.random_int() % 300) == 0) {
+        world.set_material(x, y, MaterialID::Empty);
+        return;
+    }
+
+    generic_gas_update(world, x, y, -1, -5, false);
+}
+
+void update_nerve_gas(World& world, int32_t x, int32_t y) {
+    // Deadly to life - instant kill on contact
+    Cell& cell = world.get_cell(x, y);
+
+    // Kill living things instantly
+    for (int dy = -1; dy <= 1; dy++) {
+        for (int dx = -1; dx <= 1; dx++) {
+            if (world.in_bounds(x + dx, y + dy)) {
+                MaterialID neighbor = world.get_material(x + dx, y + dy);
+                if (neighbor == MaterialID::Person) {
+                    world.set_material(x + dx, y + dy, MaterialID::Bone);
+                }
+            }
+        }
+    }
+
+    generic_gas_update(world, x, y, -1, -10, true);
+}
+
+// === EXPANSION: SOLIDS (130-136) ===
+
+void update_silver(World& world, int32_t x, int32_t y) {
+    // Precious metal - tarnishes slowly
+    if ((world.random_int() % 10000) == 0) {
+        // Could add tarnish effect
+    }
+    (void)world; (void)x; (void)y;
+}
+
+void update_platinum(World& world, int32_t x, int32_t y) {
+    // Rare metal - catalyzes reactions
+    (void)world; (void)x; (void)y;
+}
+
+void update_lead(World& world, int32_t x, int32_t y) {
+    // Heavy soft metal - blocks radiation
+    (void)world; (void)x; (void)y;
+}
+
+void update_tin(World& world, int32_t x, int32_t y) {
+    // Light metal
+    (void)world; (void)x; (void)y;
+}
+
+void update_zinc(World& world, int32_t x, int32_t y) {
+    // Reactive metal - reacts with acid to produce hydrogen
+    for (int dy = -1; dy <= 1; dy++) {
+        for (int dx = -1; dx <= 1; dx++) {
+            if (world.in_bounds(x + dx, y + dy) &&
+                world.get_material(x + dx, y + dy) == MaterialID::Acid) {
+                world.set_material(x + dx, y + dy, MaterialID::Hydrogen);
+                if ((world.random_int() % 10) == 0) {
+                    world.set_material(x, y, MaterialID::Empty);
+                    return;
+                }
+            }
+        }
+    }
+}
+
+void update_bronze(World& world, int32_t x, int32_t y) {
+    // Copper-tin alloy - static
+    (void)world; (void)x; (void)y;
+}
+
+void update_steel(World& world, int32_t x, int32_t y) {
+    // Iron-carbon alloy - rusts very slowly
+    if ((world.random_int() % 20000) == 0) {
+        for (int dy = -1; dy <= 1; dy++) {
+            for (int dx = -1; dx <= 1; dx++) {
+                if (world.in_bounds(x + dx, y + dy) &&
+                    world.get_material(x + dx, y + dy) == MaterialID::Water) {
+                    world.set_material(x, y, MaterialID::Rust);
+                    return;
+                }
+            }
+        }
+    }
+}
+
+// === EXPANSION: ORGANIC (137-143) ===
+
+void update_pollen(World& world, int32_t x, int32_t y) {
+    // Plant reproduction - floats, can grow flowers
+    Cell& cell = world.get_cell(x, y);
+
+    // Land on soil/grass to grow flower
+    if (world.in_bounds(x, y + 1)) {
+        MaterialID below = world.get_material(x, y + 1);
+        if (below == MaterialID::Soil || below == MaterialID::Grass || below == MaterialID::Dirt) {
+            if ((world.random_int() % 10) == 0) {
+                world.set_material(x, y, MaterialID::Flower);
+                return;
+            }
+        }
+    }
+
+    // Float like dust
+    generic_gas_update(world, x, y, -1, -5, true);
+}
+
+void update_root(World& world, int32_t x, int32_t y) {
+    // Underground plant - grows through soil, absorbs water
+    if ((world.random_int() % 100) == 0) {
+        // Grow downward through soil
+        int grow_dir = (world.random_int() % 3) - 1;  // -1, 0, or 1
+        int gx = x + grow_dir;
+        int gy = y + 1;
+
+        if (world.in_bounds(gx, gy)) {
+            MaterialID target = world.get_material(gx, gy);
+            if (target == MaterialID::Soil || target == MaterialID::Dirt) {
+                world.set_material(gx, gy, MaterialID::Root);
+            }
+        }
+
+        // Absorb nearby water
+        for (int dy = -1; dy <= 1; dy++) {
+            for (int dx = -1; dx <= 1; dx++) {
+                if (world.in_bounds(x + dx, y + dy) &&
+                    world.get_material(x + dx, y + dy) == MaterialID::Water) {
+                    world.set_material(x + dx, y + dy, MaterialID::Empty);
+                    // Could spawn something above ground
+                    break;
+                }
+            }
+        }
+    }
+}
+
+void update_bark(World& world, int32_t x, int32_t y) {
+    // Tree skin - flammable, static
+    for (int dy = -1; dy <= 1; dy++) {
+        for (int dx = -1; dx <= 1; dx++) {
+            if (world.in_bounds(x + dx, y + dy)) {
+                MaterialID neighbor = world.get_material(x + dx, y + dy);
+                if (neighbor == MaterialID::Fire || neighbor == MaterialID::Lava) {
+                    world.set_material(x, y, MaterialID::Fire);
+                    world.get_cell(x, y).set_lifetime(30);
+                    return;
+                }
+            }
+        }
+    }
+}
+
+void update_fruit(World& world, int32_t x, int32_t y) {
+    // Edible plant part - falls, rots over time
+    Cell& cell = world.get_cell(x, y);
+
+    // Check if supported
+    if (!world.in_bounds(x, y + 1) ||
+        world.get_material(x, y + 1) == MaterialID::Empty ||
+        world.get_material(x, y + 1) == MaterialID::Water) {
+        // Fall
+        if (world.try_move_cell(x, y, x, y + 1)) return;
+        int dir = (world.random_int() & 1) ? 1 : -1;
+        if (world.try_move_cell(x, y, x + dir, y + 1)) return;
+    }
+
+    // Rot over time
+    if ((world.random_int() % 5000) == 0) {
+        world.set_material(x, y, MaterialID::Mud);
+    }
+}
+
+void update_egg(World& world, int32_t x, int32_t y) {
+    // Hatches creatures - falls, breaks on impact
+    Cell& cell = world.get_cell(x, y);
+
+    // Check support
+    if (!world.in_bounds(x, y + 1) ||
+        world.get_material(x, y + 1) == MaterialID::Empty) {
+        // Falling
+        cell.add_velocity(1);
+        cell.clamp_velocity(-8, 8);
+
+        if (world.try_move_cell(x, y, x, y + 1)) {
+            // Check for hard landing
+            if (cell.velocity_y > 3 && world.in_bounds(x, y + 2) &&
+                world.get_material(x, y + 2) != MaterialID::Empty) {
+                // Crack! Spawn something
+                world.set_material(x, y, MaterialID::Slime);  // Egg goo
+                return;
+            }
+            return;
+        }
+    }
+
+    // Incubate over time
+    if ((world.random_int() % 3000) == 0) {
+        // Check if warm
+        bool warm = false;
+        for (int dy = -1; dy <= 1; dy++) {
+            for (int dx = -1; dx <= 1; dx++) {
+                if (world.in_bounds(x + dx, y + dy)) {
+                    MaterialID neighbor = world.get_material(x + dx, y + dy);
+                    if (neighbor == MaterialID::Fire || neighbor == MaterialID::Lava ||
+                        neighbor == MaterialID::Steam_Hot) {
+                        warm = true;
+                        break;
+                    }
+                }
+            }
+            if (warm) break;
+        }
+        if (warm) {
+            // Hatch!
+            world.set_material(x, y, MaterialID::Person);
+            world.get_cell(x, y).set_health(50);
+        }
+    }
+}
+
+void update_web(World& world, int32_t x, int32_t y) {
+    // Sticky spider silk - traps things, burns easily
+    // Check for fire
+    for (int dy = -1; dy <= 1; dy++) {
+        for (int dx = -1; dx <= 1; dx++) {
+            if (world.in_bounds(x + dx, y + dy)) {
+                MaterialID neighbor = world.get_material(x + dx, y + dy);
+                if (neighbor == MaterialID::Fire || neighbor == MaterialID::Lava) {
+                    world.set_material(x, y, MaterialID::Fire);
+                    world.get_cell(x, y).set_lifetime(5);
+                    return;
+                }
+            }
+        }
+    }
+    // Static - trapping handled elsewhere
+}
+
+void update_mucus(World& world, int32_t x, int32_t y) {
+    // Biological slime - slow liquid
+    generic_slow_liquid_update(world, x, y, 4);
+}
+
+// === EXPANSION: SPECIAL (144-151) ===
+
+void update_bomb(World& world, int32_t x, int32_t y) {
+    // Explodes on impact - check velocity
+    Cell& cell = world.get_cell(x, y);
+
+    // Fall with gravity
+    if (!world.in_bounds(x, y + 1) ||
+        world.get_material(x, y + 1) == MaterialID::Empty) {
+        cell.add_velocity(2);
+        cell.clamp_velocity(-10, 10);
+        if (world.try_move_cell(x, y, x, y + 1)) return;
+    }
+
+    // Check for fire nearby to detonate
+    bool detonate = false;
+    for (int dy = -1; dy <= 1; dy++) {
+        for (int dx = -1; dx <= 1; dx++) {
+            if (world.in_bounds(x + dx, y + dy)) {
+                MaterialID neighbor = world.get_material(x + dx, y + dy);
+                if (neighbor == MaterialID::Fire || neighbor == MaterialID::Lava ||
+                    neighbor == MaterialID::Spark || neighbor == MaterialID::Lightning) {
+                    detonate = true;
+                    break;
+                }
+            }
+        }
+        if (detonate) break;
+    }
+
+    // Impact detection
+    if (cell.velocity_y > 5) {
+        if (world.in_bounds(x, y + 1) && world.get_material(x, y + 1) != MaterialID::Empty) {
+            detonate = true;
+        }
+    }
+
+    if (detonate) {
+        // Medium explosion
+        int radius = 8;
+        for (int ey = -radius; ey <= radius; ey++) {
+            for (int ex = -radius; ex <= radius; ex++) {
+                if (ex * ex + ey * ey <= radius * radius) {
+                    if (world.in_bounds(x + ex, y + ey)) {
+                        MaterialID m = world.get_material(x + ex, y + ey);
+                        if (m != MaterialID::Bedrock && m != MaterialID::Obsidian) {
+                            if (ex * ex + ey * ey <= (radius/2) * (radius/2)) {
+                                world.set_material(x + ex, y + ey, MaterialID::Fire);
+                                world.get_cell(x + ex, y + ey).set_lifetime(20);
+                            } else if ((world.random_int() % 2) == 0) {
+                                world.set_material(x + ex, y + ey, MaterialID::Smoke);
+                                world.get_cell(x + ex, y + ey).set_lifetime(30);
+                            } else {
+                                world.set_material(x + ex, y + ey, MaterialID::Empty);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+void update_nuke(World& world, int32_t x, int32_t y) {
+    // Massive explosion - check for detonation
+    Cell& cell = world.get_cell(x, y);
+
+    // Fall
+    if (world.try_move_cell(x, y, x, y + 1)) return;
+
+    // Check for fire/detonation
+    bool detonate = false;
+    for (int dy = -1; dy <= 1; dy++) {
+        for (int dx = -1; dx <= 1; dx++) {
+            if (world.in_bounds(x + dx, y + dy)) {
+                MaterialID neighbor = world.get_material(x + dx, y + dy);
+                if (neighbor == MaterialID::Fire || neighbor == MaterialID::Lava ||
+                    neighbor == MaterialID::Lightning || neighbor == MaterialID::Plasma) {
+                    detonate = true;
+                    break;
+                }
+            }
+        }
+        if (detonate) break;
+    }
+
+    if (detonate) {
+        // Massive explosion
+        int radius = 40;
+        for (int ey = -radius; ey <= radius; ey++) {
+            for (int ex = -radius; ex <= radius; ex++) {
+                if (ex * ex + ey * ey <= radius * radius) {
+                    if (world.in_bounds(x + ex, y + ey)) {
+                        MaterialID m = world.get_material(x + ex, y + ey);
+                        if (m != MaterialID::Bedrock) {
+                            int dist_sq = ex * ex + ey * ey;
+                            if (dist_sq <= (radius/3) * (radius/3)) {
+                                world.set_material(x + ex, y + ey, MaterialID::Plasma);
+                                world.get_cell(x + ex, y + ey).set_lifetime(40);
+                            } else if (dist_sq <= (radius/2) * (radius/2)) {
+                                world.set_material(x + ex, y + ey, MaterialID::Fire);
+                                world.get_cell(x + ex, y + ey).set_lifetime(30);
+                            } else if ((world.random_int() % 3) == 0) {
+                                world.set_material(x + ex, y + ey, MaterialID::Smoke);
+                                world.get_cell(x + ex, y + ey).set_lifetime(50);
+                            } else {
+                                world.set_material(x + ex, y + ey, MaterialID::Empty);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+void update_laser(World& world, int32_t x, int32_t y) {
+    // Light beam - travels in a direction, melts things
+    Cell& cell = world.get_cell(x, y);
+
+    // Laser travels downward, destroying things
+    int dir_y = 1;  // Default: down
+
+    // Move in direction
+    for (int i = 0; i < 10; i++) {
+        int ny = y + dir_y * (i + 1);
+        if (!world.in_bounds(x, ny)) break;
+
+        MaterialID target = world.get_material(x, ny);
+        if (target == MaterialID::Empty) {
+            continue;
+        } else if (target == MaterialID::Glass || target == MaterialID::Ice) {
+            // Pass through glass/ice
+            continue;
+        } else if (target == MaterialID::Water) {
+            world.set_material(x, ny, MaterialID::Steam);
+        } else if (target != MaterialID::Bedrock && target != MaterialID::Obsidian) {
+            // Melt/destroy
+            if (target == MaterialID::Stone || target == MaterialID::Metal) {
+                world.set_material(x, ny, MaterialID::Lava);
+            } else {
+                world.set_material(x, ny, MaterialID::Fire);
+                world.get_cell(x, ny).set_lifetime(15);
+            }
+            break;
+        } else {
+            break;
+        }
+    }
+
+    // Laser dissipates
+    cell.decrement_lifetime();
+    if (cell.get_lifetime() == 0) {
+        world.set_material(x, y, MaterialID::Empty);
+    }
+}
+
+void update_black_hole(World& world, int32_t x, int32_t y) {
+    // Optimized black hole with realistic physics
+    // Uses sparse sampling for distant regions to reduce computation
+
+    const int event_horizon = 3;      // Instant destruction radius
+    const int accretion_disk = 10;    // Strong spiral effect radius
+    const int gravity_well = 35;      // Reduced for performance (was 50)
+
+    // Hawking radiation - very rare emission of particles
+    if ((world.random_int() % 2000) == 0) {
+        int emit_dir = world.random_int() % 4;
+        int ex = x + ((emit_dir == 0) ? -1 : (emit_dir == 1) ? 1 : 0);
+        int ey = y + ((emit_dir == 2) ? -1 : (emit_dir == 3) ? 1 : 0);
+        if (world.in_bounds(ex, ey) && world.get_material(ex, ey) == MaterialID::Empty) {
+            world.set_material(ex, ey, MaterialID::Plasma);
+            world.get_cell(ex, ey).set_lifetime(10);
+        }
+    }
+
+    // Pre-compute squared radii for faster comparison
+    const int event_horizon_sq = event_horizon * event_horizon;
+    const int accretion_disk_sq = accretion_disk * accretion_disk;
+    const int gravity_well_sq = gravity_well * gravity_well;
+
+    // Process in rings from center outward, with decreasing sample density
+    for (int dy = -gravity_well; dy <= gravity_well; dy++) {
+        for (int dx = -gravity_well; dx <= gravity_well; dx++) {
+            if (dx == 0 && dy == 0) continue;
+
+            int dist_sq = dx * dx + dy * dy;
+
+            // Skip outside gravity well (use squared comparison - no sqrt)
+            if (dist_sq > gravity_well_sq) continue;
+
+            // Sparse sampling for distant regions - skip most cells far away
+            // This dramatically reduces computation for large radius
+            if (dist_sq > accretion_disk_sq) {
+                // Only process ~1/4 of cells in outer region
+                if (((dx + dy) & 1) != 0) continue;  // Checkerboard skip
+                if ((world.random_int() & 3) != 0) continue;  // 25% chance
+            }
+
+            int px = x + dx;
+            int py = y + dy;
+
+            if (!world.in_bounds(px, py)) continue;
+            MaterialID m = world.get_material(px, py);
+
+            // Early exit for common empty case
+            if (m == MaterialID::Empty) continue;
+            if (m == MaterialID::Black_Hole || m == MaterialID::White_Hole ||
+                m == MaterialID::Bedrock) continue;
+
+            // EVENT HORIZON - instant destruction (use squared comparison)
+            if (dist_sq <= event_horizon_sq) {
+                world.set_material(px, py, MaterialID::Empty);
+                // Simplified energy burst - less frequent
+                if ((world.random_int() % 8) == 0) {
+                    int burst_x = x + (world.random_int() % 5) - 2;
+                    int burst_y = y + (world.random_int() % 5) - 2;
+                    if (world.in_bounds(burst_x, burst_y) &&
+                        world.get_material(burst_x, burst_y) == MaterialID::Empty) {
+                        world.set_material(burst_x, burst_y, MaterialID::Plasma);
+                        world.get_cell(burst_x, burst_y).set_lifetime(8);
+                    }
+                }
+                continue;
+            }
+
+            // Compute actual distance only when needed (after all early exits)
+            float dist = sqrtf((float)dist_sq);
+
+            // Gravitational pull - simplified inverse square
+            float gravity_strength = 400.0f / (float)dist_sq;
+            int pull_chance = (int)(gravity_strength);
+            if (pull_chance < 1) pull_chance = 1;
+            if (pull_chance > 100) pull_chance = 100;
+
+            if ((int)(world.random_int() % 100) >= pull_chance) continue;
+
+            // Movement calculation
+            int move_x, move_y;
+
+            if (dist_sq <= accretion_disk_sq) {
+                // Accretion disk - spiral motion
+                float inv_dist = 1.0f / dist;
+                float norm_x = -dx * inv_dist;
+                float norm_y = -dy * inv_dist;
+                float tang_x = -norm_y;
+                float tang_y = norm_x;
+
+                float spiral_factor = (dist / accretion_disk) * 0.6f;
+                float radial_factor = 1.0f - spiral_factor;
+
+                float move_x_f = norm_x * radial_factor + tang_x * spiral_factor;
+                float move_y_f = norm_y * radial_factor + tang_y * spiral_factor;
+
+                move_x = (move_x_f > 0.3f) ? 1 : (move_x_f < -0.3f) ? -1 : 0;
+                move_y = (move_y_f > 0.3f) ? 1 : (move_y_f < -0.3f) ? -1 : 0;
+
+                // Spaghettification - less frequent
+                if (dist < 5 && (world.random_int() % 5) == 0) {
+                    int stretch_y = (dy > 0) ? py + 1 : py - 1;
+                    if (world.in_bounds(px, stretch_y) &&
+                        world.get_material(px, stretch_y) == MaterialID::Empty) {
+                        world.set_material(px, stretch_y, m);
+                    }
+                }
+            } else {
+                // Simple pull toward center
+                move_x = (dx > 0) ? -1 : (dx < 0) ? 1 : 0;
+                move_y = (dy > 0) ? -1 : (dy < 0) ? 1 : 0;
+            }
+
+            // Single move attempt (removed multi-step for performance)
+            int new_x = px + move_x;
+            int new_y = py + move_y;
+
+            if (world.in_bounds(new_x, new_y)) {
+                MaterialID target = world.get_material(new_x, new_y);
+                if (target == MaterialID::Empty) {
+                    world.swap_cells(px, py, new_x, new_y);
+                }
+            }
+        }
+    }
+}
+
+void update_white_hole(World& world, int32_t x, int32_t y) {
+    // Repels matter
+    int push_radius = 15;
+
+    // Push nearby materials away from center
+    for (int dy = -push_radius; dy <= push_radius; dy++) {
+        for (int dx = -push_radius; dx <= push_radius; dx++) {
+            if (dx == 0 && dy == 0) continue;
+
+            int dist_sq = dx * dx + dy * dy;
+            if (dist_sq > push_radius * push_radius) continue;
+            if ((world.random_int() % 5) != 0) continue;
+
+            int px = x + dx;
+            int py = y + dy;
+
+            if (!world.in_bounds(px, py)) continue;
+            MaterialID m = world.get_material(px, py);
+            if (m == MaterialID::Empty || m == MaterialID::Black_Hole ||
+                m == MaterialID::White_Hole || m == MaterialID::Bedrock) continue;
+
+            // Move away from white hole
+            int move_x = (dx > 0) ? 1 : (dx < 0) ? -1 : 0;
+            int move_y = (dy > 0) ? 1 : (dy < 0) ? -1 : 0;
+
+            int new_x = px + move_x;
+            int new_y = py + move_y;
+
+            if (world.in_bounds(new_x, new_y) &&
+                world.get_material(new_x, new_y) == MaterialID::Empty) {
+                world.swap_cells(px, py, new_x, new_y);
+            }
+        }
+    }
+}
+
+void update_acid_gas(World& world, int32_t x, int32_t y) {
+    // Corrosive vapor - damages materials
+    Cell& cell = world.get_cell(x, y);
+
+    // Corrode nearby materials
+    if ((world.random_int() % 10) == 0) {
+        for (int dy = -1; dy <= 1; dy++) {
+            for (int dx = -1; dx <= 1; dx++) {
+                if (world.in_bounds(x + dx, y + dy)) {
+                    MaterialID neighbor = world.get_material(x + dx, y + dy);
+                    // Corrode metals and organics
+                    if (neighbor == MaterialID::Metal || neighbor == MaterialID::Copper ||
+                        neighbor == MaterialID::Iron_Filings || neighbor == MaterialID::Flesh ||
+                        neighbor == MaterialID::Wood || neighbor == MaterialID::Leaf) {
+                        if ((world.random_int() % 5) == 0) {
+                            world.set_material(x + dx, y + dy, MaterialID::Empty);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    generic_gas_update(world, x, y, -1, -10, true);
+}
+
+void update_ice_bomb(World& world, int32_t x, int32_t y) {
+    // Freezing explosion
+    Cell& cell = world.get_cell(x, y);
+
+    // Fall
+    if (world.try_move_cell(x, y, x, y + 1)) return;
+
+    // Check for impact or trigger
+    bool detonate = false;
+    if (cell.velocity_y > 3) detonate = true;
+
+    for (int dy = -1; dy <= 1; dy++) {
+        for (int dx = -1; dx <= 1; dx++) {
+            if (world.in_bounds(x + dx, y + dy)) {
+                MaterialID neighbor = world.get_material(x + dx, y + dy);
+                if (neighbor == MaterialID::Fire || neighbor == MaterialID::Spark) {
+                    detonate = true;  // Ironic trigger
+                }
+            }
+        }
+    }
+
+    if (detonate) {
+        int radius = 12;
+        for (int ey = -radius; ey <= radius; ey++) {
+            for (int ex = -radius; ex <= radius; ex++) {
+                if (ex * ex + ey * ey <= radius * radius) {
+                    if (world.in_bounds(x + ex, y + ey)) {
+                        MaterialID m = world.get_material(x + ex, y + ey);
+                        if (m == MaterialID::Water) {
+                            world.set_material(x + ex, y + ey, MaterialID::Ice);
+                        } else if (m == MaterialID::Lava) {
+                            world.set_material(x + ex, y + ey, MaterialID::Obsidian);
+                        } else if (m == MaterialID::Steam || m == MaterialID::Steam_Hot) {
+                            world.set_material(x + ex, y + ey, MaterialID::Snow);
+                        } else if (m == MaterialID::Fire || m == MaterialID::Ember) {
+                            world.set_material(x + ex, y + ey, MaterialID::Empty);
+                        } else if (m == MaterialID::Empty && (world.random_int() % 3) == 0) {
+                            world.set_material(x + ex, y + ey, MaterialID::Frost);
+                            world.get_cell(x + ex, y + ey).set_lifetime(40);
+                        }
+                    }
+                }
+            }
+        }
+        world.set_material(x, y, MaterialID::Ice);
+    }
+}
+
+void update_fire_bomb(World& world, int32_t x, int32_t y) {
+    // Incendiary explosion
+    Cell& cell = world.get_cell(x, y);
+
+    // Fall
+    if (world.try_move_cell(x, y, x, y + 1)) return;
+
+    // Check for impact
+    bool detonate = cell.velocity_y > 3;
+
+    for (int dy = -1; dy <= 1; dy++) {
+        for (int dx = -1; dx <= 1; dx++) {
+            if (world.in_bounds(x + dx, y + dy)) {
+                MaterialID neighbor = world.get_material(x + dx, y + dy);
+                if (neighbor == MaterialID::Fire || neighbor == MaterialID::Lava) {
+                    detonate = true;
+                }
+            }
+        }
+    }
+
+    if (detonate) {
+        int radius = 10;
+        for (int ey = -radius; ey <= radius; ey++) {
+            for (int ex = -radius; ex <= radius; ex++) {
+                if (ex * ex + ey * ey <= radius * radius) {
+                    if (world.in_bounds(x + ex, y + ey)) {
+                        MaterialID m = world.get_material(x + ex, y + ey);
+                        if (m != MaterialID::Bedrock && m != MaterialID::Water) {
+                            if (ex * ex + ey * ey <= (radius/2) * (radius/2)) {
+                                world.set_material(x + ex, y + ey, MaterialID::Napalm);
+                                world.get_cell(x + ex, y + ey).set_lifetime(50);
+                            } else if (m == MaterialID::Empty || (world.random_int() % 2) == 0) {
+                                world.set_material(x + ex, y + ey, MaterialID::Fire);
+                                world.get_cell(x + ex, y + ey).set_lifetime(25);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+// === EXPANSION: FANTASY (152-161) ===
+
+void update_mana(World& world, int32_t x, int32_t y) {
+    // Magic energy liquid - glows, powers magical things
+    // Flow like water but slower
+    if (world.try_move_cell(x, y, x, y + 1)) return;
+
+    int dir = world.get_cell(x, y).get_flow_direction() ? 1 : -1;
+    if (!world.try_move_cell(x, y, x + dir, y + 1)) {
+        if (!world.try_move_cell(x, y, x - dir, y + 1)) {
+            if (!world.try_move_cell(x, y, x + dir, y)) {
+                world.get_cell(x, y).set_flow_direction(!world.get_cell(x, y).get_flow_direction());
+            }
+        }
+    }
+
+    // Energize nearby magic things
+    if ((world.random_int() % 50) == 0) {
+        for (int dy = -1; dy <= 1; dy++) {
+            for (int dx = -1; dx <= 1; dx++) {
+                if (world.in_bounds(x + dx, y + dy)) {
+                    MaterialID neighbor = world.get_material(x + dx, y + dy);
+                    if (neighbor == MaterialID::Crystal) {
+                        // Power up crystal - create magic effect
+                        if (world.in_bounds(x, y - 1) && world.get_material(x, y - 1) == MaterialID::Empty) {
+                            world.set_material(x, y - 1, MaterialID::Magic);
+                            world.get_cell(x, y - 1).set_lifetime(30);
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+void update_mirage(World& world, int32_t x, int32_t y) {
+    // Illusory shimmer - fades in and out
+    Cell& cell = world.get_cell(x, y);
+
+    if (cell.get_lifetime() > 0) {
+        cell.decrement_lifetime();
+        if (cell.get_lifetime() == 0) {
+            world.set_material(x, y, MaterialID::Empty);
+            return;
+        }
+    } else if ((world.random_int() % 200) == 0) {
+        world.set_material(x, y, MaterialID::Empty);
+        return;
+    }
+
+    // Shimmer around
+    if ((world.random_int() % 5) == 0) {
+        int dx = (world.random_int() % 3) - 1;
+        int dy = (world.random_int() % 3) - 1;
+        if (world.in_bounds(x + dx, y + dy) && world.get_material(x + dx, y + dy) == MaterialID::Empty) {
+            world.swap_cells(x, y, x + dx, y + dy);
+        }
+    }
+}
+
+void update_holy_water(World& world, int32_t x, int32_t y) {
+    // Blessed liquid - purifies cursed things, damages undead
+    // Flow like water
+    if (world.try_move_cell(x, y, x, y + 1)) return;
+
+    int dir = world.get_cell(x, y).get_flow_direction() ? 1 : -1;
+    if (!world.try_move_cell(x, y, x + dir, y + 1)) {
+        if (!world.try_move_cell(x, y, x - dir, y + 1)) {
+            int spread = 4;
+            bool moved = false;
+            for (int i = 1; i <= spread && !moved; i++) {
+                if (world.try_move_cell(x, y, x + dir * i, y)) {
+                    moved = true;
+                }
+            }
+            if (!moved) {
+                world.get_cell(x, y).set_flow_direction(!world.get_cell(x, y).get_flow_direction());
+            }
+        }
+    }
+
+    // Purify nearby cursed things
+    for (int dy = -1; dy <= 1; dy++) {
+        for (int dx = -1; dx <= 1; dx++) {
+            if (world.in_bounds(x + dx, y + dy)) {
+                MaterialID neighbor = world.get_material(x + dx, y + dy);
+                if (neighbor == MaterialID::Cursed) {
+                    world.set_material(x + dx, y + dy, MaterialID::Blessed);
+                    world.set_material(x, y, MaterialID::Empty);
+                    return;
+                }
+                if (neighbor == MaterialID::Ectoplasm || neighbor == MaterialID::Spirit) {
+                    world.set_material(x + dx, y + dy, MaterialID::Empty);
+                }
+            }
+        }
+    }
+}
+
+void update_cursed(World& world, int32_t x, int32_t y) {
+    // Dark corruption - spreads slowly, damages life
+    Cell& cell = world.get_cell(x, y);
+
+    // Spread to nearby materials
+    if ((world.random_int() % 200) == 0) {
+        int dx = (world.random_int() % 3) - 1;
+        int dy = (world.random_int() % 3) - 1;
+        if (world.in_bounds(x + dx, y + dy)) {
+            MaterialID neighbor = world.get_material(x + dx, y + dy);
+            // Corrupt organic materials
+            if (neighbor == MaterialID::Grass || neighbor == MaterialID::Flower ||
+                neighbor == MaterialID::Leaf || neighbor == MaterialID::Wood) {
+                world.set_material(x + dx, y + dy, MaterialID::Cursed);
+            }
+        }
+    }
+
+    // Damage nearby people
+    for (int dy = -1; dy <= 1; dy++) {
+        for (int dx = -1; dx <= 1; dx++) {
+            if (world.in_bounds(x + dx, y + dy) &&
+                world.get_material(x + dx, y + dy) == MaterialID::Person) {
+                world.get_cell(x + dx, y + dy).damage_health(1);
+            }
+        }
+    }
+}
+
+void update_blessed(World& world, int32_t x, int32_t y) {
+    // Light purification - heals and protects
+    // Heal nearby people
+    if ((world.random_int() % 30) == 0) {
+        for (int dy = -1; dy <= 1; dy++) {
+            for (int dx = -1; dx <= 1; dx++) {
+                if (world.in_bounds(x + dx, y + dy) &&
+                    world.get_material(x + dx, y + dy) == MaterialID::Person) {
+                    Cell& target = world.get_cell(x + dx, y + dy);
+                    uint8_t health = target.get_health();
+                    if (health < 100) {
+                        target.set_health(health + 1);
+                    }
+                }
+            }
+        }
+    }
+
+    // Remove nearby cursed
+    for (int dy = -1; dy <= 1; dy++) {
+        for (int dx = -1; dx <= 1; dx++) {
+            if (world.in_bounds(x + dx, y + dy) &&
+                world.get_material(x + dx, y + dy) == MaterialID::Cursed) {
+                world.set_material(x + dx, y + dy, MaterialID::Empty);
+            }
+        }
+    }
+}
+
+void update_soul(World& world, int32_t x, int32_t y) {
+    // Spirit essence - rises slowly, fades
+    Cell& cell = world.get_cell(x, y);
+
+    // Fade over time
+    if (cell.get_lifetime() > 0) {
+        cell.decrement_lifetime();
+        if (cell.get_lifetime() == 0) {
+            world.set_material(x, y, MaterialID::Empty);
+            return;
+        }
+    } else if ((world.random_int() % 500) == 0) {
+        world.set_material(x, y, MaterialID::Empty);
+        return;
+    }
+
+    // Rise slowly with wandering
+    if ((world.random_int() % 3) == 0) {
+        int dx = (world.random_int() % 3) - 1;
+        if (world.in_bounds(x + dx, y - 1) && world.get_material(x + dx, y - 1) == MaterialID::Empty) {
+            world.swap_cells(x, y, x + dx, y - 1);
+        }
+    }
+}
+
+void update_spirit(World& world, int32_t x, int32_t y) {
+    // Ghost matter - passes through solids, wanders
+    Cell& cell = world.get_cell(x, y);
+
+    // Fade over time
+    if (cell.get_lifetime() > 0) {
+        cell.decrement_lifetime();
+        if (cell.get_lifetime() == 0) {
+            world.set_material(x, y, MaterialID::Empty);
+            return;
+        }
+    }
+
+    // Wander randomly, can pass through things
+    if ((world.random_int() % 2) == 0) {
+        int dx = (world.random_int() % 3) - 1;
+        int dy = (world.random_int() % 3) - 1;
+        if (world.in_bounds(x + dx, y + dy)) {
+            MaterialID target = world.get_material(x + dx, y + dy);
+            if (target == MaterialID::Empty) {
+                world.swap_cells(x, y, x + dx, y + dy);
+            } else if (target != MaterialID::Bedrock && target != MaterialID::Holy_Water) {
+                // Phase through - swap positions
+                world.swap_cells(x, y, x + dx, y + dy);
+            }
+        }
+    }
+}
+
+void update_aether(World& world, int32_t x, int32_t y) {
+    // Heavenly gas - rises fast, heals
+    Cell& cell = world.get_cell(x, y);
+
+    // Heal nearby people
+    if ((world.random_int() % 50) == 0) {
+        for (int dy = -1; dy <= 1; dy++) {
+            for (int dx = -1; dx <= 1; dx++) {
+                if (world.in_bounds(x + dx, y + dy) &&
+                    world.get_material(x + dx, y + dy) == MaterialID::Person) {
+                    Cell& target = world.get_cell(x + dx, y + dy);
+                    uint8_t health = target.get_health();
+                    if (health < 100) {
+                        target.set_health(health + 2);
+                    }
+                }
+            }
+        }
+    }
+
+    generic_gas_update(world, x, y, -3, -20, true);
+}
+
+void update_nether(World& world, int32_t x, int32_t y) {
+    // Hellish gas - sinks, damages
+    Cell& cell = world.get_cell(x, y);
+
+    // Damage nearby life
+    for (int dy = -1; dy <= 1; dy++) {
+        for (int dx = -1; dx <= 1; dx++) {
+            if (world.in_bounds(x + dx, y + dy)) {
+                MaterialID neighbor = world.get_material(x + dx, y + dy);
+                if (neighbor == MaterialID::Person) {
+                    world.get_cell(x + dx, y + dy).damage_health(3);
+                }
+                // Wilt plants
+                if ((neighbor == MaterialID::Grass || neighbor == MaterialID::Flower) &&
+                    (world.random_int() % 10) == 0) {
+                    world.set_material(x + dx, y + dy, MaterialID::Ash);
+                }
+            }
+        }
+    }
+
+    // Sink (positive rise speed = sinking)
+    if ((world.random_int() & 1) == 0) {
+        if (world.try_move_cell(x, y, x, y + 1)) return;
+    }
+
+    int dir = (world.random_int() & 1) ? 1 : -1;
+    if (!world.try_move_cell(x, y, x + dir, y)) {
+        world.try_move_cell(x, y, x - dir, y);
+    }
+
+    // Dissipate
+    if (cell.get_lifetime() > 0) {
+        cell.decrement_lifetime();
+        if (cell.get_lifetime() == 0) {
+            world.set_material(x, y, MaterialID::Empty);
+        }
+    }
+}
+
+void update_phoenix_ash(World& world, int32_t x, int32_t y) {
+    // Rebirth powder - can revive dead things, burns bright
+    Cell& cell = world.get_cell(x, y);
+
+    // Check for bones nearby - revive to person
+    if ((world.random_int() % 100) == 0) {
+        for (int dy = -1; dy <= 1; dy++) {
+            for (int dx = -1; dx <= 1; dx++) {
+                if (world.in_bounds(x + dx, y + dy) &&
+                    world.get_material(x + dx, y + dy) == MaterialID::Bone) {
+                    world.set_material(x + dx, y + dy, MaterialID::Person);
+                    world.get_cell(x + dx, y + dy).set_health(30);
+                    world.set_material(x, y, MaterialID::Fire);
+                    world.get_cell(x, y).set_lifetime(20);
+                    return;
+                }
+            }
+        }
+    }
+
+    // Near fire - burst into flames and respawn
+    for (int dy = -1; dy <= 1; dy++) {
+        for (int dx = -1; dx <= 1; dx++) {
+            if (world.in_bounds(x + dx, y + dy)) {
+                MaterialID neighbor = world.get_material(x + dx, y + dy);
+                if (neighbor == MaterialID::Fire || neighbor == MaterialID::Lava) {
+                    // Burst - create dragon fire
+                    world.set_material(x, y, MaterialID::Dragon_Fire);
+                    world.get_cell(x, y).set_lifetime(30);
+                    return;
+                }
+            }
+        }
+    }
+
+    generic_powder_update(world, x, y, 1, 6);
 }
 
 } // namespace Materials
