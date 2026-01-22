@@ -1525,9 +1525,471 @@ static const MaterialCombination COMBINATIONS[] = {
     {MaterialID::Thermite_Powder, MaterialID::Spark, MaterialID::Thermite, MaterialID::Empty, 1},
     // Thermite_Powder + Fire = Thermite
     {MaterialID::Thermite_Powder, MaterialID::Fire, MaterialID::Thermite, MaterialID::Fire, 2},
+
+    // ========================================================================
+    // DISCOVERY TREE COMBINATIONS
+    // Designed so all 161 materials are reachable from 15 starter materials
+    // Starter: Empty, Stone, Sand, Water, Fire, Wood, Lava, Dirt, Snow, Salt,
+    //          Seed, Coal, Oil, Ice, Spark
+    // ========================================================================
+
+    // === TIER 1: Direct from starters ===
+    // Wood + Fire = Ash + Fire (burning wood)
+    {MaterialID::Wood, MaterialID::Fire, MaterialID::Ash, MaterialID::Fire, 4},
+    // Coal + Fire = Ash + Ember
+    {MaterialID::Coal, MaterialID::Fire, MaterialID::Ash, MaterialID::Ember, 8},
+    // Oil + Fire = Fire + Smoke
+    {MaterialID::Oil, MaterialID::Fire, MaterialID::Fire, MaterialID::Smoke, 2},
+    // Wood + Water = Sawdust (soggy breakdown)
+    {MaterialID::Wood, MaterialID::Water, MaterialID::Sawdust, MaterialID::Water, 128},
+    // Stone + Lava = Stone + Stone (heating)
+    {MaterialID::Stone, MaterialID::Lava, MaterialID::Obsidian, MaterialID::Stone, 16},
+    // Ice + Fire = Water + Steam
+    {MaterialID::Ice, MaterialID::Fire, MaterialID::Water, MaterialID::Steam, 2},
+    // Snow + Water = Ice
+    {MaterialID::Snow, MaterialID::Water, MaterialID::Ice, MaterialID::Empty, 16},
+    // Salt + Ice = Brine (salted ice melts)
+    {MaterialID::Salt, MaterialID::Ice, MaterialID::Brine, MaterialID::Empty, 8},
+    // Dirt + Seed = Grass (already exists but reaffirm)
+    // Coal + Stone = Gravel (grinding)
+    {MaterialID::Coal, MaterialID::Stone, MaterialID::Gravel, MaterialID::Coal, 64},
+    // Sand + Fire = Glass_Powder
+    {MaterialID::Sand, MaterialID::Fire, MaterialID::Glass_Powder, MaterialID::Fire, 32},
+    // Wood + Lava = Charcoal + Fire
+    {MaterialID::Wood, MaterialID::Lava, MaterialID::Charcoal, MaterialID::Fire, 4},
+    // Gravel from Coal + Dirt (grinding rocks)
+    {MaterialID::Coal, MaterialID::Dirt, MaterialID::Gravel, MaterialID::Empty, 64},
+    // Dirt + Coal = Soil
+    {MaterialID::Dirt, MaterialID::Coal, MaterialID::Soil, MaterialID::Empty, 32},
+
+    // === TIER 2: From Tier 1 discoveries ===
+    // Ash + Water = Mud (muddy ash - already exists but expands)
+    // Ember + Coal = Fire + Charcoal
+    {MaterialID::Ember, MaterialID::Coal, MaterialID::Fire, MaterialID::Charcoal, 8},
+    // Steam + Ice = Water
+    {MaterialID::Steam, MaterialID::Ice, MaterialID::Water, MaterialID::Water, 4},
+    // Smoke + Water = Dust
+    {MaterialID::Smoke, MaterialID::Water, MaterialID::Dust, MaterialID::Empty, 16},
+    // Grass + Fire = Ash + Smoke
+    {MaterialID::Grass, MaterialID::Fire, MaterialID::Ash, MaterialID::Smoke, 2},
+    // Grass + Water = Leaf
+    {MaterialID::Grass, MaterialID::Water, MaterialID::Leaf, MaterialID::Empty, 32},
+    // Flower + Fire = Ash
+    {MaterialID::Flower, MaterialID::Fire, MaterialID::Ash, MaterialID::Smoke, 4},
+    // Flower + Water = Seed
+    {MaterialID::Flower, MaterialID::Water, MaterialID::Seed, MaterialID::Slime, 32},
+    // Sawdust + Fire = Fire + Ash
+    {MaterialID::Sawdust, MaterialID::Fire, MaterialID::Fire, MaterialID::Ash, 2},
+    // Gravel + Water = Mud + Stone
+    {MaterialID::Gravel, MaterialID::Water, MaterialID::Mud, MaterialID::Stone, 16},
+    // Gravel + Lava = Stone + Obsidian
+    {MaterialID::Gravel, MaterialID::Lava, MaterialID::Stone, MaterialID::Obsidian, 8},
+    // Brine + Fire = Salt + Steam
+    {MaterialID::Brine, MaterialID::Fire, MaterialID::Salt, MaterialID::Steam, 4},
+    // Mud + Fire = Dirt + Steam
+    {MaterialID::Mud, MaterialID::Fire, MaterialID::Dirt, MaterialID::Steam, 8},
+    // Mud + Sand = Clay
+    {MaterialID::Mud, MaterialID::Sand, MaterialID::Clay, MaterialID::Empty, 16},
+
+    // === TIER 3: More complex materials ===
+    // Clay + Water = Mud (reverse)
+    {MaterialID::Clay, MaterialID::Water, MaterialID::Mud, MaterialID::Mud, 32},
+    // Leaf + Fire = Ash + Spore
+    {MaterialID::Leaf, MaterialID::Fire, MaterialID::Ash, MaterialID::Spore, 4},
+    // Leaf + Dirt = Moss
+    {MaterialID::Leaf, MaterialID::Dirt, MaterialID::Moss, MaterialID::Soil, 32},
+    // Moss + Fire = Ash
+    {MaterialID::Moss, MaterialID::Fire, MaterialID::Ash, MaterialID::Smoke, 4},
+    // Spore + Water = Fungus
+    {MaterialID::Spore, MaterialID::Water, MaterialID::Fungus, MaterialID::Empty, 8},
+    // Spore + Soil = Fungus
+    {MaterialID::Spore, MaterialID::Soil, MaterialID::Fungus, MaterialID::Fungus, 16},
+    // Fungus + Fire = Spore + Smoke
+    {MaterialID::Fungus, MaterialID::Fire, MaterialID::Spore, MaterialID::Smoke, 4},
+    // Dust + Water = Mud
+    {MaterialID::Dust, MaterialID::Water, MaterialID::Mud, MaterialID::Empty, 8},
+    // Dust + Fire = Smoke + Ember
+    {MaterialID::Dust, MaterialID::Fire, MaterialID::Smoke, MaterialID::Ember, 4},
+    // Charcoal + Fire = Ember + Ash
+    // (already defined above, but also:)
+    {MaterialID::Charcoal, MaterialID::Water, MaterialID::Ink, MaterialID::Water, 32},
+    // Soil + Water = Mud + Soil
+    {MaterialID::Soil, MaterialID::Water, MaterialID::Mud, MaterialID::Soil, 16},
+    // Soil + Seed = Vine
+    {MaterialID::Soil, MaterialID::Seed, MaterialID::Vine, MaterialID::Empty, 16},
+
+    // === METALS ===
+    // Stone + Coal + Fire = Metal (smelting)
+    {MaterialID::Coal, MaterialID::Gravel, MaterialID::Metal, MaterialID::Ash, 32},
+    // Metal + Fire = Metal (heating - no change but produces sparks)
+    {MaterialID::Metal, MaterialID::Spark, MaterialID::Metal, MaterialID::Fire, 16},
+    // Metal + Metal = Metal (no change)
+    // Metal + Coal = Steel (alloying)
+    {MaterialID::Metal, MaterialID::Coal, MaterialID::Steel, MaterialID::Empty, 32},
+    // Metal + Lava = Metal (molten form)
+    // Copper from Metal + Acid (already exists)
+    // Gold from Magic + Sand (already exists)
+    // Silver from Stone + Magic
+    {MaterialID::Stone, MaterialID::Magic, MaterialID::Silver, MaterialID::Empty, 32},
+    // Copper + Metal = Bronze
+    {MaterialID::Copper, MaterialID::Metal, MaterialID::Bronze, MaterialID::Empty, 16},
+    // Metal + Water = Rust + Water (already exists)
+    // Steel + Water = Steel (rust resistant)
+    // Titanium from Steel + Magic
+    {MaterialID::Steel, MaterialID::Magic, MaterialID::Titanium, MaterialID::Empty, 32},
+    // Platinum from Gold + Magic
+    {MaterialID::Gold, MaterialID::Magic, MaterialID::Platinum, MaterialID::Empty, 48},
+    // Lead from Metal + Poison
+    {MaterialID::Metal, MaterialID::Poison, MaterialID::Lead, MaterialID::Empty, 32},
+    // Tin from Metal + Water (light oxidation)
+    {MaterialID::Metal, MaterialID::Salt, MaterialID::Tin, MaterialID::Rust, 64},
+    // Zinc from Metal + Acid (weak)
+    {MaterialID::Metal, MaterialID::Acid, MaterialID::Zinc, MaterialID::Toxic_Gas, 32},
+
+    // === ORGANICS ===
+    // Vine + Fire = Ash
+    {MaterialID::Vine, MaterialID::Fire, MaterialID::Ash, MaterialID::Smoke, 4},
+    // Vine + Water = Algae
+    {MaterialID::Vine, MaterialID::Water, MaterialID::Algae, MaterialID::Empty, 32},
+    // Algae + Fire = Ash + Slime
+    {MaterialID::Algae, MaterialID::Fire, MaterialID::Ash, MaterialID::Slime, 8},
+    // Algae + Stone = Coral
+    {MaterialID::Algae, MaterialID::Stone, MaterialID::Coral, MaterialID::Empty, 32},
+    // Coral + Fire = Stone (calcifies)
+    {MaterialID::Coral, MaterialID::Fire, MaterialID::Stone, MaterialID::Ash, 8},
+    // Flower + Seed = Pollen
+    {MaterialID::Flower, MaterialID::Seed, MaterialID::Pollen, MaterialID::Flower, 16},
+    // Pollen + Water = Honey
+    {MaterialID::Pollen, MaterialID::Water, MaterialID::Honey, MaterialID::Empty, 16},
+    // Honey + Fire = Wax + Steam
+    {MaterialID::Honey, MaterialID::Fire, MaterialID::Wax, MaterialID::Steam, 8},
+    // Wax + Fire = Fire + Smoke
+    {MaterialID::Wax, MaterialID::Fire, MaterialID::Fire, MaterialID::Smoke, 4},
+    // Wax + Honey = Honeycomb
+    {MaterialID::Wax, MaterialID::Honey, MaterialID::Honeycomb, MaterialID::Empty, 16},
+    // Wood + Stone = Bark
+    {MaterialID::Wood, MaterialID::Stone, MaterialID::Bark, MaterialID::Wood, 64},
+    // Vine + Soil = Root
+    {MaterialID::Vine, MaterialID::Soil, MaterialID::Root, MaterialID::Empty, 32},
+    // Flower + Honey = Fruit
+    {MaterialID::Flower, MaterialID::Honey, MaterialID::Fruit, MaterialID::Empty, 32},
+    // Fruit + Fire = Juice + Steam
+    {MaterialID::Fruit, MaterialID::Fire, MaterialID::Juice, MaterialID::Steam, 8},
+    // Fruit + Water = Juice
+    {MaterialID::Fruit, MaterialID::Water, MaterialID::Juice, MaterialID::Empty, 16},
+    // Slime + Flesh = Mucus
+    {MaterialID::Slime, MaterialID::Flesh, MaterialID::Mucus, MaterialID::Empty, 16},
+    // Slime + Water = Mucus
+    {MaterialID::Slime, MaterialID::Water, MaterialID::Mucus, MaterialID::Empty, 32},
+    // Bone from Flesh + Fire (burnt remains)
+    {MaterialID::Flesh, MaterialID::Fire, MaterialID::Bone, MaterialID::Ash, 16},
+    // Flesh from Slime + Blood
+    {MaterialID::Slime, MaterialID::Blood, MaterialID::Flesh, MaterialID::Empty, 32},
+    // Blood from Flesh + Water
+    {MaterialID::Flesh, MaterialID::Water, MaterialID::Blood, MaterialID::Flesh, 32},
+    // Egg from Flesh + Seed (life creation)
+    {MaterialID::Flesh, MaterialID::Seed, MaterialID::Egg, MaterialID::Empty, 64},
+    // Web from Slime + Air (silk production)
+    {MaterialID::Slime, MaterialID::Dust, MaterialID::Web, MaterialID::Empty, 32},
+
+    // === LIQUIDS ===
+    // Juice + Fire = Sugar + Steam
+    {MaterialID::Juice, MaterialID::Fire, MaterialID::Sugar, MaterialID::Steam, 8},
+    // Sap from Wood + Water (tree bleeds)
+    {MaterialID::Wood, MaterialID::Acid, MaterialID::Sap, MaterialID::Wood, 32},
+    // Milk from Grass + Water (abstract)
+    {MaterialID::Grass, MaterialID::Seed, MaterialID::Milk, MaterialID::Empty, 64},
+    // Alcohol from Juice + Sugar (fermentation)
+    {MaterialID::Juice, MaterialID::Sugar, MaterialID::Alcohol, MaterialID::Empty, 32},
+    // Petrol from Coal + Oil (refining)
+    {MaterialID::Coal, MaterialID::Oil, MaterialID::Petrol, MaterialID::Ash, 32},
+    // Glue from Bone + Water
+    {MaterialID::Bone, MaterialID::Water, MaterialID::Glue, MaterialID::Empty, 32},
+    // Mercury from Metal + Acid (liquid metal)
+    // (already defined)
+    // Poison from Fungus + Water
+    {MaterialID::Fungus, MaterialID::Water, MaterialID::Poison, MaterialID::Empty, 16},
+    // Tar from Coal + Oil (heavy processing)
+    {MaterialID::Coal, MaterialID::Petrol, MaterialID::Tar, MaterialID::Empty, 32},
+    // Paint from Ink + Water
+    {MaterialID::Ink, MaterialID::Water, MaterialID::Paint, MaterialID::Empty, 16},
+    // Soap from Oil + Ash
+    {MaterialID::Oil, MaterialID::Ash, MaterialID::Soap, MaterialID::Empty, 32},
+    // Coffee from Seed + Fire (roasting)
+    {MaterialID::Seed, MaterialID::Fire, MaterialID::Coffee, MaterialID::Ash, 32},
+    // Sewage from Mud + Poison
+    {MaterialID::Mud, MaterialID::Poison, MaterialID::Sewage, MaterialID::Empty, 16},
+    // Bleach from Salt + Water + Spark (electrolysis abstract)
+    {MaterialID::Salt, MaterialID::Spark, MaterialID::Bleach, MaterialID::Hydrogen, 16},
+
+    // === GASES ===
+    // Hydrogen from Water + Spark (electrolysis)
+    {MaterialID::Water, MaterialID::Spark, MaterialID::Hydrogen, MaterialID::Oxygen, 16},
+    // Helium from Magic + Air (light gas)
+    {MaterialID::Magic, MaterialID::Steam, MaterialID::Helium, MaterialID::Empty, 32},
+    // Methane from Sewage + Fire (biogas)
+    {MaterialID::Sewage, MaterialID::Fire, MaterialID::Methane, MaterialID::Smoke, 8},
+    // Toxic_Gas from Poison + Fire (already various sources)
+    // Plasma from Fire + Magic
+    {MaterialID::Fire, MaterialID::Magic, MaterialID::Plasma, MaterialID::Empty, 16},
+    // Chlorine from Bleach + Fire
+    {MaterialID::Bleach, MaterialID::Fire, MaterialID::Chlorine, MaterialID::Steam, 8},
+    // Ammonia from Sewage + Steam
+    {MaterialID::Sewage, MaterialID::Steam, MaterialID::Ammonia, MaterialID::Empty, 16},
+    // Carbon_Dioxide from Fire + Water (combustion byproduct)
+    {MaterialID::Fire, MaterialID::Water, MaterialID::Carbon_Dioxide, MaterialID::Steam, 32},
+    // Nitrous from Ammonia + Fire
+    {MaterialID::Ammonia, MaterialID::Fire, MaterialID::Nitrous, MaterialID::Steam, 16},
+    // Steam_Hot from Lava + Water
+    {MaterialID::Lava, MaterialID::Water, MaterialID::Steam_Hot, MaterialID::Obsidian, 4},
+    // Miasma from Sewage + Spore
+    {MaterialID::Sewage, MaterialID::Spore, MaterialID::Miasma, MaterialID::Empty, 16},
+    // Pheromone from Flower + Steam
+    {MaterialID::Flower, MaterialID::Steam, MaterialID::Pheromone, MaterialID::Empty, 32},
+    // Nerve_Gas from Poison + Chlorine
+    {MaterialID::Poison, MaterialID::Chlorine, MaterialID::Nerve_Gas, MaterialID::Empty, 16},
+    // Acid_Gas from Acid + Fire
+    {MaterialID::Acid, MaterialID::Fire, MaterialID::Acid_Gas, MaterialID::Steam, 8},
+    // Confetti from Flower + Spark (celebration)
+    {MaterialID::Flower, MaterialID::Spark, MaterialID::Confetti, MaterialID::Empty, 8},
+    // Liquid_Nitrogen from Ice + Magic
+    {MaterialID::Ice, MaterialID::Magic, MaterialID::Liquid_Nitrogen, MaterialID::Empty, 16},
+
+    // === POWDERS ===
+    // Gunpowder from Coal + Salt + Spark
+    {MaterialID::Coal, MaterialID::Salt, MaterialID::Gunpowder, MaterialID::Empty, 32},
+    // Sulfur from Lava + Steam (volcanic)
+    {MaterialID::Lava, MaterialID::Steam, MaterialID::Sulfur, MaterialID::Stone, 32},
+    // Cement fromIte + Gravel (calcium powder mix) - NOT Stone+Sand as that triggers on borders
+    {MaterialID::Calcium, MaterialID::Gravel, MaterialID::Cement, MaterialID::Empty, 32},
+    // Cement + Water = Concrete
+    {MaterialID::Cement, MaterialID::Water, MaterialID::Concrete, MaterialID::Empty, 8},
+    // Flour from Seed + Stone (grinding)
+    {MaterialID::Seed, MaterialID::Stone, MaterialID::Flour, MaterialID::Empty, 32},
+    // Flour + Fire = Fire (explosive)
+    {MaterialID::Flour, MaterialID::Fire, MaterialID::Fire, MaterialID::Fire, 1},
+    // Fertilizer from Ash + Soil
+    {MaterialID::Ash, MaterialID::Soil, MaterialID::Fertilizer, MaterialID::Empty, 16},
+    // Volcanic_Ash from Lava + Ash
+    {MaterialID::Lava, MaterialID::Ash, MaterialID::Volcanic_Ash, MaterialID::Empty, 16},
+    // Iron_Filings from Metal + Stone (filing)
+    {MaterialID::Metal, MaterialID::Stone, MaterialID::Iron_Filings, MaterialID::Stone, 64},
+    // Chalk from Limestone + Water
+    {MaterialID::Limestone, MaterialID::Water, MaterialID::Chalk, MaterialID::Empty, 32},
+    // Calcium from Bone + Acid
+    {MaterialID::Bone, MaterialID::Acid, MaterialID::Calcium, MaterialID::Empty, 16},
+    // Thermite_Powder from Iron_Filings + Rust
+    {MaterialID::Iron_Filings, MaterialID::Rust, MaterialID::Thermite_Powder, MaterialID::Empty, 16},
+
+    // === STONES AND SOLIDS ===
+    // Granite from Gravel + Lava (slow cooling igneous)
+    {MaterialID::Gravel, MaterialID::Lava, MaterialID::Granite, MaterialID::Empty, 32},
+    // Marble from Limestone + Lava (metamorphic heat)
+    {MaterialID::Limestone, MaterialID::Lava, MaterialID::Marble, MaterialID::Empty, 32},
+    // Sandstone from Sand + Cement (binding)
+    {MaterialID::Sand, MaterialID::Cement, MaterialID::Sandstone, MaterialID::Empty, 16},
+    // Limestone from Coral + Stone
+    {MaterialID::Coral, MaterialID::Stone, MaterialID::Limestone, MaterialID::Empty, 32},
+    // Slate from Clay + Fire (fired flat)
+    {MaterialID::Clay, MaterialID::Fire, MaterialID::Slate, MaterialID::Smoke, 32},
+    // Basalt from Lava + Ice (rapid cooling)
+    {MaterialID::Lava, MaterialID::Ice, MaterialID::Basalt, MaterialID::Steam, 8},
+    // Quartz_Block from Glass + Magic
+    {MaterialID::Glass, MaterialID::Magic, MaterialID::Quartz_Block, MaterialID::Empty, 32},
+    // Ceramic from Clay + Lava
+    {MaterialID::Clay, MaterialID::Lava, MaterialID::Ceramic, MaterialID::Empty, 8},
+    // Bedrock from Obsidian + Lava (ultra hard)
+    {MaterialID::Obsidian, MaterialID::Lava, MaterialID::Bedrock, MaterialID::Empty, 64},
+    // Rubber from Sap + Fire (vulcanization)
+    {MaterialID::Sap, MaterialID::Fire, MaterialID::Rubber, MaterialID::Smoke, 16},
+
+    // === SPECIAL ITEMS ===
+    // TNT from Gunpowder + Sand
+    {MaterialID::Gunpowder, MaterialID::Sand, MaterialID::TNT, MaterialID::Empty, 16},
+    // C4 from TNT + Glue
+    {MaterialID::TNT, MaterialID::Glue, MaterialID::C4, MaterialID::Empty, 16},
+    // Fuse from Gunpowder + Sawdust
+    {MaterialID::Gunpowder, MaterialID::Sawdust, MaterialID::Fuse, MaterialID::Empty, 16},
+    // Firework from Gunpowder + Metal
+    {MaterialID::Gunpowder, MaterialID::Metal, MaterialID::Firework, MaterialID::Empty, 16},
+    // Lightning from Spark + Plasma
+    {MaterialID::Spark, MaterialID::Plasma, MaterialID::Lightning, MaterialID::Empty, 8},
+    // Bomb from TNT + Metal
+    {MaterialID::TNT, MaterialID::Metal, MaterialID::Bomb, MaterialID::Empty, 16},
+    // Nuke from Bomb + Plasma
+    {MaterialID::Bomb, MaterialID::Plasma, MaterialID::Nuke, MaterialID::Empty, 32},
+    // Laser from Light + Crystal
+    {MaterialID::Spark, MaterialID::Crystal, MaterialID::Laser, MaterialID::Empty, 16},
+    // Ice_Bomb from TNT + Ice
+    {MaterialID::TNT, MaterialID::Ice, MaterialID::Ice_Bomb, MaterialID::Empty, 16},
+    // Fire_Bomb from TNT + Oil
+    {MaterialID::TNT, MaterialID::Oil, MaterialID::Fire_Bomb, MaterialID::Empty, 16},
+    // Napalm from Petrol + Glue
+    {MaterialID::Petrol, MaterialID::Glue, MaterialID::Napalm, MaterialID::Empty, 16},
+    // Clone from Magic + Flesh
+    {MaterialID::Magic, MaterialID::Flesh, MaterialID::Clone, MaterialID::Empty, 32},
+    // Void from Black_Hole + Magic
+    {MaterialID::Black_Hole, MaterialID::Magic, MaterialID::Void, MaterialID::Empty, 32},
+    // Portal_In from Magic + Obsidian
+    {MaterialID::Magic, MaterialID::Obsidian, MaterialID::Portal_In, MaterialID::Empty, 32},
+    // Portal_Out from Portal_In + Magic
+    {MaterialID::Portal_In, MaterialID::Magic, MaterialID::Portal_Out, MaterialID::Empty, 32},
+    // Black_Hole from Void + Magic
+    {MaterialID::Void, MaterialID::Antimatter, MaterialID::Black_Hole, MaterialID::Empty, 16},
+    // White_Hole from Black_Hole + Magic
+    {MaterialID::Black_Hole, MaterialID::Magic, MaterialID::White_Hole, MaterialID::Empty, 32},
+    // Life from Flesh + Magic
+    {MaterialID::Flesh, MaterialID::Magic, MaterialID::Life, MaterialID::Empty, 32},
+    // Person spawned by Life landing
+
+    // === FANTASY ===
+    // Magic from Stardust + Water (already exists)
+    // Crystal from Magic + Stone (already exists)
+    // Crystal alternate: Ice + Magic
+    {MaterialID::Ice, MaterialID::Crystal, MaterialID::Diamond, MaterialID::Empty, 64},
+    // Ectoplasm from Soul + Water
+    {MaterialID::Soul, MaterialID::Water, MaterialID::Ectoplasm, MaterialID::Empty, 16},
+    // Antimatter from Void + Magic
+    {MaterialID::Void, MaterialID::Magic, MaterialID::Antimatter, MaterialID::Empty, 32},
+    // Fairy_Dust from Magic + Flower
+    {MaterialID::Magic, MaterialID::Flower, MaterialID::Fairy_Dust, MaterialID::Empty, 16},
+    // Dragon_Fire from Fire + Magic
+    {MaterialID::Fire, MaterialID::Magic, MaterialID::Dragon_Fire, MaterialID::Empty, 24},
+    // Frost from Ice + Magic
+    {MaterialID::Ice, MaterialID::Magic, MaterialID::Frost, MaterialID::Empty, 16},
+    // Ember from Fire + Coal (already defined)
+    // Stardust from Magic + Diamond
+    {MaterialID::Magic, MaterialID::Diamond, MaterialID::Stardust, MaterialID::Empty, 32},
+    // Void_Dust from Void + Ash
+    {MaterialID::Void, MaterialID::Ash, MaterialID::Void_Dust, MaterialID::Empty, 16},
+    // Mana from Magic + Water
+    {MaterialID::Magic, MaterialID::Water, MaterialID::Mana, MaterialID::Empty, 16},
+    // Mirage from Magic + Steam
+    {MaterialID::Magic, MaterialID::Steam, MaterialID::Mirage, MaterialID::Empty, 24},
+    // Holy_Water from Water + Blessed
+    {MaterialID::Water, MaterialID::Blessed, MaterialID::Holy_Water, MaterialID::Empty, 8},
+    // Cursed from Magic + Poison
+    {MaterialID::Magic, MaterialID::Poison, MaterialID::Cursed, MaterialID::Empty, 16},
+    // Blessed from Magic + Holy_Water
+    {MaterialID::Magic, MaterialID::Holy_Water, MaterialID::Blessed, MaterialID::Empty, 16},
+    // Soul from Flesh + Fire + Magic
+    {MaterialID::Flesh, MaterialID::Dragon_Fire, MaterialID::Soul, MaterialID::Ash, 32},
+    // Spirit from Soul + Steam
+    {MaterialID::Soul, MaterialID::Steam, MaterialID::Spirit, MaterialID::Empty, 16},
+    // Aether from Spirit + Magic
+    {MaterialID::Spirit, MaterialID::Magic, MaterialID::Aether, MaterialID::Empty, 32},
+    // Nether from Cursed + Fire
+    {MaterialID::Cursed, MaterialID::Fire, MaterialID::Nether, MaterialID::Empty, 16},
+    // Phoenix_Ash from Fire + Ash + Magic
+    {MaterialID::Ash, MaterialID::Dragon_Fire, MaterialID::Phoenix_Ash, MaterialID::Empty, 32},
+    // Void from Antimatter alone
+    {MaterialID::Antimatter, MaterialID::Stone, MaterialID::Void, MaterialID::Empty, 4},
+
+    // === BOOTSTRAP: Getting first magic-tier material ===
+    // Stardust can be found from very rare Spark + Ice combo
+    {MaterialID::Spark, MaterialID::Ice, MaterialID::Stardust, MaterialID::Water, 64},
+    // Or Lava + Ice extremes
+    {MaterialID::Lava, MaterialID::Snow, MaterialID::Ember, MaterialID::Steam, 16},
+    // Void from Coal + Lava (deep burning)
+    {MaterialID::Coal, MaterialID::Lava, MaterialID::Void, MaterialID::Ash, 128},
+
+    // === ACID PATH (Acid is starter but needs to unlock things) ===
+    // Acid + Glass = Glass_Powder (etching) - NOT Stone, triggers on borders
+    {MaterialID::Acid, MaterialID::Glass, MaterialID::Glass_Powder, MaterialID::Toxic_Gas, 16},
+    // Acid + Wood = Sawdust + Toxic_Gas
+    {MaterialID::Acid, MaterialID::Wood, MaterialID::Sawdust, MaterialID::Toxic_Gas, 8},
+    // Acid + Oil = Poison
+    {MaterialID::Acid, MaterialID::Oil, MaterialID::Poison, MaterialID::Smoke, 16},
+    // Acid + Coal = Ash + Toxic_Gas
+    {MaterialID::Acid, MaterialID::Coal, MaterialID::Ash, MaterialID::Toxic_Gas, 16},
+
+    // === COPPER PATH (needed for Bronze) ===
+    // Metal + Acid = Copper (refined) - alternative to existing rust reaction
+    {MaterialID::Metal, MaterialID::Lava, MaterialID::Copper, MaterialID::Metal, 32},
+    // Gravel + Lava = Copper (ore smelting)
+    {MaterialID::Gravel, MaterialID::Fire, MaterialID::Copper, MaterialID::Ash, 64},
+
+    // === ADDITIONAL MISSING PATHS ===
+    // Person from Life is automatic, but also from Egg
+    {MaterialID::Egg, MaterialID::Fire, MaterialID::Person, MaterialID::Ash, 32},
+    // Flesh from Egg + Water (hatching organic)
+    {MaterialID::Egg, MaterialID::Water, MaterialID::Flesh, MaterialID::Slime, 32},
+    // Slime from Water + Seed (plant goop)
+    {MaterialID::Water, MaterialID::Seed, MaterialID::Slime, MaterialID::Empty, 64},
+    // Blood from Water + Flesh (injury simulation)
+    {MaterialID::Water, MaterialID::Fire, MaterialID::Blood, MaterialID::Steam, 128},
+    // Blessed from Fire + Water + rare chance (holy creation)
+    {MaterialID::Fire, MaterialID::Ice, MaterialID::Blessed, MaterialID::Steam, 256},
+
+    // --- MISSING MATERIAL UNLOCKS ---
+    // Mercury: Heavy liquid metal from Metal + Acid + heat
+    {MaterialID::Metal, MaterialID::Lava, MaterialID::Mercury, MaterialID::Smoke, 64},
+    // Bamboo: Fast-growing plant from Seed + Water in fertile soil
+    {MaterialID::Seed, MaterialID::Mud, MaterialID::Bamboo, MaterialID::Empty, 32},
+    // Alternate Bamboo: Vine growing tall
+    {MaterialID::Vine, MaterialID::Seed, MaterialID::Bamboo, MaterialID::Empty, 48},
 };
 
 static const int NUM_COMBINATIONS = sizeof(COMBINATIONS) / sizeof(COMBINATIONS[0]);
+
+// ============================================================================
+// DISCOVERY SYSTEM INTEGRATION
+// ============================================================================
+// Callback for Story Mode discovery tracking
+// When a combination occurs, this notifies the discovery system
+
+using CombinationCallback = void(*)(MaterialID mat_a, MaterialID mat_b,
+                                     MaterialID result_a, MaterialID result_b,
+                                     uint32_t frame_number);
+
+static CombinationCallback g_combination_callback = nullptr;
+static bool g_story_mode_active = false;
+static uint32_t g_current_frame = 0;
+
+// Check if material is unlocked (for story mode)
+using MaterialUnlockChecker = bool(*)(MaterialID);
+static MaterialUnlockChecker g_material_unlocked_checker = nullptr;
+
+} // namespace Materials
+
+// Public API for setting discovery callbacks from main.cpp
+void set_discovery_callback(Materials::CombinationCallback callback) {
+    Materials::g_combination_callback = callback;
+}
+
+void set_story_mode(bool active) {
+    Materials::g_story_mode_active = active;
+}
+
+void set_material_unlock_checker(Materials::MaterialUnlockChecker checker) {
+    Materials::g_material_unlocked_checker = checker;
+}
+
+void set_current_frame(uint32_t frame) {
+    Materials::g_current_frame = frame;
+}
+
+// Expose combination data for DiscoverySystem initialization
+const void* get_combinations_data() {
+    return Materials::COMBINATIONS;
+}
+
+int get_combinations_count() {
+    return Materials::NUM_COMBINATIONS;
+}
+
+CombinationInfo get_combination_by_index(int index) {
+    CombinationInfo info = {MaterialID::Empty, MaterialID::Empty, MaterialID::Empty, MaterialID::Empty};
+    if (index >= 0 && index < Materials::NUM_COMBINATIONS) {
+        info.mat_a = Materials::COMBINATIONS[index].mat_a;
+        info.mat_b = Materials::COMBINATIONS[index].mat_b;
+        info.result_a = Materials::COMBINATIONS[index].result_a;
+        info.result_b = Materials::COMBINATIONS[index].result_b;
+    }
+    return info;
+}
+
+namespace Materials {
 
 // ============================================================================
 // OPTIMIZED COMBINATION LOOKUP SYSTEM
@@ -1591,6 +2053,11 @@ static bool try_material_combination(World& world, int32_t x, int32_t y) {
     // Fast early exit: if this material has no recipes, skip entirely
     if (!has_combinations[my_mat_idx]) return false;
 
+    // In story mode, check if this material is unlocked
+    if (g_story_mode_active && g_material_unlocked_checker) {
+        if (!g_material_unlocked_checker(my_mat)) return false;
+    }
+
     // Check all 8 neighbors
     for (int dy = -1; dy <= 1; dy++) {
         for (int dx = -1; dx <= 1; dx++) {
@@ -1601,6 +2068,11 @@ static bool try_material_combination(World& world, int32_t x, int32_t y) {
 
             MaterialID neighbor_mat = world.get_material(nx, ny);
             if (neighbor_mat == MaterialID::Empty) continue;
+
+            // In story mode, check if neighbor material is unlocked
+            if (g_story_mode_active && g_material_unlocked_checker) {
+                if (!g_material_unlocked_checker(neighbor_mat)) continue;
+            }
 
             int neighbor_idx = static_cast<int>(neighbor_mat);
 
@@ -1616,6 +2088,14 @@ static bool try_material_combination(World& world, int32_t x, int32_t y) {
             // Determine if we matched forward (my_mat == mat_a) or reverse
             bool forward = (my_mat == combo.mat_a);
 
+            // Notify discovery system BEFORE applying results
+            // This ensures the combination is recorded before material_spawn_callback fires
+            if (g_combination_callback) {
+                g_combination_callback(combo.mat_a, combo.mat_b,
+                                       combo.result_a, combo.result_b,
+                                       g_current_frame);
+            }
+
             if (forward) {
                 apply_combination_result(world, x, y, combo.result_a);
                 apply_combination_result(world, nx, ny, combo.result_b);
@@ -1623,6 +2103,7 @@ static bool try_material_combination(World& world, int32_t x, int32_t y) {
                 apply_combination_result(world, x, y, combo.result_b);
                 apply_combination_result(world, nx, ny, combo.result_a);
             }
+
             return true;
         }
     }
@@ -8151,45 +8632,81 @@ void update_laser(World& world, int32_t x, int32_t y) {
 }
 
 void update_black_hole(World& world, int32_t x, int32_t y) {
-    // Optimized black hole with realistic physics
-    // Uses sparse sampling for distant regions to reduce computation
+    // Realistic black hole simulation with performance optimizations
+    // Features: Event horizon, photon sphere, accretion disk with Keplerian rotation,
+    // relativistic jets, tidal forces (spaghettification), gravitational lensing,
+    // time dilation effect, Hawking radiation, and mass accumulation
 
-    const int event_horizon = 3;      // Instant destruction radius
-    const int accretion_disk = 10;    // Strong spiral effect radius
-    const int gravity_well = 35;      // Reduced for performance (was 50)
+    // === PHYSICAL PARAMETERS ===
+    const int event_horizon = 2;      // Schwarzschild radius - point of no return
+    const int photon_sphere = 3;      // 1.5x event horizon - light orbits here
+    const int innermost_orbit = 5;    // ISCO - innermost stable circular orbit (3x Schwarzschild)
+    const int accretion_disk = 12;    // Visible accretion disk outer edge
+    const int gravity_well = 30;      // Gravitational influence radius
 
-    // Hawking radiation - very rare emission of particles
-    if ((world.random_int() % 2000) == 0) {
-        int emit_dir = world.random_int() % 4;
-        int ex = x + ((emit_dir == 0) ? -1 : (emit_dir == 1) ? 1 : 0);
-        int ey = y + ((emit_dir == 2) ? -1 : (emit_dir == 3) ? 1 : 0);
-        if (world.in_bounds(ex, ey) && world.get_material(ex, ey) == MaterialID::Empty) {
-            world.set_material(ex, ey, MaterialID::Plasma);
-            world.get_cell(ex, ey).set_lifetime(10);
-        }
-    }
-
-    // Pre-compute squared radii for faster comparison
+    // Pre-compute squared radii (avoid sqrt in hot path)
     const int event_horizon_sq = event_horizon * event_horizon;
+    const int photon_sphere_sq = photon_sphere * photon_sphere;
+    const int innermost_orbit_sq = innermost_orbit * innermost_orbit;
     const int accretion_disk_sq = accretion_disk * accretion_disk;
     const int gravity_well_sq = gravity_well * gravity_well;
 
-    // Process in rings from center outward, with decreasing sample density
+    // Track mass consumed this frame for jet emission
+    int mass_consumed = 0;
+
+    // === RELATIVISTIC JETS ===
+    // Black holes emit bipolar jets perpendicular to accretion disk
+    // Jets are powered by infalling matter - more matter = stronger jets
+    Cell& bh_cell = world.get_cell(x, y);
+    int stored_mass = bh_cell.get_lifetime();  // Abuse lifetime as mass counter
+
+    if (stored_mass > 15) {
+        // Emit jet particles upward and downward
+        for (int jet_dir = -1; jet_dir <= 1; jet_dir += 2) {
+            int jet_dist = 3 + (world.random_int() % 4);
+            int jy = y + jet_dir * jet_dist;
+            int jx = x + (world.random_int() % 3) - 1;  // Slight spread
+
+            if (world.in_bounds(jx, jy) && world.get_material(jx, jy) == MaterialID::Empty) {
+                world.set_material(jx, jy, MaterialID::Plasma);
+                world.get_cell(jx, jy).set_lifetime(15 + world.random_int() % 10);
+                // Give jet particles velocity away from black hole
+                world.get_cell(jx, jy).velocity_y = jet_dir * 8;
+            }
+        }
+        bh_cell.set_lifetime(stored_mass - 10);  // Consume stored mass
+    }
+
+    // === HAWKING RADIATION ===
+    // Quantum effect - black holes slowly evaporate by emitting particles
+    // Emits from just outside event horizon in random direction
+    if ((world.random_int() % 3000) == 0) {
+        float angle = (world.random_int() % 360) * 3.14159f / 180.0f;
+        int ex = x + (int)(cosf(angle) * (event_horizon + 1));
+        int ey = y + (int)(sinf(angle) * (event_horizon + 1));
+        if (world.in_bounds(ex, ey) && world.get_material(ex, ey) == MaterialID::Empty) {
+            // Hawking radiation appears as high-energy particles
+            world.set_material(ex, ey, MaterialID::Spark);
+            world.get_cell(ex, ey).set_lifetime(20);
+        }
+    }
+
+    // === MAIN GRAVITY PROCESSING ===
+    // Process gravity field with sparse sampling for performance
     for (int dy = -gravity_well; dy <= gravity_well; dy++) {
         for (int dx = -gravity_well; dx <= gravity_well; dx++) {
             if (dx == 0 && dy == 0) continue;
 
             int dist_sq = dx * dx + dy * dy;
 
-            // Skip outside gravity well (use squared comparison - no sqrt)
+            // Skip outside gravity well
             if (dist_sq > gravity_well_sq) continue;
 
-            // Sparse sampling for distant regions - skip most cells far away
-            // This dramatically reduces computation for large radius
+            // Performance: Sparse sampling in outer regions
             if (dist_sq > accretion_disk_sq) {
-                // Only process ~1/4 of cells in outer region
-                if (((dx + dy) & 1) != 0) continue;  // Checkerboard skip
-                if ((world.random_int() & 3) != 0) continue;  // 25% chance
+                // Process only 1/8 of cells in outer region
+                if (((dx ^ dy) & 1) != 0) continue;
+                if ((world.random_int() & 3) != 0) continue;
             }
 
             int px = x + dx;
@@ -8198,73 +8715,126 @@ void update_black_hole(World& world, int32_t x, int32_t y) {
             if (!world.in_bounds(px, py)) continue;
             MaterialID m = world.get_material(px, py);
 
-            // Early exit for common empty case
+            // Skip empty and immovable
             if (m == MaterialID::Empty) continue;
             if (m == MaterialID::Black_Hole || m == MaterialID::White_Hole ||
                 m == MaterialID::Bedrock) continue;
 
-            // EVENT HORIZON - instant destruction (use squared comparison)
+            // === EVENT HORIZON - Point of no return ===
             if (dist_sq <= event_horizon_sq) {
                 world.set_material(px, py, MaterialID::Empty);
-                // Simplified energy burst - less frequent
-                if ((world.random_int() % 8) == 0) {
-                    int burst_x = x + (world.random_int() % 5) - 2;
-                    int burst_y = y + (world.random_int() % 5) - 2;
-                    if (world.in_bounds(burst_x, burst_y) &&
-                        world.get_material(burst_x, burst_y) == MaterialID::Empty) {
-                        world.set_material(burst_x, burst_y, MaterialID::Plasma);
-                        world.get_cell(burst_x, burst_y).set_lifetime(8);
+                mass_consumed++;
+
+                // Matter crossing event horizon releases energy
+                if ((world.random_int() % 4) == 0) {
+                    // X-ray burst at random point on photon sphere
+                    float burst_angle = (world.random_int() % 360) * 3.14159f / 180.0f;
+                    int bx = x + (int)(cosf(burst_angle) * photon_sphere);
+                    int by = y + (int)(sinf(burst_angle) * photon_sphere);
+                    if (world.in_bounds(bx, by) && world.get_material(bx, by) == MaterialID::Empty) {
+                        world.set_material(bx, by, MaterialID::Plasma);
+                        world.get_cell(bx, by).set_lifetime(6);
                     }
                 }
                 continue;
             }
 
-            // Compute actual distance only when needed (after all early exits)
+            // Calculate distance (only when needed)
             float dist = sqrtf((float)dist_sq);
+            float inv_dist = 1.0f / dist;
 
-            // Gravitational pull - simplified inverse square
-            float gravity_strength = 400.0f / (float)dist_sq;
+            // === PHOTON SPHERE - Light orbits here ===
+            // Plasma/Spark/Fire particles orbit instead of falling in
+            if (dist_sq <= photon_sphere_sq && dist_sq > event_horizon_sq) {
+                if (m == MaterialID::Plasma || m == MaterialID::Spark ||
+                    m == MaterialID::Fire || m == MaterialID::Magic) {
+                    // Pure tangential motion - stable orbit
+                    float tang_x = -dy * inv_dist;
+                    float tang_y = dx * inv_dist;
+                    int orbit_x = px + ((tang_x > 0.5f) ? 1 : (tang_x < -0.5f) ? -1 : 0);
+                    int orbit_y = py + ((tang_y > 0.5f) ? 1 : (tang_y < -0.5f) ? -1 : 0);
+
+                    if (world.in_bounds(orbit_x, orbit_y) &&
+                        world.get_material(orbit_x, orbit_y) == MaterialID::Empty) {
+                        world.swap_cells(px, py, orbit_x, orbit_y);
+                    }
+                    continue;
+                }
+            }
+
+            // === TIME DILATION ===
+            // Particles slow down as they approach event horizon
+            // Simulated by reducing move probability near the center
+            float time_factor = dist / accretion_disk;  // 0 at center, 1 at disk edge
+            if (time_factor < 0.3f) time_factor = 0.3f;  // Cap minimum speed
+
+            // === GRAVITATIONAL STRENGTH ===
+            // Inverse square law: F = GM/r²
+            float gravity_strength = 500.0f / (float)dist_sq;
+            gravity_strength *= time_factor;  // Apply time dilation
+
             int pull_chance = (int)(gravity_strength);
             if (pull_chance < 1) pull_chance = 1;
             if (pull_chance > 100) pull_chance = 100;
 
             if ((int)(world.random_int() % 100) >= pull_chance) continue;
 
-            // Movement calculation
-            int move_x, move_y;
+            // === MOVEMENT CALCULATION ===
+            float norm_x = -dx * inv_dist;  // Unit vector toward black hole
+            float norm_y = -dy * inv_dist;
+            float tang_x = -norm_y;          // Tangent (perpendicular, counterclockwise)
+            float tang_y = norm_x;
 
-            if (dist_sq <= accretion_disk_sq) {
-                // Accretion disk - spiral motion
-                float inv_dist = 1.0f / dist;
-                float norm_x = -dx * inv_dist;
-                float norm_y = -dy * inv_dist;
-                float tang_x = -norm_y;
-                float tang_y = norm_x;
+            float move_x_f, move_y_f;
 
-                float spiral_factor = (dist / accretion_disk) * 0.6f;
-                float radial_factor = 1.0f - spiral_factor;
+            if (dist_sq <= innermost_orbit_sq) {
+                // === INSIDE ISCO - Unstable, spiraling inward ===
+                // Matter here cannot maintain stable orbit, falls rapidly
 
-                float move_x_f = norm_x * radial_factor + tang_x * spiral_factor;
-                float move_y_f = norm_y * radial_factor + tang_y * spiral_factor;
+                // Strong radial pull with slight rotation
+                float spiral = 0.2f;
+                move_x_f = norm_x * 0.8f + tang_x * spiral;
+                move_y_f = norm_y * 0.8f + tang_y * spiral;
 
-                move_x = (move_x_f > 0.3f) ? 1 : (move_x_f < -0.3f) ? -1 : 0;
-                move_y = (move_y_f > 0.3f) ? 1 : (move_y_f < -0.3f) ? -1 : 0;
-
-                // Spaghettification - less frequent
-                if (dist < 5 && (world.random_int() % 5) == 0) {
-                    int stretch_y = (dy > 0) ? py + 1 : py - 1;
-                    if (world.in_bounds(px, stretch_y) &&
-                        world.get_material(px, stretch_y) == MaterialID::Empty) {
-                        world.set_material(px, stretch_y, m);
+                // === TIDAL FORCES / SPAGHETTIFICATION ===
+                // Differential gravity stretches objects radially
+                if ((world.random_int() % 3) == 0) {
+                    // Stretch along radial direction (toward/away from BH)
+                    int stretch_x = px + (int)(norm_x * 2);
+                    int stretch_y = py + (int)(norm_y * 2);
+                    if (world.in_bounds(stretch_x, stretch_y) &&
+                        world.get_material(stretch_x, stretch_y) == MaterialID::Empty) {
+                        // Clone particle along stretch direction (visual tidal effect)
+                        world.set_material(stretch_x, stretch_y, m);
                     }
                 }
+
+            } else if (dist_sq <= accretion_disk_sq) {
+                // === ACCRETION DISK - Keplerian orbital motion ===
+                // Orbital velocity: v ∝ 1/√r (faster closer to center)
+                float orbital_speed = 1.0f / sqrtf(dist / innermost_orbit);
+                if (orbital_speed > 1.0f) orbital_speed = 1.0f;
+
+                // Gradual inspiral - mostly tangential with slight inward drift
+                float inspiral_rate = 0.15f;  // Rate of inward spiral
+                move_x_f = tang_x * orbital_speed + norm_x * inspiral_rate;
+                move_y_f = tang_y * orbital_speed + norm_y * inspiral_rate;
+
             } else {
-                // Simple pull toward center
-                move_x = (dx > 0) ? -1 : (dx < 0) ? 1 : 0;
-                move_y = (dy > 0) ? -1 : (dy < 0) ? 1 : 0;
+                // === OUTER REGION - Simple gravitational attraction ===
+                // Particles fall roughly straight toward black hole
+
+                // Add slight deflection based on initial velocity (gravitational lensing)
+                float deflection = 0.1f * (1.0f - dist / gravity_well);
+                move_x_f = norm_x + tang_x * deflection;
+                move_y_f = norm_y + tang_y * deflection;
             }
 
-            // Single move attempt (removed multi-step for performance)
+            // Convert to discrete movement
+            int move_x = (move_x_f > 0.3f) ? 1 : (move_x_f < -0.3f) ? -1 : 0;
+            int move_y = (move_y_f > 0.3f) ? 1 : (move_y_f < -0.3f) ? -1 : 0;
+
+            // Attempt to move
             int new_x = px + move_x;
             int new_y = py + move_y;
 
@@ -8272,9 +8842,23 @@ void update_black_hole(World& world, int32_t x, int32_t y) {
                 MaterialID target = world.get_material(new_x, new_y);
                 if (target == MaterialID::Empty) {
                     world.swap_cells(px, py, new_x, new_y);
+                } else if (dist_sq <= accretion_disk_sq &&
+                           target != MaterialID::Black_Hole &&
+                           target != MaterialID::Bedrock &&
+                           target != MaterialID::White_Hole) {
+                    // In accretion disk, particles can push past each other (turbulent flow)
+                    if ((world.random_int() % 5) == 0) {
+                        world.swap_cells(px, py, new_x, new_y);
+                    }
                 }
             }
         }
+    }
+
+    // Store accumulated mass for jet emission
+    bh_cell.set_lifetime(stored_mass + mass_consumed);
+    if (bh_cell.get_lifetime() > 100) {
+        bh_cell.set_lifetime(100);  // Cap stored mass
     }
 }
 

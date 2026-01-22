@@ -238,15 +238,15 @@ using PixelEngine::MaterialID;
             // Decrease bloom intensity
             _inputState->decrease_bloom = true;
             break;
-        case ',':
         case '<':
-            // Previous page
-            _inputState->prev_page = true;
+            // Speed down (Shift+,)
+            _inputState->speed_down = true;
+            NSLog(@"Speed down");
             break;
-        case '.':
         case '>':
-            // Next page
-            _inputState->next_page = true;
+            // Speed up (Shift+.)
+            _inputState->speed_up = true;
+            NSLog(@"Speed up");
             break;
         case 'l':
         case 'L':
@@ -283,17 +283,64 @@ using PixelEngine::MaterialID;
             _inputState->shape_drawing = false;
             NSLog(@"Tool mode: Brush");
             break;
+        case 'i':
+        case 'I':
+            // Pipette/Inspect tool
+            _inputState->tool_mode = PixelEngine::ToolMode::Pipette;
+            _inputState->shape_drawing = false;
+            NSLog(@"Tool mode: Pipette (Inspect)");
+            break;
         case 'x':
         case 'X':
             // Toggle filled vs outline shapes
             _inputState->filled_shapes = !_inputState->filled_shapes;
             NSLog(@"Shapes: %s", _inputState->filled_shapes ? "Filled" : "Outline");
             break;
+        case 'j':
+        case 'J':
+            // Open journal (story mode)
+            _inputState->open_journal = true;
+            NSLog(@"Open journal");
+            break;
+        case 'h':
+        case 'H':
+            // Toggle help overlay
+            _inputState->show_help = true;
+            NSLog(@"Toggle help");
+            break;
+        case ' ':
+            // Pause/resume simulation
+            _inputState->pause_toggle = true;
+            NSLog(@"Pause toggle");
+            break;
+        case ',':
+            // Previous page / category
+            _inputState->prev_page = true;
+            break;
+        case '.':
+            // Next page / category
+            _inputState->next_page = true;
+            break;
+        case 't':
+        case 'T':
+            // Toggle color picker menu
+            _inputState->show_color_menu = !_inputState->show_color_menu;
+            NSLog(@"Color menu: %s", _inputState->show_color_menu ? "ON" : "OFF");
+            break;
+        case '\r':  // Return/Enter key
+        case 3:     // Enter key (numpad)
+            _inputState->menu_select = true;
+            NSLog(@"Menu select");
+            break;
+        case 27:    // Escape key
+            _inputState->escape_pressed = true;
+            NSLog(@"Escape pressed");
+            break;
         default:
             break;
     }
 
-    // Handle function keys (special key codes)
+    // Handle special keys (arrow keys, function keys)
     unsigned short keyCode = [event keyCode];
     switch (keyCode) {
         case 122:  // F1
@@ -311,6 +358,30 @@ using PixelEngine::MaterialID;
         case 118:  // F4
             _inputState->toggle_vignette = true;
             NSLog(@"Toggle vignette");
+            break;
+        case 126:  // Up arrow
+            _inputState->menu_up = true;
+            NSLog(@"Menu up");
+            break;
+        case 125:  // Down arrow
+            _inputState->menu_down = true;
+            NSLog(@"Menu down");
+            break;
+        case 123:  // Left arrow
+            _inputState->menu_left = true;
+            NSLog(@"Menu left");
+            break;
+        case 124:  // Right arrow
+            _inputState->menu_right = true;
+            NSLog(@"Menu right");
+            break;
+        case 53:   // Escape key (keyCode)
+            _inputState->escape_pressed = true;
+            NSLog(@"Escape pressed (keyCode)");
+            break;
+        case 36:   // Return key (keyCode)
+            _inputState->menu_select = true;
+            NSLog(@"Menu select (keyCode)");
             break;
         default:
             break;
@@ -380,6 +451,10 @@ bool Platform::initialize(int32_t window_width, int32_t window_height, const cha
         // Set minimum size to prevent window from being too small
         [window setMinSize:NSMakeSize(400, 300)];
 
+        // Enable window transparency
+        [window setOpaque:NO];
+        [window setBackgroundColor:[NSColor clearColor]];
+
         window_ = (__bridge_retained void*)window;
 
         // Create Metal device
@@ -393,9 +468,10 @@ bool Platform::initialize(int32_t window_width, int32_t window_height, const cha
         InputView* metalView = [[InputView alloc] initWithFrame:windowRect device:device];
         metalView.inputState = &input_state_;
         metalView.delegate = appDelegate;
-        metalView.clearColor = MTLClearColorMake(0.0, 0.0, 0.0, 1.0);
-        metalView.framebufferOnly = YES;
+        metalView.clearColor = MTLClearColorMake(0.0, 0.0, 0.0, 0.0);  // Transparent clear
+        metalView.framebufferOnly = NO;  // Need this for transparency
         metalView.preferredFramesPerSecond = 60;
+        metalView.layer.opaque = NO;  // Metal layer transparency
 
         // Enable mouse tracking
         NSTrackingArea* trackingArea = [[NSTrackingArea alloc]

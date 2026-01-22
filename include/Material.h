@@ -319,6 +319,34 @@ void update_aether(World& world, int32_t x, int32_t y);
 void update_nether(World& world, int32_t x, int32_t y);
 void update_phoenix_ash(World& world, int32_t x, int32_t y);
 
+// Discovery system callback types
+using CombinationCallback = void(*)(MaterialID mat_a, MaterialID mat_b,
+                                     MaterialID result_a, MaterialID result_b,
+                                     uint32_t frame_number);
+
+using MaterialUnlockChecker = bool(*)(MaterialID);
+
 } // namespace Materials
+
+// Discovery system integration (defined in Material.cpp, called from main.cpp)
+void set_discovery_callback(Materials::CombinationCallback callback);
+void set_story_mode(bool active);
+void set_material_unlock_checker(Materials::MaterialUnlockChecker checker);
+void set_current_frame(uint32_t frame);
+
+// Get combination data for DiscoverySystem initialization
+const void* get_combinations_data();
+int get_combinations_count();
+
+// Combination info for journal display
+struct CombinationInfo {
+    MaterialID mat_a;
+    MaterialID mat_b;
+    MaterialID result_a;
+    MaterialID result_b;
+};
+
+// Get a specific combination by index (for journal display)
+CombinationInfo get_combination_by_index(int index);
 
 } // namespace PixelEngine

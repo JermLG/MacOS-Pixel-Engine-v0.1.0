@@ -1,0 +1,17 @@
+# Build artifacts
+build/*.o
+build/PixelEngine
+build/PixelEngine.app/
+build/DiscoverySystem.o
+build/.DS_Store
+build/shaders/*.air
+build/shaders/*.metallib
+
+# macOS
+.DS_Store
+*.dSYM/
+
+# IDE
+.vscode/
+*.xcodeproj/
+*.xcworkspace/

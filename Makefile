@@ -21,7 +21,8 @@ INCLUDES = -I$(INCLUDE_DIR)
 CPP_SOURCES = $(SRC_DIR)/main.cpp \
               $(SRC_DIR)/Material.cpp \
               $(SRC_DIR)/World.cpp \
-              $(SRC_DIR)/Simulation.cpp
+              $(SRC_DIR)/Simulation.cpp \
+              $(SRC_DIR)/DiscoverySystem.cpp
 
 MM_SOURCES = $(SRC_DIR)/MetalRenderer.mm \
              $(SRC_DIR)/Platform.mm
@@ -82,3 +83,79 @@ debug:
 	@echo "MM_SOURCES: $(MM_SOURCES)"
 	@echo "CPP_OBJECTS: $(CPP_OBJECTS)"
 	@echo "MM_OBJECTS: $(MM_OBJECTS)"
+
+# ============================================================================
+# App Bundle
+# ============================================================================
+APP_NAME = PixelEngine
+APP_BUNDLE = $(BUILD_DIR)/$(APP_NAME).app
+APP_CONTENTS = $(APP_BUNDLE)/Contents
+APP_MACOS = $(APP_CONTENTS)/MacOS
+APP_RESOURCES = $(APP_CONTENTS)/Resources
+
+.PHONY: app
+
+# Build the .app bundle
+app: $(TARGET) $(SHADER_LIB)
+	@echo "Creating app bundle..."
+	@mkdir -p $(APP_MACOS)
+	@mkdir -p $(APP_RESOURCES)/shaders
+	@# Copy executable
+	@cp $(TARGET) $(APP_MACOS)/$(APP_NAME)
+	@# Copy shaders
+	@cp $(SHADER_LIB) $(APP_RESOURCES)/shaders/
+	@# Create Info.plist
+	@echo '<?xml version="1.0" encoding="UTF-8"?>' > $(APP_CONTENTS)/Info.plist
+	@echo '<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">' >> $(APP_CONTENTS)/Info.plist
+	@echo '<plist version="1.0">' >> $(APP_CONTENTS)/Info.plist
+	@echo '<dict>' >> $(APP_CONTENTS)/Info.plist
+	@echo '    <key>CFBundleExecutable</key>' >> $(APP_CONTENTS)/Info.plist
+	@echo '    <string>$(APP_NAME)</string>' >> $(APP_CONTENTS)/Info.plist
+	@echo '    <key>CFBundleIdentifier</key>' >> $(APP_CONTENTS)/Info.plist
+	@echo '    <string>com.vibin.pixelengine</string>' >> $(APP_CONTENTS)/Info.plist
+	@echo '    <key>CFBundleName</key>' >> $(APP_CONTENTS)/Info.plist
+	@echo '    <string>$(APP_NAME)</string>' >> $(APP_CONTENTS)/Info.plist
+	@echo '    <key>CFBundleDisplayName</key>' >> $(APP_CONTENTS)/Info.plist
+	@echo '    <string>Pixel Engine</string>' >> $(APP_CONTENTS)/Info.plist
+	@echo '    <key>CFBundleVersion</key>' >> $(APP_CONTENTS)/Info.plist
+	@echo '    <string>1.0.0</string>' >> $(APP_CONTENTS)/Info.plist
+	@echo '    <key>CFBundleShortVersionString</key>' >> $(APP_CONTENTS)/Info.plist
+	@echo '    <string>1.0.0</string>' >> $(APP_CONTENTS)/Info.plist
+	@echo '    <key>CFBundlePackageType</key>' >> $(APP_CONTENTS)/Info.plist
+	@echo '    <string>APPL</string>' >> $(APP_CONTENTS)/Info.plist
+	@echo '    <key>CFBundleIconFile</key>' >> $(APP_CONTENTS)/Info.plist
+	@echo '    <string>AppIcon</string>' >> $(APP_CONTENTS)/Info.plist
+	@echo '    <key>LSMinimumSystemVersion</key>' >> $(APP_CONTENTS)/Info.plist
+	@echo '    <string>11.0</string>' >> $(APP_CONTENTS)/Info.plist
+	@echo '    <key>NSHighResolutionCapable</key>' >> $(APP_CONTENTS)/Info.plist
+	@echo '    <true/>' >> $(APP_CONTENTS)/Info.plist
+	@echo '    <key>NSSupportsAutomaticGraphicsSwitching</key>' >> $(APP_CONTENTS)/Info.plist
+	@echo '    <true/>' >> $(APP_CONTENTS)/Info.plist
+	@echo '</dict>' >> $(APP_CONTENTS)/Info.plist
+	@echo '</plist>' >> $(APP_CONTENTS)/Info.plist
+	@# Copy icon if it exists
+	@if [ -f "resources/AppIcon.icns" ]; then \
+		cp resources/AppIcon.icns $(APP_RESOURCES)/; \
+	fi
+	@echo "App bundle created: $(APP_BUNDLE)"
+
+# Create a distributable DMG
+.PHONY: dmg
+dmg: app
+	@echo "Creating DMG..."
+	@rm -f $(BUILD_DIR)/$(APP_NAME).dmg
+	@hdiutil create -volname "$(APP_NAME)" -srcfolder $(APP_BUNDLE) -ov -format UDZO $(BUILD_DIR)/$(APP_NAME).dmg
+	@echo "DMG created: $(BUILD_DIR)/$(APP_NAME).dmg"
+
+# ============================================================================
+# itch.io Publishing
+# ============================================================================
+ITCH_USER = JermLG
+ITCH_GAME = pixel-engine
+BUTLER = arch -x86_64 ~/bin/butler
+
+.PHONY: publish
+publish: app
+	@echo "Publishing to itch.io..."
+	@BUTLER_API_KEY=$$(cat ~/.config/itch/butler_creds) $(BUTLER) push $(APP_BUNDLE) $(ITCH_USER)/$(ITCH_GAME):mac
+	@echo "Published to https://$(ITCH_USER).itch.io/$(ITCH_GAME)"

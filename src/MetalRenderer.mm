@@ -135,27 +135,53 @@ bool MetalRenderer::create_pipelines() {
 
     // Load shader library
     NSError* error = nil;
-
-    // Try to load compiled shader library first
-    NSString* shaderPath = [[NSBundle mainBundle] pathForResource:@"shaders/shader" ofType:@"metallib"];
     id<MTLLibrary> library = nil;
 
-    if (shaderPath) {
-        library = [device newLibraryWithFile:shaderPath error:&error];
+    // Try multiple locations for compiled shader library
+    NSArray* metalLibPaths = @[
+        // App bundle Resources folder
+        [[NSBundle mainBundle] pathForResource:@"shaders/shader" ofType:@"metallib"] ?: @"",
+        // Relative to executable (for command-line runs)
+        @"shaders/shader.metallib",
+        // Same directory as executable
+        [[[NSBundle mainBundle] executablePath] stringByDeletingLastPathComponent]
+            ? [[[[NSBundle mainBundle] executablePath] stringByDeletingLastPathComponent] stringByAppendingPathComponent:@"shaders/shader.metallib"]
+            : @""
+    ];
+
+    for (NSString* path in metalLibPaths) {
+        if (path.length > 0 && [[NSFileManager defaultManager] fileExistsAtPath:path]) {
+            library = [device newLibraryWithFile:path error:&error];
+            if (library) {
+                NSLog(@"Loaded shader library from: %@", path);
+                break;
+            }
+        }
     }
 
     // If not found, compile from source
     if (!library) {
-        NSString* sourcePath = [[NSBundle mainBundle] pathForResource:@"shaders/shader" ofType:@"metal"];
-        if (!sourcePath) {
-            sourcePath = @"shaders/shader.metal";
+        NSArray* sourcePaths = @[
+            [[NSBundle mainBundle] pathForResource:@"shaders/shader" ofType:@"metal"] ?: @"",
+            @"shaders/shader.metal",
+            @"../shaders/shader.metal"
+        ];
+
+        NSString* shaderSource = nil;
+        for (NSString* path in sourcePaths) {
+            if (path.length > 0) {
+                shaderSource = [NSString stringWithContentsOfFile:path
+                                                         encoding:NSUTF8StringEncoding
+                                                            error:&error];
+                if (shaderSource) {
+                    NSLog(@"Loaded shader source from: %@", path);
+                    break;
+                }
+            }
         }
 
-        NSString* shaderSource = [NSString stringWithContentsOfFile:sourcePath
-                                                           encoding:NSUTF8StringEncoding
-                                                              error:&error];
         if (!shaderSource) {
-            NSLog(@"Failed to load shader source: %@", error);
+            NSLog(@"Failed to load shader source from any location");
             return false;
         }
 
@@ -192,12 +218,23 @@ bool MetalRenderer::create_pipelines() {
     vertexDescriptor.layouts[0].stepFunction = MTLVertexStepFunctionPerVertex;
 
     // Helper to create pipeline
-    auto createPipeline = [&](id<MTLFunction> fragment, MTLPixelFormat format) -> id<MTLRenderPipelineState> {
+    auto createPipeline = [&](id<MTLFunction> fragment, MTLPixelFormat format, bool enableBlending = false) -> id<MTLRenderPipelineState> {
         MTLRenderPipelineDescriptor* desc = [[MTLRenderPipelineDescriptor alloc] init];
         desc.vertexFunction = vertexFunction;
         desc.fragmentFunction = fragment;
         desc.vertexDescriptor = vertexDescriptor;
         desc.colorAttachments[0].pixelFormat = format;
+
+        // Enable alpha blending for transparency support
+        if (enableBlending) {
+            desc.colorAttachments[0].blendingEnabled = YES;
+            desc.colorAttachments[0].sourceRGBBlendFactor = MTLBlendFactorSourceAlpha;
+            desc.colorAttachments[0].destinationRGBBlendFactor = MTLBlendFactorOneMinusSourceAlpha;
+            desc.colorAttachments[0].rgbBlendOperation = MTLBlendOperationAdd;
+            desc.colorAttachments[0].sourceAlphaBlendFactor = MTLBlendFactorOne;
+            desc.colorAttachments[0].destinationAlphaBlendFactor = MTLBlendFactorOneMinusSourceAlpha;
+            desc.colorAttachments[0].alphaBlendOperation = MTLBlendOperationAdd;
+        }
 
         NSError* err = nil;
         id<MTLRenderPipelineState> state = [device newRenderPipelineStateWithDescriptor:desc error:&err];
@@ -207,8 +244,8 @@ bool MetalRenderer::create_pipelines() {
         return state;
     };
 
-    // Main pipeline (renders to screen - BGRA8Unorm)
-    id<MTLRenderPipelineState> mainPipeline = createPipeline(fragmentMain, MTLPixelFormatBGRA8Unorm);
+    // Main pipeline (renders to screen - BGRA8Unorm) - enable blending for transparency
+    id<MTLRenderPipelineState> mainPipeline = createPipeline(fragmentMain, MTLPixelFormatBGRA8Unorm, true);
     if (!mainPipeline) return false;
     pipeline_main_ = (__bridge_retained void*)mainPipeline;
 
@@ -235,9 +272,9 @@ bool MetalRenderer::create_pipelines() {
         }
     }
 
-    // Composite pipeline (renders to screen)
+    // Composite pipeline (renders to screen) - enable blending for transparency
     if (fragmentComposite) {
-        id<MTLRenderPipelineState> compositePipeline = createPipeline(fragmentComposite, MTLPixelFormatBGRA8Unorm);
+        id<MTLRenderPipelineState> compositePipeline = createPipeline(fragmentComposite, MTLPixelFormatBGRA8Unorm, true);
         if (compositePipeline) {
             pipeline_composite_ = (__bridge_retained void*)compositePipeline;
         }

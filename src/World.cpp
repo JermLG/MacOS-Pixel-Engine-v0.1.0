@@ -53,6 +53,11 @@ void World::set_material(int32_t x, int32_t y, MaterialID material) {
     get_cell(x, y).material_id = material;
     activate_chunk_at_position(x, y);
 
+    // Notify callback when a non-empty material spawns (for Story Mode discovery)
+    if (material != MaterialID::Empty && material_spawn_callback_) {
+        material_spawn_callback_(material);
+    }
+
     // Activate neighboring chunks if on chunk boundary
     if (x % CHUNK_SIZE == 0 && x > 0) {
         activate_chunk_at_position(x - 1, y);
@@ -195,7 +200,7 @@ void World::clear_world() {
     }
 }
 
-void World::generate_color_buffer(uint32_t* buffer) const {
+void World::generate_color_buffer(uint32_t* buffer, uint32_t background_color) const {
     // Optimized: process chunk by chunk for better cache locality
     for (int32_t chunk_y = 0; chunk_y < chunks_high_; ++chunk_y) {
         for (int32_t chunk_x = 0; chunk_x < chunks_wide_; ++chunk_x) {
@@ -217,8 +222,12 @@ void World::generate_color_buffer(uint32_t* buffer) const {
                     if (world_x >= width_) break;
 
                     const Cell& cell = chunk.cells[local_y * CHUNK_SIZE + local_x];
-                    const auto& mat_def = material_system_.get_material(cell.material_id);
-                    row[local_x] = mat_def.base_color.to_rgba32();
+                    if (cell.material_id == MaterialID::Empty) {
+                        row[local_x] = background_color;
+                    } else {
+                        const auto& mat_def = material_system_.get_material(cell.material_id);
+                        row[local_x] = mat_def.base_color.to_rgba32();
+                    }
                 }
             }
         }

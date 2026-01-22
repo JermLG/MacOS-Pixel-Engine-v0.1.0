@@ -84,9 +84,16 @@ public:
     }
 
     // Rendering - generate color buffer
-    void generate_color_buffer(uint32_t* buffer) const;
+    // background_color: RGBA color for empty cells (0 = transparent/black)
+    void generate_color_buffer(uint32_t* buffer, uint32_t background_color = 0) const;
 
     MaterialSystem& get_material_system() { return material_system_; }
+
+    // Material spawn callback (for Story Mode discovery safety net)
+    using MaterialSpawnCallback = void(*)(MaterialID);
+    void set_material_spawn_callback(MaterialSpawnCallback callback) {
+        material_spawn_callback_ = callback;
+    }
 
 private:
     int32_t width_;
@@ -98,6 +105,7 @@ private:
     MaterialSystem& material_system_;
 
     uint32_t rng_state_;
+    MaterialSpawnCallback material_spawn_callback_ = nullptr;
 
     // Convert world coordinates to chunk index
     int32_t world_to_chunk_index(int32_t x, int32_t y) const {
